@@ -1,9 +1,9 @@
 # 0002 — Static single page on Worker static assets, no build step, self-hosted fonts, GPM Keynote design system
 
-> Status: proposed (awaiting Dan's approval) · Date: 2026-11-06
+> Status: accepted (Dan, 2026-11-06) · Date: 2026-11-06
 
 ## Context
-GOAL.md and the spec ask for one static, free page with no backend, forms, trackers or third-party requests. It must work without JS, be mobile-first and WCAG AA, deploy via git to Cloudflare, and be maintained by one person for months to years at rigor L1. The page and 7 challenge `.md` files ship unchanged. Dan supplied the GPM Keynote design system (a 1920px slide system: Archivo fonts, square, no shadows, gradients or icons). The spec's build constraints say "system fonts, no CDN".
+GOAL.md and the spec ask for one static, free page with no backend, forms, trackers or third-party requests. It must work without JS, be mobile-first and WCAG AA, deploy via git to Cloudflare, and be maintained by one person for months to years at rigor L2. The page and 7 challenge `.md` files ship unchanged. Dan supplied the GPM Keynote design system (a 1920px slide system: Archivo fonts, square, no shadows, gradients or icons). The spec's build constraints say "system fonts, no CDN".
 
 ## Options
 1. **Hand-written `public/index.html` with inline CSS, served as Worker static assets (cf_scaffold.py), no build step.** Pros: zero dependencies to run the page; what you edit is what ships; deploy in seconds; matches the spec ("single index.html, inline CSS"). Cons: no templating, so repeated markup (7 cards, 8 FAQ items) is written by hand; design rules are kept by tests, not by a type system.

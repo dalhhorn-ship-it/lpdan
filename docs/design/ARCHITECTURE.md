@@ -3,7 +3,7 @@
 > Proposed (awaiting Dan's approval), 2026-11-06. Technical shape of the static landing page: files, CSS token layer, sections, accessibility, performance, tests, deploy, build slices. Decision record: docs/decisions/0002-static-page-worker-assets-no-build.md.
 
 ## Context
-One static, mobile-first page (docs/specs/landing-page.md) plus 7 challenge files. No backend, forms, trackers or third-party requests; works without JS; WCAG AA; rigor L1. Built in the GPM Keynote design system (design/gpm-keynote/), which is a 1920px slide system and needs a web translation. Deploys via git to a Cloudflare Worker that serves static assets.
+One static, mobile-first page (docs/specs/landing-page.md) plus 7 challenge files. No backend, forms, trackers or third-party requests; works without JS; WCAG AA; rigor L2 (Dan, 2026-11-06). Built in the GPM Keynote design system (design/gpm-keynote/), which is a 1920px slide system and needs a web translation. Deploys via git to a Cloudflare Worker that serves static assets.
 
 ## File layout
 ```
@@ -181,7 +181,7 @@ Dan's own items are separate: challenge review, dogfooding challenges 1–2, the
 ## Risks and open questions
 - `.md` content-type and `_headers` on Workers static assets are not yet tested (S0a). Fallback is 5 lines in the Worker.
 - Spec text says "system fonts"; the design system needs Archivo. We self-host it, so there are still no third-party requests. Needs Dan's OK (ADR 0002).
-- The decision tree maps "public internet" to L3; GOAL.md says L1. Needs Dan's explicit sign-off (see OPERATING-MODEL).
+- Resolved: Dan set rigor L2 on 2026-11-06 (see OPERATING-MODEL).
 - Hero fit at 375px with a 44px h1 is tight. The smoke test guards it; fallback is a 40px floor.
 - The first merge publishes the draft on workers.dev. Mitigation: noindex, and don't share the URL before S9.
 - README drift after template changes: run `--upstream` on every template release.

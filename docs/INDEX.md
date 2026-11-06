@@ -28,11 +28,11 @@
 | CLAUDE.md | 37 | Always-loaded instructions. Keep short and stable (it is paid every turn). Details live… |
 | docs/BACKLOG.md | 44 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
 | docs/GOAL.md | 59 | Status: confirmed by Dan on 2026-11-06. |
-| docs/OPERATING-MODEL.md | 73 | Proposed — awaiting Dan's approval (2026-11-06). How this project is built: chosen… |
+| docs/OPERATING-MODEL.md | 76 | Approved by Dan on 2026-11-06, with rigor raised to L2. How this project is built:… |
 | docs/TECH-DEBT.md | 9 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
 | docs/decisions/0000-template.md | 15 | Status: proposed \| accepted \| superseded by NNNN · Date: YYYY-MM-DD |
 | docs/decisions/0001-use-danfactory-template.md | 12 | Status: accepted · Date: 2026-11-06 |
-| docs/decisions/0002-static-page-worker-assets-no-build.md | 27 | Status: proposed (awaiting Dan's approval) · Date: 2026-11-06 |
+| docs/decisions/0002-static-page-worker-assets-no-build.md | 27 | Status: accepted (Dan, 2026-11-06) · Date: 2026-11-06 |
 | docs/design/ARCHITECTURE.md | 188 | Proposed (awaiting Dan's approval), 2026-11-06. Technical shape of the static landing… — sections: Context:5, File layout:8, CSS architecture:27, Design-token mapping…:39, Responsive type scale and…:58, Section → component mapping:76, Changes needed in the…:97, Accessibility plan (contrast…:111, Performance budget…:125, Content truth:135, Test strategy:141, Deploy:157, Build plan (vertical slices…:166, Risks and open questions:181 |
 | docs/operating-model/AGENT-ROUTING.md | 80 | Which agent gets involved when. The main agent coordinates and decides; subagents are… |
 | docs/operating-model/DECISION-TREE.md | 68 | Picks the operating model for a goal. Version 1.1.0. Keep this file short: details live… |

@@ -8,7 +8,7 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 
 ## Milestone: M0 — Project set up (target: 2026-11-08)
 - [x] Goal agreed: Dan confirms docs/GOAL.md #process
-- [ ] Operating model chosen (documents-content + software-product static site, L1) #process
+- [x] Operating model chosen (documents-content + software-product static site, L2) #process
 - [ ] Check script: copy-vs-README snippet match and link check (S) #quality
 
 ## Milestone: M1 — Launch the page (target: 2026-11-20)
