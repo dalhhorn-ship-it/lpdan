@@ -10,15 +10,18 @@
   document.addEventListener('click', function (e) {
     var b = e.target.closest('.copy');
     if (!b) return;
-    navigator.clipboard.writeText(b.getAttribute('data-copy')).then(function () {
+    var txt = b.getAttribute('data-copy');
+    if (!txt) return;
+    clearTimeout(b._t);
+    navigator.clipboard.writeText(txt).then(function () {
       b.textContent = 'copied';
       b.classList.add('done');
       status.textContent = 'Copied';
-      setTimeout(function () {
+      b._t = setTimeout(function () {
         b.textContent = 'copy';
         b.classList.remove('done');
         status.textContent = '';
       }, 1600);
-    }, function () {});
+    }, function () { status.textContent = 'Copy failed'; });
   });
 })();

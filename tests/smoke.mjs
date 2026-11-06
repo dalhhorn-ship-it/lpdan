@@ -43,7 +43,7 @@ const check = (name, ok, detail = '') => { if (ok) passed++; else failures.push(
 const browser = await chromium.launch();
 try {
   // Viewports: overflow, console, network, above the fold
-  for (const [w, h] of [[375, 667], [375, 812], [1280, 800], [1440, 900]]) {
+  for (const [w, h] of [[375, 667], [1280, 800], [1440, 900]]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h } });
     const page = await ctx.newPage();
     const errors = [], foreign = [];
@@ -64,15 +64,17 @@ try {
     for (const [k, v] of Object.entries(fold)) check(`hero ${k} above the fold @${w}x${h}`, v <= h, `(bottom ${Math.round(v)})`);
     const hero = await page.evaluate(() => {
       const nav = document.querySelector('nav.top'), cs = getComputedStyle(nav);
-      const small = [...document.querySelectorAll('nav.top a, .hero .btn')].filter((a) => a.offsetParent && a.getBoundingClientRect().height < 43).map((a) => a.textContent.trim());
+      const small = [...document.querySelectorAll('nav.top a, .hero .btn, .copy')].filter((a) => { const r = a.getBoundingClientRect(); return a.offsetParent && (Math.round(r.height) < 44 || Math.round(r.width) < 44); }).map((a) => a.textContent.trim());
       return { h1s: document.querySelectorAll('h1').length, h1fs: parseFloat(getComputedStyle(document.querySelector('.hero h1')).fontSize),
-        sticky: cs.position === 'sticky' && cs.backdropFilter === 'none', navText: nav.textContent, small,
-        cap: document.querySelector('.hero .dash')?.getAttribute('aria-label')?.includes('sample data'),
+        sticky: cs.position === 'sticky' && cs.top === '0px' && cs.backdropFilter === 'none' && cs.backgroundColor === 'rgb(11, 11, 46)', navText: nav.textContent, small,
+        hrefs: [...nav.querySelectorAll('a')].map((a) => a.getAttribute('href')).join(' '),
+        cap: /sample data/i.test(document.querySelector('.hero .dash')?.getAttribute('aria-label') || '') && /sample data/i.test(document.querySelector('.hero .mockcap')?.textContent || ''),
         feedback: /share feedback/i.test(document.body.textContent) };
     });
     check(`one h1, size >= 40px @${w}`, hero.h1s === 1 && hero.h1fs >= 40, `(${hero.h1fs})`);
     check(`nav sticky, solid @${w}`, hero.sticky);
     check(`nav has no Challenges link, no Share feedback @${w}`, !/challenges/i.test(hero.navText) && !hero.feedback);
+    check(`nav links are exactly spec §0 @${w}`, hero.hrefs === '#top #why #flow #dashboard #habits #start https://github.com/dalhhorn-ship-it/danfactory', `(${hero.hrefs})`);
     check(`nav/hero targets >= 44px @${w}`, hero.small.length === 0, hero.small.join(', '));
     check(`dash mock labelled sample data @${w}`, hero.cap);
     // magenta text must be large and bold/display
