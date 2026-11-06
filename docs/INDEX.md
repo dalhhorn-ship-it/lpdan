@@ -29,7 +29,7 @@
 | docs/BACKLOG.md | 44 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
 | docs/GOAL.md | 59 | Status: confirmed by Dan on 2026-11-06. |
 | docs/OPERATING-MODEL.md | 76 | Approved by Dan on 2026-11-06, with rigor raised to L2. How this project is built:… |
-| docs/TECH-DEBT.md | 9 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
+| docs/TECH-DEBT.md | 13 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
 | docs/decisions/0000-template.md | 15 | Status: proposed \| accepted \| superseded by NNNN · Date: YYYY-MM-DD |
 | docs/decisions/0001-use-danfactory-template.md | 12 | Status: accepted · Date: 2026-11-06 |
 | docs/decisions/0002-static-page-worker-assets-no-build.md | 27 | Status: accepted (Dan, 2026-11-06) · Date: 2026-11-06 |
