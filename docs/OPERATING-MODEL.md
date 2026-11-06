@@ -15,6 +15,7 @@ Roster: product-manager, software-architect, developer, test-runner, reviewer, t
 | When | Use |
 |---|---|
 | Backlog re-slice after this plan is approved | product-manager |
+| After every slice, before the dashboard refresh (Dan, 2026-11-06) | product-manager re-proposes the build sequence: reorders open items in docs/BACKLOG.md and updates the `> Sequence:` line; the Roadmap tab shows that order |
 | Specified slice (S1, S3–S7 in ARCHITECTURE.md) | developer (Sonnet), one slice per PR |
 | Small fixes (< ~50 lines), spike S0, scaffold S2, OG S8 | main agent |
 | Failing or noisy tests | test-runner |
