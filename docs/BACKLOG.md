@@ -22,6 +22,12 @@ Order is riskiest-first: truth of the copy and the dashboard visual are the risk
 - [ ] Credits + footer (S). AC: all README-credited projects linked.
 - [ ] Single index.html: responsive, accessible (semantic HTML, contrast, keyboard), no third-party requests, no JS required (M) #quality. AC: Lighthouse mobile 90+ in all three.
 - [ ] Deploy to Cloudflare via git (S) #infra. AC: live URL; page served from the main branch push.
+- [ ] Campaign section on the page: 7 challenge cards, submit steps, help line (M). AC: matches spec section 9b; links to /challenges/*.md work.
+- [ ] FAQ accordion with details/summary (S). AC: works without JS; answers match challenge 1 file.
+- [x] Challenge files 01-07 drafted in public/challenges/ (L). AC: each has goal, skills, danfactory features, time box, steps, done-when, proof.
+- [ ] Dan reviews challenge files and the farm game brief (02) for tone and truth (S) #quality
+- [ ] Dogfood: run challenges 1 and 2 end to end on a clean machine and fix snags in the files and FAQ (M) #quality
+- [ ] Enable GitHub Issues/Discussions on danfactory with a "challenge" label and `[challenge-N]` title convention (S) #process
 - [ ] Open Graph/social preview tags and favicon (S). AC: link preview renders; image is local.
 - [ ] Truth pass: Dan reviews all copy; run check script (S) #quality.
 
@@ -30,6 +36,8 @@ Order is riskiest-first: truth of the copy and the dashboard visual are the risk
 - [ ] "Worked example": a small project run through the flow, honest about results (L)
 - [ ] Dark/light toggle and print-friendly cheat sheet of the 7 habits (S)
 - [ ] Translations (S per language)
+- [ ] Challenge 8+ ideas: a data-spreadsheet challenge, a library-cli challenge, an automation-script challenge (M each)
+- [ ] Community showcase page of self-submitted projects, with consent (M)
 - [ ] Live dashboard demo generated from the repo's own backlog in CI (M) #foundation
 - [ ] Cookieless traffic stats, if Dan allows (S) #infra
 

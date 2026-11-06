@@ -18,6 +18,12 @@ Single `index.html`, inline CSS, no backend, no forms, no trackers, no third-par
 - Given any numeric or feature claim, when checked against the repo, then it is true (18 agents; 8 paths plus adopt-existing; budgets 350 lines / 120k tokens).
 - Given the network panel, when the page loads, then only the HTML (plus local assets) is requested.
 - Given the credits section, then every project in "Credits" below is linked.
+- Given the Campaign section, then it shows 7 challenge cards in order, each with level, title, one-liner, time box, skills, badge and working links to `/challenges/NN-*.md`.
+- Given any challenge file, then it tells the reader to start with danfactory (README commands verbatim), say "let's start", and submit proof (repo link, dashboard screenshot, `--print` output) tagged `[challenge-N]`.
+- Given the FAQ, then it works without JS (details/summary) and points to official docs by name, with no invented install URLs.
+- Given the campaign copy, then scoring and badges are labelled self-reported and no prizes, rankings or participant counts are claimed.
+- Given challenges 1 to 3, then they run on localhost; Cloudflare appears first in challenge 4.
+- Given the farm game brief (02), then it names no existing game, title or character.
 
 ## Non-goals
 Signup, forms, analytics, blog, docs mirror, testimonials, star counts, comparisons that disparage other tools.
@@ -122,6 +128,45 @@ Brand: "danfactory". Links: Why, Flow, Dashboard, Habits, Start. Button: "GitHub
 6. **Push and keep going.** A push is the deploy; a background watcher reports back with bounded waits. (`ship`, `deploy-watcher`, async-delivery policy.)
 7. **Retro, and feed learnings back.** At milestones write down what worked, tag shared lessons `[upstream]`, send them to the template. (`retro`, `upstream_learnings.py`.)
 
+### 9b. Campaign: the Vibe Ladder (id="campaign")
+Placed after the 7 habits and before Adopt. Each challenge is done with danfactory (start from the template or adopt, brainstorm -> choose-path -> build, dashboard as proof). Challenge files are served from `/challenges/NN-*.md` (source: public/challenges/) as links and downloads.
+
+- Headline: Learn by shipping: the Vibe Ladder
+- Subline: Seven small challenges, from "does my laptop work?" to "I improved the template". Each one teaches a skill, each one is done with danfactory, and you prove it with your own dashboard.
+- Intro line: Free, for fun, honour system. No signup, no leaderboard service, no prizes promised.
+
+**Ladder cards** (each card: level, title, one-liner, time box, skills, badge, buttons "Read the challenge" and "Download .md"):
+1. **Set up: git + Claude Code + danfactory.** Get your tools working and see your first dashboard. 30-45 min. Skills: terminal, git, starting Claude Code. Badge: Spark. File: 01-setup.md
+2. **Your first farm game.** Plant, grow, harvest, earn coins in a small original 3D world, running on localhost. Includes a ready-made brief that seeds your goal. 2-3 h. Skills: briefing, goal setting, small builds. Badge: Sprout. File: 02-farm-game.md
+3. **Tests and a green dashboard.** Test the game rules and get tests and coverage on the dashboard. Localhost. 1-2 h. Skills: testing, TDD, metrics. Badge: Greenhouse. File: 03-tests-green.md
+4. **Ship to Cloudflare via git.** Push is the deploy; a background watcher reports. 1-2 h. Skills: deploys, not waiting. Badge: Lift-off. File: 04-ship-cloudflare.md
+5. **Adopt an existing build.** Bring a Lovable, Bolt or v0 project (or any repo) under danfactory with `/danfactory:adopt`. 1-2 h. Skills: reading an audit, backlog and tech debt. Badge: Rescue. File: 05-adopt.md
+6. **A feature with a verification team.** One L2 feature with spec, reviewer, validator, karen and jenny. 2-4 h. Skills: specs, delegation, verification. Badge: Crew. File: 06-verified-feature.md
+7. **Retro and give back.** Run a retro and send an `[upstream]` learning to the template. 1 h. Skills: retros, open-source contribution. Badge: Giveback. File: 07-retro-upstream.md
+
+Note under the ladder: "Challenges 1 to 3 run on localhost (for example `python3 -m http.server 8000` in your game folder, then open http://localhost:8000). Cloudflare comes in challenge 4."
+
+**How to compete / submit**
+- Headline: Show your work, honestly
+- Steps: 1. Do the challenge with danfactory. 2. Open a GitHub Issue (or Discussion, if enabled) on dalhhorn-ship-it/danfactory titled `[challenge-N] <name> - <your project>`. 3. Include: repo link, a dashboard screenshot, and the output of `python3 scripts/dashboard.py --print` (that is the `dashboard/SUMMARY.md` table).
+- Code: `python3 scripts/dashboard.py --print`
+- Optional fun scoring (self-reported): one badge per challenge; bonus points for green tests, coverage at or above the budget, and low weighted tokens per session (from `python3 scripts/metrics.py report`). "Everything is self-reported. The dashboard is your receipt, not a lie detector."
+- Button: Open the challenge board on GitHub (Issues page, link below).
+
+**Help line**
+- Headline: Stuck? Ask in public
+- Body: "No phone, no email. Open an Issue at https://github.com/dalhhorn-ship-it/danfactory/issues titled `[challenge-N] help: <problem>` with your operating system, the command, and the exact error."
+
+**FAQ** (accordion; use `<details>`, which works without JS)
+- Q: git says "command not found". A: Install git from the official git site (git-scm.com) or your package manager, then open a new terminal.
+- Q: python3 is missing. A: Install Python 3 from python.org or your package manager. Check with `python3 --version` (on some systems the command is `python`). The template uses only the standard library.
+- Q: Claude Code won't start or asks me to log in. A: Run `claude` and follow the login prompt. Install and account requirements are in the official Claude Code docs; check there, they change.
+- Q: I'm on Windows. A: The scripts are bash. WSL (Windows Subsystem for Linux) is the simplest route; see Microsoft's WSL docs and the Claude Code docs. Work inside the WSL terminal.
+- Q: `bootstrap.sh: Permission denied`. A: Run it as `bash scripts/bootstrap.sh "my-project" "one line description"`; no executable bit needed.
+- Q: Where is the dashboard? A: `dashboard/index.html` in your project. `python3 scripts/dashboard.py --open` builds and opens it; `dashboard/SUMMARY.md` is the text version.
+- Q: My game page is blank on localhost. A: Serve the folder with `python3 -m http.server 8000` and open http://localhost:8000 instead of double-clicking the file; check the browser console for errors.
+- Q: Why did `git init` start empty history? A: On purpose: `rm -rf .git && git init` gives you your own history, not the template's.
+
 ### 10. Adopt an existing Lovable / Bolt / v0 build
 - Headline: Already built something? Bring it along
 - Subline: Install danfactory as a Claude Code plugin and run one command inside your repo. It works on a `danfactory/adopt` branch and never overwrites your files.
@@ -171,6 +216,7 @@ claude
 - Repo docs live under `docs/operating-model/` (AGENT-ROUTING, DECISION-TREE, paths) and `docs/policies/`.
 
 ## Scope cuts (recommended)
+- Cut from the campaign: leaderboard, automated verification of submissions, user profiles, a badge-image generator (badges are text names on the page), and a challenge-8+ ladder.
 - Cut: animated demos, video, blog, translations, dark mode toggle, live GitHub API stats (a third-party request and an inviting fake-proof risk). Pushed to M2.
 - Cut: full per-agent and per-path pages; link to the repo.
 - Cut: a hosted "try it" playground; needs a backend.
@@ -181,3 +227,8 @@ claude
 - Is any traffic measurement acceptable (Cloudflare cookieless stats)?
 - Dan's personal "why I built it" line, and their preferred credit link.
 - Dashboard visual: real project screenshot or generated sample?
+- Campaign: does Dan want GitHub Discussions enabled on danfactory (or Issues only)? Who judges, or is it purely honour system? Should there be any real prize (default: none)?
+- Help line: any phone/email Dan wants to offer? Default is GitHub Issues only. Who answers, and how fast (do not promise a response time on the page)?
+- Is Challenge 4 acceptable as the first step needing a Cloudflare account, and should the page say whether it is free (not claimed until Dan confirms)?
+- Challenge 3 test command: the template has no default; confirm whether to recommend Node's built-in runner or leave it to Claude.
+- The page's challenge files are the source of truth in public/challenges/; the build must copy them to the Cloudflare output unchanged.
