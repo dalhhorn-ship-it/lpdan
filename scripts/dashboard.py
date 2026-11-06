@@ -72,8 +72,12 @@ def parse_backlog(text):
     for line in strip_code(text).splitlines():
         m = MILESTONE_RE.match(line)
         if line.startswith("## ") and m:
-            current = {"name": m.group(1).strip(), "target": m.group(2) or "", "items": []}
+            current = {"name": m.group(1).strip(), "target": m.group(2) or "", "items": [], "sequence": ""}
             milestones.append(current)
+            continue
+        sm = re.match(r">\s*Sequence:\s*(.+)", line)
+        if sm and current is not None and not current["sequence"]:
+            current["sequence"] = sm.group(1).strip()
             continue
         im = ITEM_RE.match(line)
         if im and current is not None:
@@ -210,9 +214,11 @@ def lane_of(tags):
 
 
 def roadmap(backlog, open_debt):
-    """Proposed sequence: milestones in BACKLOG.md order become columns, items keep their file order,
-    and open items are numbered per lane (1 = next up). Open debt not yet scheduled is a final column."""
-    columns, seq = [], {"value": 0, "foundation": 0}
+    """Proposed sequence: milestones in BACKLOG.md order, items in file order. Open items get one global
+    number across both lanes (1 = next up). Fully done milestones are summarised, not rendered as columns.
+    Open debt not yet scheduled is a final column."""
+    columns, done_ms, upcoming, seq = [], [], [], 0
+    sequence = next((ms["sequence"] for ms in backlog if ms.get("sequence")), "")
     debt_cards = [{"title": "%s %s" % (x["id"], x["title"]), "state": "todo", "size": x["effort"],
                    "lane": "foundation", "impact": x["impact"], "debt": True}
                   for x in sorted(open_debt, key=lambda x: {"high": 0, "medium": 1, "low": 2}.get(x["impact"], 3))]
@@ -221,19 +227,24 @@ def roadmap(backlog, open_debt):
         groups.append(("Tech debt to schedule", "", debt_cards))
     for name, target, items in groups:
         cards = {"value": [], "foundation": []}
-        for it in items:
-            if it["state"] == "dropped":
-                continue
+        live = [it for it in items if it["state"] != "dropped"]
+        for it in live:
             lane = it.get("lane") or lane_of(it.get("tags", []))
             card = {"title": it["title"], "state": it["state"], "size": it.get("size", ""),
                     "impact": it.get("impact", ""), "debt": it.get("debt", False), "seq": None}
             if it["state"] != "done":
-                seq[lane] += 1
-                card["seq"] = seq[lane]
+                seq += 1
+                card["seq"] = seq
+                upcoming.append(dict(card, lane=lane, short=it["title"].split(" AC:")[0].strip().rstrip(".;:, ")))
             cards[lane].append(card)
-        if cards["value"] or cards["foundation"]:
+        for k in cards:  # open cards first (stable, so file order is kept); done ones trail
+            cards[k].sort(key=lambda c: c["seq"] is None)
+        if live and all(it["state"] == "done" for it in live):
+            done_ms.append({"name": name, "done": len(live), "total": len(live)})
+        elif live:
             columns.append({"name": name, "target": target, "lanes": cards})
-    return {"columns": columns, "open": dict(seq)}
+    opened = {k: sum(1 for c in columns for x in c["lanes"][k] if x["seq"]) for k in ("value", "foundation")}
+    return {"columns": columns, "done": done_ms, "next": upcoming[:3], "sequence": sequence, "open": opened}
 
 
 def collect():
@@ -321,7 +332,7 @@ def f_codegraph():
 
 def render_roadmap(rm):
     cols = rm["columns"]
-    if not cols:
+    if not cols and not rm["done"]:
         return ('<div class="card"><p class="muted">No roadmap yet. Add milestones and items to docs/BACKLOG.md; '
                 'tag foundation work with #foundation (or #arch, #infra, #runway, #debt, #quality...).</p></div>')
 
@@ -334,20 +345,30 @@ def render_roadmap(rm):
         return '<li class="rm-card %s">%s<span class="t">%s</span>%s</li>' % (
             e(c["state"]), num, e(c["title"]), '<span class="b">%s</span>' % badges if badges else "")
 
+    lane_name = {k: label for k, label, _ in LANES}
+    done = "".join('<div class="rm-done">Done: %s (%d/%d)</div>' % (e(x["name"]), x["done"], x["total"])
+                   for x in rm["done"])
+    nxt = "".join('<li><span class="seq">%d</span><span class="t">%s</span><span class="b"><span class="size">%s</span>'
+                  '</span></li>' % (x["seq"], e(x["short"]),
+                                    e(" · ".join(p for p in (x["size"], lane_name[x["lane"]]) if p)))
+                  for x in rm["next"])
+    nxt = '<div class="rm-next"><b>Next up</b><ol>%s</ol></div>' % nxt if nxt else ""
+    sub = rm["sequence"] or ("Columns follow milestone order in docs/BACKLOG.md; numbers are the suggested order "
+                             "across both lanes. Lanes come from tags; open items in docs/TECH-DEBT.md land in the "
+                             "foundation lane.")
     head = "".join('<div class="rm-col-h"><b>%s</b>%s</div>' % (
         e(c["name"]), '<span class="muted small">target %s</span>' % e(c["target"]) if c["target"] else "")
         for c in cols)
     rows = ""
-    for key, label, sub in LANES:
+    for key, label, lsub in LANES:
         rows += '<div class="rm-lane-h %s"><b>%s</b><span class="muted small">%s · %d open</span></div>' % (
-            key, e(label), e(sub), rm["open"][key])
+            key, e(label), e(lsub), rm["open"][key])
         rows += "".join('<ul class="rm-cell %s">%s</ul>' % (
             key, "".join(card(x) for x in c["lanes"][key]) or '<li class="muted small">–</li>') for c in cols)
-    return ('<div class="card"><h2>Roadmap: proposed sequence</h2>'
-            '<p class="muted small">Columns follow milestone order in docs/BACKLOG.md; numbers are the suggested order '
-            'within each lane. Lanes come from tags; open items in docs/TECH-DEBT.md land in the foundation lane.</p>'
-            '<div class="scroll"><div class="rm" style="--cols:%d">'
-            '<div class="rm-corner"></div>%s%s</div></div></div>' % (len(cols), head, rows))
+    grid = ('<div class="scroll"><div class="rm" style="--cols:%d"><div class="rm-corner"></div>%s%s</div></div>'
+            % (len(cols), head, rows)) if cols else ""
+    return ('<div class="card"><h2>Roadmap: proposed sequence</h2><p class="muted small">%s</p>%s%s%s</div>'
+            % (e(sub), done, nxt, grid))
 
 
 def render(d):
@@ -558,6 +579,12 @@ footer {{ margin-top:24px; font-size:12px; color:var(--muted); }}
 .rm-card .size, .rm-card .state {{ font-size:11px; padding:0 6px; border-radius:999px; background:var(--track); color:var(--muted); }}
 .rm-card.doing {{ box-shadow:inset 0 0 0 1px var(--accent); }} .rm-card.doing .state {{ color:var(--accent); }}
 .rm-card.blocked .state {{ background:var(--bad-bg); color:var(--bad); }}
+.rm-done {{ font-size:13px; color:var(--muted); margin:0 0 6px; }}
+.rm-next {{ margin:6px 0 8px; padding:6px 10px; border-radius:8px; background:var(--track); border-left:4px solid var(--accent); font-size:13px; }}
+.rm-next ol {{ list-style:none; margin:6px 0 0; padding:0; display:flex; flex-direction:column; gap:4px; }}
+.rm-next li {{ display:flex; flex-wrap:nowrap; align-items:baseline; gap:6px; }}
+.rm-next .seq {{ font-variant-numeric:tabular-nums; font-weight:650; color:var(--muted); min-width:1.4em; }}
+.rm-next .t {{ flex:1 1 0; min-width:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }} .rm-next .b {{ white-space:nowrap; }} .rm-next .size {{ font-size:11px; padding:0 6px; border-radius:999px; background:var(--surface); color:var(--muted); }}
 .rm-card.done {{ opacity:.55; }} .rm-card.done .t {{ text-decoration:line-through; }} .rm-card.done .seq {{ color:var(--ok); }}
 @media (max-width:520px) {{ .rm {{ --lane-w:104px; --col-w:minmax(200px,1fr); }} .rm-lane-h {{ padding:8px; }} .meta {{ text-align:left; }} .grid {{ grid-template-columns:1fr; }} }}
 </style>

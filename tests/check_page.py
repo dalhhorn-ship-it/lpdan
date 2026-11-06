@@ -155,6 +155,24 @@ def px_of(val, rootvars):
     return None
 
 
+def dashboard_checks(check):
+    """Roadmap tab of scripts/dashboard.py: global numbering, done milestones collapsed, next-up strip."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import dashboard
+    md = ("## Milestone: M0 — Set up (target: 2026-01-01)\n- [x] A (S)\n- [x] B (S)\n"
+          "## Milestone: M1 — Launch (target: 2026-02-01)\n> Sequence: ship hero first\n"
+          "- [ ] Page (M) #quality. AC: renders\n- [ ] Copy (S)\n- [x] Old (S)\n- [ ] Deploy (S) #infra\n- [ ] Faq (S)\n")
+    rm = dashboard.roadmap(dashboard.parse_backlog(md), [])
+    seqs = [c["seq"] for col in rm["columns"] for k in ("value", "foundation") for c in col["lanes"][k] if c["seq"]]
+    check("dashboard roadmap: open items numbered 1..n across lanes", sorted(seqs) == [1, 2, 3, 4], seqs)
+    check("dashboard roadmap: done milestone collapsed", [c["name"] for c in rm["columns"]] == ["M1 — Launch"]
+          and rm["done"][0]["done"] == 2, rm["done"])
+    check("dashboard roadmap: next up = first 3, short title", [x["short"] for x in rm["next"]] == ["Page", "Copy", "Deploy"],
+          rm["next"])
+    out = dashboard.render_roadmap(rm)
+    check("dashboard roadmap: sequence subtitle and done line", "ship hero first" in out and "Done: M0 — Set up (2/2)" in out)
+
+
 def main():
     results = []
 
@@ -305,6 +323,8 @@ def main():
     check("font licence shipped", (PUB / "fonts" / "OFL.txt").is_file())
     low = text.lower()
     check("no banned proof phrases", not [b for b in BANNED if b in low], [b for b in BANNED if b in low])
+
+    dashboard_checks(check)
 
     failed = [r for r in results if not r[1]]
     for name, _, detail in failed:
