@@ -26,12 +26,14 @@
 | File | Lines | Summary |
 |---|---:|---|
 | CLAUDE.md | 37 | Always-loaded instructions. Keep short and stable (it is paid every turn). Details live… |
-| docs/BACKLOG.md | 14 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
-| docs/GOAL.md | 30 | The agreed goal for this project. Written by the `brainstorm` skill after the user… |
-| docs/OPERATING-MODEL.md | 34 | How this project is built: chosen path(s), rigor, agents, practices, gates, budgets.… |
+| docs/BACKLOG.md | 44 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
+| docs/GOAL.md | 59 | Status: confirmed by Dan on 2026-11-06. |
+| docs/OPERATING-MODEL.md | 73 | Proposed — awaiting Dan's approval (2026-11-06). How this project is built: chosen… |
 | docs/TECH-DEBT.md | 9 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
 | docs/decisions/0000-template.md | 15 | Status: proposed \| accepted \| superseded by NNNN · Date: YYYY-MM-DD |
 | docs/decisions/0001-use-danfactory-template.md | 12 | Status: accepted · Date: 2026-11-06 |
+| docs/decisions/0002-static-page-worker-assets-no-build.md | 27 | Status: proposed (awaiting Dan's approval) · Date: 2026-11-06 |
+| docs/design/ARCHITECTURE.md | 188 | Proposed (awaiting Dan's approval), 2026-11-06. Technical shape of the static landing… — sections: Context:5, File layout:8, CSS architecture:27, Design-token mapping…:39, Responsive type scale and…:58, Section → component mapping:76, Changes needed in the…:97, Accessibility plan (contrast…:111, Performance budget…:125, Content truth:135, Test strategy:141, Deploy:157, Build plan (vertical slices…:166, Risks and open questions:181 |
 | docs/operating-model/AGENT-ROUTING.md | 80 | Which agent gets involved when. The main agent coordinates and decides; subagents are… |
 | docs/operating-model/DECISION-TREE.md | 68 | Picks the operating model for a goal. Version 1.1.0. Keep this file short: details live… |
 | docs/operating-model/LEARNINGS.md | 23 | Append-only log written by `retro`. Each entry tags path(s) and a type; `[upstream]`… |
@@ -49,3 +51,4 @@
 | docs/policies/security.md | 20 | Secure defaults always; full audits on request or before L3 releases. |
 | docs/policies/testing-and-metrics.md | 17 | Fast feedback is a feature. Measure test time, coverage, deploys and tokens; act on the… |
 | docs/policies/token-economy.md | 28 | Spend tokens on decisions, not on moving bytes. Adapted from Spotify's `shunt` plugin… |
+| docs/specs/landing-page.md | 231 | Status: confirmed by Dan on 2026-11-06 (see Decisions). Traces to docs/GOAL.md outcome… — sections: Problem statement:5, User story:8, Build constraints:11, Acceptance criteria:14, Non-goals:28, Sections in order (copy below):31, Truth rules for the developer:214, Scope cuts (recommended):218, Decisions (Dan, 2026-11-06):225 |
