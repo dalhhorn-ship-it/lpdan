@@ -37,7 +37,7 @@
     "test_affected": "python3 tests/check_page.py",
     "coverage": "",
     "lint": "node --check public/copy.js && node --check tests/smoke.mjs && python3 -m py_compile tests/check_page.py",
-    "build": "",
+    "build": "npm run build",
     "deploy": ""
   },
   "coverage_report": {
@@ -60,12 +60,13 @@
       "provider": "cloudflare",
       "method": "git",
       "production_branch": "main",
-      "product": "",
-      "project_name": "",
+      "product": "workers",
+      "project_name": "danfactory",
       "production_url": "",
-      "worker_name": "",
+      "worker_name": "danfactory",
       "workers_subdomain": "",
-      "preview_url_pattern": "https://{alias}-{worker}.{subdomain}.workers.dev"
+      "preview_url_pattern": "https://{alias}-{worker}.{subdomain}.workers.dev",
+      "route": "B-github-actions"
     },
     "skills": {
       "security-audit": {
