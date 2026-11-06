@@ -1,35 +1,27 @@
-# Handoff — 2026-11-06 19:25 — Landing page: S1 done, next S3 (hero)
+# Handoff — 2026-11-06 19:40 — S3 done; first deploy in flight (PR #1)
 
 ## Task
-Dan's free landing page promoting danfactory to vibe coders (why/who, 3 phases, agents, dashboard/traceability, 7 habits, adopt, start) plus a 7-challenge campaign ("Vibe Ladder"). GPM Keynote design system. Ask Dan for approval at milestones; keep his dashboard artifact updated.
+Dan's free landing page promoting danfactory (spec docs/specs/landing-page.md) + 7-challenge campaign. GPM Keynote design. Ask Dan at milestones; keep dashboard artifact updated.
 
 ## State
-- Done: PRD confirmed (docs/specs/landing-page.md, Decisions section); operating model approved at L2 (306b4c9); S0 spike + Worker scaffold + _headers + workflow fixes (77ac60a); S1 test harness + token layer (619d827) + review fixes (c399408). Tests: `python3 scripts/metrics.py test` green in ~3 s; `bash scripts/check.sh` ok.
-- In progress: nothing half-applied.
-- Branch: landing-draft (pushed), uncommitted: none. main = initial commit only.
+- Done: S0, S1, S3 (hero; review fixes a2a89b1). Roadmap tab fixed (4ed7806): global sequence, done milestones collapsed, Next up strip, `> Sequence:` subtitle. PM sequence in docs/BACKLOG.md M1.
+- Rule (Dan): after every slice, product-manager re-proposes the build sequence before the dashboard refresh (OPERATING-MODEL.md, AGENT-ROUTING.md).
+- In flight: Dan approved go-live. PR https://github.com/dalhhorn-ship-it/lpdan/pull/1 (landing-draft → main), session subscribed to PR activity. When "test" check is green: merge via REST (`gh api -X PUT repos/dalhhorn-ship-it/lpdan/pulls/1/merge`), capture PUSHED_AT, launch deploy-watcher (background) for production `/version`; preview job is expected to fail before the first merge.
+- After deploy: find workers_subdomain from the deploy job log/wrangler output, record integrations.deploy.production_url + workers_subdomain in factory.json, tell Dan the URL (noindex, don't share before S9).
+- Unknown: whether CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID secrets are set (proxy blocks Actions secrets API). First deploy job result answers it.
+- Branch landing-draft pushed at cb48216; clean.
 
-## Decisions (and why)
-- Rigor L2 (Dan chose over proposed L1; tree says L3 for public internet) — docs/OPERATING-MODEL.md
-- Static single page, no build step, Worker static assets, self-hosted Archivo, midnight theme only — docs/decisions/0002-static-page-worker-assets-no-build.md
-- Campaign: GitHub Issues only, honour system, no prize, no phone/email; don't claim Cloudflare is free; Claude picks test runner in challenge 3
-- Copy: keep closing headline "Give your next project rails, not rules"; no Share feedback button; no Challenges nav link
-- Worker name `danfactory` (Dan has not confirmed; changeable before first deploy)
+## Open questions for Dan
+- Copyable install command in the hero? (Currently no; backlog reworded to spec.)
+- No-JS section menu on phones? (TD-005)
+- Add backlog item for TD-003 font licence before truth pass? (PM suggests yes)
 
 ## Next steps
-1. S3 hero + nav + copy.js polish (developer agent), then L2 ladder: test-runner, reviewer, ui-comprehensive-tester; task-completion-validator for M items.
-2. S4 dashboard section, S5 campaign (remove TD-001 gate), S6 content, S7 adopt/start/credits — per docs/design/ARCHITECTURE.md "Build plan".
-3. S2 go-live once Dan adds GitHub secret CLOUDFLARE_API_TOKEN on lpdan (+ confirms Worker name): PR landing-draft → main, deploy-watcher in background, record workers_subdomain/production_url in factory.json.
-4. After each slice: `python3 scripts/dashboard.py` then republish artifact https://claude.ai/artifact/FmN8SMHSu89S6yQdjmmUKW (Artifact publish, file_path dashboard/index.html).
-5. Milestone end (M1): karen + jenny, then retro; S8 OG image, S9 truth pass + remove noindex.
+1. Finish deploy (above). 2. S4 dashboard section (PM sequence #1). Then per BACKLOG order. After each slice: L2 ladder → PM re-sequence → `python3 scripts/dashboard.py` → republish https://claude.ai/artifact/FmN8SMHSu89S6yQdjmmUKW (file dashboard/index.html).
 
 ## Watch out
-- Running repo scripts like bootstrap.sh was once blocked by the auto-mode classifier; cf_scaffold.py later ran fine.
-- Playwright: use the preinstalled one (require('playwright')); never `playwright install` locally. CI installs it with --no-save.
-- public/index.html > 350 lines: read in slices or via bulk-reader.
-- Design rules: no shadows/gradients/radius/icons; magenta text only ≥24px bold; streaks never behind text.
-- Dan writes in English/Dutch; use they/them for Dan.
-
-## Pointers
-- docs/design/ARCHITECTURE.md (build plan, tokens, tests, deploy), docs/OPERATING-MODEL.md, docs/BACKLOG.md, docs/TECH-DEBT.md (TD-001..004)
-- design/gpm-keynote/README.md, tokens.json; design/landing/index.html
-- tests/check_page.py, tests/smoke.mjs, public/_headers, wrangler.jsonc, .github/workflows/
+- gh GraphQL blocked: use `gh api` REST. Actions secrets API blocked.
+- Run docs_index.py before committing docs changes (check.sh fails on stale INDEX).
+- Test runs append metrics/history.jsonl: commit it with your change.
+- public/index.html > 350 lines: read in slices. Design rules: no shadows/gradients/radius/icons; magenta text ≥24px bold.
+- Dan: they/them; English/Dutch.
