@@ -1,4 +1,4 @@
-# Handoff — 2026-11-06 19:40 — S3 done; first deploy in flight (PR #1)
+# Handoff — 2026-11-06 19:45 — S3 done; PR #1 merged, prod deploy blocked on Cloudflare token
 
 ## Task
 Dan's free landing page promoting danfactory (spec docs/specs/landing-page.md) + 7-challenge campaign. GPM Keynote design. Ask Dan at milestones; keep dashboard artifact updated.
@@ -6,9 +6,8 @@ Dan's free landing page promoting danfactory (spec docs/specs/landing-page.md) +
 ## State
 - Done: S0, S1, S3 (hero; review fixes a2a89b1). Roadmap tab fixed (4ed7806): global sequence, done milestones collapsed, Next up strip, `> Sequence:` subtitle. PM sequence in docs/BACKLOG.md M1.
 - Rule (Dan): after every slice, product-manager re-proposes the build sequence before the dashboard refresh (OPERATING-MODEL.md, AGENT-ROUTING.md).
-- In flight: Dan approved go-live. PR https://github.com/dalhhorn-ship-it/lpdan/pull/1 (landing-draft → main), session subscribed to PR activity. When "test" check is green: merge via REST (`gh api -X PUT repos/dalhhorn-ship-it/lpdan/pulls/1/merge`), capture PUSHED_AT, launch deploy-watcher (background) for production `/version`; preview job is expected to fail before the first merge.
-- After deploy: find workers_subdomain from the deploy job log/wrangler output, record integrations.deploy.production_url + workers_subdomain in factory.json, tell Dan the URL (noindex, don't share before S9).
-- Unknown: whether CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID secrets are set (proxy blocks Actions secrets API). First deploy job result answers it.
+- PR #1 merged to main (ef1f8af). Prod deploy job failed: `Authentication error [code: 10000]` on /accounts/***/workers/services/danfactory (also preview job x2). Secrets exist and authenticate (Account API Token, account 5036de18…), token lacks Workers Scripts: Edit. Waiting on Dan to recreate token (Edit Cloudflare Workers template) and replace GitHub secret CLOUDFLARE_API_TOKEN.
+- Then: re-run the failed deploy job (`gh api -X POST repos/dalhhorn-ship-it/lpdan/actions/jobs/<id>/rerun`, find id via actions/runs?head_sha=ef1f8af…), launch deploy-watcher in background, record production_url + workers_subdomain in factory.json, tell Dan the URL (noindex).
 - Branch landing-draft pushed at cb48216; clean.
 
 ## Open questions for Dan
