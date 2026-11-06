@@ -6,23 +6,38 @@
   },
   "project": {
     "name": "Landing Page Dan Factory",
-    "one_liner": ""
+    "one_liner": "Free landing page that teaches vibe coders to build with Claude the danfactory way, with a challenge campaign."
   },
-  "phase": "brainstorm",
+  "phase": "build",
   "paths": {
-    "primary": "",
-    "secondary": []
+    "primary": "documents-content",
+    "secondary": [
+      "software-product"
+    ]
   },
   "agents": {
-    "roster": [],
+    "roster": [
+      "product-manager",
+      "software-architect",
+      "developer",
+      "test-runner",
+      "reviewer",
+      "task-completion-validator",
+      "code-quality-pragmatist",
+      "karen",
+      "jenny",
+      "ui-comprehensive-tester",
+      "deploy-watcher",
+      "doc-keeper"
+    ],
     "routing": "docs/operating-model/AGENT-ROUTING.md"
   },
   "commands": {
-    "test": "",
-    "test_affected": "",
+    "test": "python3 tests/check_page.py && node tests/smoke.mjs",
+    "test_affected": "python3 tests/check_page.py",
     "coverage": "",
-    "lint": "",
-    "build": "",
+    "lint": "node --check public/copy.js && node --check tests/smoke.mjs && python3 -m py_compile tests/check_page.py",
+    "build": "npm run build",
     "deploy": ""
   },
   "coverage_report": {
@@ -30,8 +45,8 @@
     "file": ""
   },
   "budgets": {
-    "test_seconds": 120,
-    "affected_test_seconds": 30,
+    "test_seconds": 30,
+    "affected_test_seconds": 5,
     "deploy_seconds": 180,
     "min_coverage_pct": 80,
     "max_coverage_drop_pct": 2,
@@ -45,12 +60,13 @@
       "provider": "cloudflare",
       "method": "git",
       "production_branch": "main",
-      "product": "",
-      "project_name": "",
+      "product": "workers",
+      "project_name": "danfactory",
       "production_url": "",
-      "worker_name": "",
+      "worker_name": "danfactory",
       "workers_subdomain": "",
-      "preview_url_pattern": "https://{alias}-{worker}.{subdomain}.workers.dev"
+      "preview_url_pattern": "https://{alias}-{worker}.{subdomain}.workers.dev",
+      "route": "B-github-actions"
     },
     "skills": {
       "security-audit": {

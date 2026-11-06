@@ -1,0 +1,18 @@
+// Cloudflare Worker config (danfactory scaffold). Deploys only via git.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "danfactory",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-06",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/version",
+      "/health"
+    ]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

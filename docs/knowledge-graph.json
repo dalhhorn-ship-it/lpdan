@@ -1,12 +1,14 @@
 {"generated_by": "scripts/docs_index.py", "code_graph": "codegraph (docs/CODEMAP.md)",
  "nodes": [
   {"id": "CLAUDE.md", "title": "CLAUDE.md", "lines": 37},
-  {"id": "docs/BACKLOG.md", "title": "Backlog", "lines": 14},
-  {"id": "docs/GOAL.md", "title": "Goal", "lines": 30},
-  {"id": "docs/OPERATING-MODEL.md", "title": "Operating model", "lines": 34},
-  {"id": "docs/TECH-DEBT.md", "title": "Tech debt register", "lines": 9},
+  {"id": "docs/BACKLOG.md", "title": "Backlog", "lines": 45},
+  {"id": "docs/GOAL.md", "title": "Goal", "lines": 59},
+  {"id": "docs/OPERATING-MODEL.md", "title": "Operating model", "lines": 77},
+  {"id": "docs/TECH-DEBT.md", "title": "Tech debt register", "lines": 14},
   {"id": "docs/decisions/0000-template.md", "title": "NNNN \u2014 Title", "lines": 15},
   {"id": "docs/decisions/0001-use-danfactory-template.md", "title": "0001 \u2014 Start from the danfactory template", "lines": 12},
+  {"id": "docs/decisions/0002-static-page-worker-assets-no-build.md", "title": "0002 \u2014 Static single page on Worker static assets, no build step, self-hosted fonts, GPM Keynote design system", "lines": 27},
+  {"id": "docs/design/ARCHITECTURE.md", "title": "Architecture: danfactory landing page", "lines": 188},
   {"id": "docs/operating-model/AGENT-ROUTING.md", "title": "Agent routing", "lines": 80},
   {"id": "docs/operating-model/DECISION-TREE.md", "title": "Decision tree", "lines": 68},
   {"id": "docs/operating-model/LEARNINGS.md", "title": "Learnings", "lines": 23},
@@ -23,10 +25,16 @@
   {"id": "docs/policies/documentation.md", "title": "Policy: documentation", "lines": 11},
   {"id": "docs/policies/security.md", "title": "Policy: security", "lines": 20},
   {"id": "docs/policies/testing-and-metrics.md", "title": "Policy: testing and delivery metrics", "lines": 17},
-  {"id": "docs/policies/token-economy.md", "title": "Policy: token economy", "lines": 28}
+  {"id": "docs/policies/token-economy.md", "title": "Policy: token economy", "lines": 28},
+  {"id": "docs/specs/landing-page.md", "title": "Spec: danfactory landing page", "lines": 232}
  ],
  "edges": [
   {"from": "docs/policies/documentation.md", "to": "docs/INDEX.md"},
-  {"from": "docs/policies/token-economy.md", "to": "docs/INDEX.md"}
+  {"from": "docs/policies/token-economy.md", "to": "docs/INDEX.md"},
+  {"from": "docs/specs/landing-page.md", "to": "docs/BACKLOG.md"},
+  {"from": "docs/specs/landing-page.md", "to": "docs/GOAL.md"},
+  {"from": "docs/specs/landing-page.md", "to": "docs/OPERATING-MODEL.md"},
+  {"from": "docs/specs/landing-page.md", "to": "docs/TECH-DEBT.md"},
+  {"from": "docs/specs/landing-page.md", "to": "docs/operating-model/paths/adopt-existing.md"}
  ]
 }

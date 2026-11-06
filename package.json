@@ -1,0 +1,12 @@
+{
+  "name": "danfactory",
+  "private": true,
+  "scripts": {
+    "build": "echo 'static site: nothing to build'",
+    "dev": "wrangler dev",
+    "test": "python3 tests/check_page.py"
+  },
+  "devDependencies": {
+    "wrangler": "^4.21.0"
+  }
+}

@@ -218,11 +218,11 @@ class Dashboard(unittest.TestCase):
         cols = rm["columns"]
         self.assertEqual([c["name"] for c in cols], ["M1", "M2", "Tech debt to schedule"])
         lane = lambda i, k: [(x["title"], x["seq"]) for x in cols[i]["lanes"][k]]
-        self.assertEqual(lane(0, "value"), [("Login works", None), ("Share a list", 1)])
+        self.assertEqual(lane(0, "value"), [("Share a list", 2), ("Login works", None)])
         self.assertEqual(lane(0, "foundation"), [("Set up CI", 1)])
-        self.assertEqual(lane(1, "foundation"), [("Split storage layer", 2)])
-        self.assertEqual(lane(1, "value"), [("Export to CSV", 2)])
-        self.assertEqual(lane(2, "foundation"), [("TD-001 No retries", 3)])
+        self.assertEqual(lane(1, "foundation"), [("Split storage layer", 3)])
+        self.assertEqual(lane(1, "value"), [("Export to CSV", 4)])
+        self.assertEqual(lane(2, "foundation"), [("TD-001 No retries", 5)])
         self.assertEqual(rm["open"], {"value": 2, "foundation": 3})
         html = self.d.render_roadmap(rm)
         self.assertIn("Technical foundation", html)
