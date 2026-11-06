@@ -1,6 +1,6 @@
 # Spec: danfactory landing page
 
-> Status: draft — confirm with user (Dan). Traces to docs/GOAL.md outcome and acceptance criteria 1-7. Facts come from /README.md and docs/operating-model/, docs/policies/. Copy is final unless Dan edits; the developer decides layout and implementation.
+> Status: confirmed by Dan on 2026-11-06 (see Decisions). Traces to docs/GOAL.md outcome and acceptance criteria 1-7. Facts come from /README.md and docs/operating-model/, docs/policies/. Copy is final unless Dan edits; the developer decides layout and implementation.
 
 ## Problem statement
 Vibe coders who start in Lovable, Bolt, v0 or Claude hit a wall as projects grow: lost context, token burn, no tests, no traceability, deploy chaos. danfactory fixes this, but its README speaks to people who already know Claude Code. The page translates it for builders who are not pro engineers.
@@ -222,13 +222,10 @@ claude
 - Cut: a hosted "try it" playground; needs a backend.
 - Keep: dashboard visual, 7 habits, and the two copy-paste blocks. They carry the value.
 
-## Open questions
-- Which URL/domain? Is the repo set as a template repository? Which license?
-- Is any traffic measurement acceptable (Cloudflare cookieless stats)?
-- Dan's personal "why I built it" line, and their preferred credit link.
-- Dashboard visual: real project screenshot or generated sample?
-- Campaign: does Dan want GitHub Discussions enabled on danfactory (or Issues only)? Who judges, or is it purely honour system? Should there be any real prize (default: none)?
-- Help line: any phone/email Dan wants to offer? Default is GitHub Issues only. Who answers, and how fast (do not promise a response time on the page)?
-- Is Challenge 4 acceptable as the first step needing a Cloudflare account, and should the page say whether it is free (not claimed until Dan confirms)?
-- Challenge 3 test command: the template has no default; confirm whether to recommend Node's built-in runner or leave it to Claude.
-- The page's challenge files are the source of truth in public/challenges/; the build must copy them to the Cloudflare output unchanged.
+## Decisions (Dan, 2026-11-06)
+- PRD approved. Status: confirmed.
+- Campaign: GitHub Issues only (no Discussions), honour system, no prize. Help line: GitHub Issues only, no phone/email; no response time promised.
+- Challenge 4: the page does not claim Cloudflare is free.
+- Challenge 3: no test runner named; Claude picks it during `choose-path`.
+- Other open points accepted at their defaults: no license stated until Dan adds one; "Use this template" shown only as optional ("if enabled"); no personal line for now; no traffic measurement; a `*.workers.dev` URL until a domain is chosen; dashboard visual = labelled sample mock + real day-one screenshot.
+- Challenge files in public/challenges/ are the source of truth and ship unchanged.

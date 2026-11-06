@@ -6,9 +6,9 @@
   },
   "project": {
     "name": "Landing Page Dan Factory",
-    "one_liner": ""
+    "one_liner": "Free landing page that teaches vibe coders to build with Claude the danfactory way, with a challenge campaign."
   },
-  "phase": "brainstorm",
+  "phase": "operating-model",
   "paths": {
     "primary": "",
     "secondary": []

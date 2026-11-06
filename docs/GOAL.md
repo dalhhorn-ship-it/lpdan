@@ -1,6 +1,6 @@
 # Goal
 
-> Status: draft — confirm with user (Dan).
+> Status: confirmed by Dan on 2026-11-06.
 
 ## Outcome
 A single, free, static landing page that teaches vibe coders how to run vibecoding with Claude without the project collapsing as it grows, and shows danfactory (github.com/dalhhorn-ship-it/danfactory) as the way to work and scale. It is a community give-back by Dan, not a product. After reading it, a visitor understands the problem, the 3-phase flow, and the traceability dashboard, and can start in under a minute with copy-paste commands.

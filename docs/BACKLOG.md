@@ -7,7 +7,7 @@ Format: one `## Milestone: <name>` heading per milestone (optional `(target: YYY
 Roadmap tab: item order here is the proposed sequence. Tag technical work `#foundation` (or `#arch`, `#infra`, `#runway`, `#debt`, `#quality`, `#ci`, `#security`, `#process`) to put it in the technical-foundation lane; everything else counts as user value.
 
 ## Milestone: M0 — Project set up (target: 2026-11-08)
-- [ ] Goal agreed: Dan confirms docs/GOAL.md (draft) #process
+- [x] Goal agreed: Dan confirms docs/GOAL.md #process
 - [ ] Operating model chosen (documents-content + software-product static site, L1) #process
 - [ ] Check script: copy-vs-README snippet match and link check (S) #quality
 
