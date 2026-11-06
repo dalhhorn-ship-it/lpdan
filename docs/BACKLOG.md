@@ -12,25 +12,25 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 - [x] Check script: copy-vs-README snippet match and link check (S) #quality
 
 ## Milestone: M1 — Launch the page (target: 2026-11-20)
-Order is riskiest-first: truth of the copy and the dashboard visual are the risks.
+> Sequence: proposed by product-manager 2026-11-06 — riskiest-first (dashboard visual, then truth of the copy), with deploy pulled forward so Dan can unblock the Cloudflare token and review on a live URL, then campaign/FAQ with TD-001 right behind them, and polish, dogfooding and the final truth pass last.
 - [x] Hero: headline, subline and GitHub CTA above the fold on mobile (S); one-click copy lives with the #start commands. AC: Given a phone viewport, when the page loads, then headline, subline and GitHub CTA are visible without scrolling.
+- [x] Challenge files 01-07 drafted in public/challenges/ (L). AC: each has goal, skills, danfactory features, time box, steps, done-when, proof.
 - [ ] Dashboard section with a real screenshot or faithful static mock generated from `python3 scripts/dashboard.py` output (M). AC: shows versions, progress, backlog, tech debt, metrics and the Roadmap tab; labeled as an example if mocked.
-- [ ] Problem, audience, 3-phase flow sections with final copy (M). AC: matches spec; every claim traceable to README/docs.
-- [ ] 7 habits teaching section (S). AC: each habit names the template feature that enforces it.
-- [ ] Agents, paths, token economy sections (M). AC: 18 agents, 8 paths plus adopt-existing, numbers match the repo.
-- [ ] Adopt existing Lovable/Bolt/v0 build + start in 3 commands sections (S). AC: snippets verbatim from README.
-- [ ] Credits + footer (S). AC: all README-credited projects linked.
-- [ ] Single index.html: responsive, accessible (semantic HTML, contrast, keyboard), no third-party requests, no JS required (M) #quality. AC: Lighthouse mobile 90+ in all three.
 - [ ] Deploy to Cloudflare via git (S) #infra. AC: live URL; page served from the main branch push.
+- [ ] Problem, audience, 3-phase flow sections with final copy (M). AC: matches spec; every claim traceable to README/docs.
+- [ ] Agents, paths, token economy sections (M). AC: 18 agents, 8 paths plus adopt-existing, numbers match the repo.
+- [ ] 7 habits teaching section (S). AC: each habit names the template feature that enforces it.
+- [ ] Adopt existing Lovable/Bolt/v0 build + start in 3 commands sections (S). AC: snippets verbatim from README.
+- [ ] Dan reviews challenge files and the farm game brief (02) for tone and truth (S) #quality
+- [ ] Enable GitHub Issues/Discussions on danfactory with a "challenge" label and `[challenge-N]` title convention (S) #process
 - [ ] Campaign section on the page: 7 challenge cards, submit steps, help line (M). AC: matches spec section 9b; links to /challenges/*.md work.
 - [ ] FAQ accordion with details/summary (S). AC: works without JS; answers match challenge 1 file.
-- [x] Challenge files 01-07 drafted in public/challenges/ (L). AC: each has goal, skills, danfactory features, time box, steps, done-when, proof.
-- [ ] Dan reviews challenge files and the farm game brief (02) for tone and truth (S) #quality
-- [ ] Dogfood: run challenges 1 and 2 end to end on a clean machine and fix snags in the files and FAQ (M) #quality
-- [ ] Enable GitHub Issues/Discussions on danfactory with a "challenge" label and `[challenge-N]` title convention (S) #process
-- [ ] Open Graph/social preview tags and favicon (S). AC: link preview renders; image is local.
-- [ ] Truth pass: Dan reviews all copy; run check script (S) #quality.
 - [ ] S5: remove the campaign-check gate in tests/check_page.py (TD-001) (S) #quality
+- [ ] Credits + footer (S). AC: all README-credited projects linked.
+- [ ] Single index.html: responsive, accessible (semantic HTML, contrast, keyboard), no third-party requests, no JS required (M) #quality. AC: Lighthouse mobile 90+ in all three.
+- [ ] Open Graph/social preview tags and favicon (S). AC: link preview renders; image is local.
+- [ ] Dogfood: run challenges 1 and 2 end to end on a clean machine and fix snags in the files and FAQ (M) #quality
+- [ ] Truth pass: Dan reviews all copy; run check script (S) #quality.
 
 ## Milestone: M2 — Ideas, not committed (target: )
 - [ ] Short screen recording or animated terminal of the 3 phases (M)
