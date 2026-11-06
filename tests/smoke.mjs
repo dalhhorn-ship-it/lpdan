@@ -43,7 +43,7 @@ const check = (name, ok, detail = '') => { if (ok) passed++; else failures.push(
 const browser = await chromium.launch();
 try {
   // Viewports: overflow, console, network, above the fold
-  for (const [w, h] of [[375, 667], [1280, 800], [1440, 900]]) {
+  for (const [w, h] of [[375, 667], [375, 812], [1280, 800], [1440, 900]]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h } });
     const page = await ctx.newPage();
     const errors = [], foreign = [];
@@ -62,6 +62,19 @@ try {
       return { h1: bottom('.hero h1'), sub: bottom('.hero .lede'), cta: bottom('.hero .btn.p') };
     }, h);
     for (const [k, v] of Object.entries(fold)) check(`hero ${k} above the fold @${w}x${h}`, v <= h, `(bottom ${Math.round(v)})`);
+    const hero = await page.evaluate(() => {
+      const nav = document.querySelector('nav.top'), cs = getComputedStyle(nav);
+      const small = [...document.querySelectorAll('nav.top a, .hero .btn')].filter((a) => a.offsetParent && a.getBoundingClientRect().height < 43).map((a) => a.textContent.trim());
+      return { h1s: document.querySelectorAll('h1').length, h1fs: parseFloat(getComputedStyle(document.querySelector('.hero h1')).fontSize),
+        sticky: cs.position === 'sticky' && cs.backdropFilter === 'none', navText: nav.textContent, small,
+        cap: document.querySelector('.hero .dash')?.getAttribute('aria-label')?.includes('sample data'),
+        feedback: /share feedback/i.test(document.body.textContent) };
+    });
+    check(`one h1, size >= 40px @${w}`, hero.h1s === 1 && hero.h1fs >= 40, `(${hero.h1fs})`);
+    check(`nav sticky, solid @${w}`, hero.sticky);
+    check(`nav has no Challenges link, no Share feedback @${w}`, !/challenges/i.test(hero.navText) && !hero.feedback);
+    check(`nav/hero targets >= 44px @${w}`, hero.small.length === 0, hero.small.join(', '));
+    check(`dash mock labelled sample data @${w}`, hero.cap);
     // magenta text must be large and bold/display
     const mag = await page.evaluate(() => {
       const bad = []; const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);

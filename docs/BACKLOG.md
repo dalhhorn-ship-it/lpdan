@@ -13,7 +13,7 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 
 ## Milestone: M1 — Launch the page (target: 2026-11-20)
 Order is riskiest-first: truth of the copy and the dashboard visual are the risks.
-- [ ] Hero + one-click copy of the install command, above the fold on mobile (S). AC: Given a phone viewport, when the page loads, then headline, subline and GitHub CTA are visible without scrolling.
+- [x] Hero + one-click copy of the install command, above the fold on mobile (S). AC: Given a phone viewport, when the page loads, then headline, subline and GitHub CTA are visible without scrolling.
 - [ ] Dashboard section with a real screenshot or faithful static mock generated from `python3 scripts/dashboard.py` output (M). AC: shows versions, progress, backlog, tech debt, metrics and the Roadmap tab; labeled as an example if mocked.
 - [ ] Problem, audience, 3-phase flow sections with final copy (M). AC: matches spec; every claim traceable to README/docs.
 - [ ] 7 habits teaching section (S). AC: each habit names the template feature that enforces it.
