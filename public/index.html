@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>danfactory — vibe code with Claude, without the wall</title>
+<meta name="description" content="danfactory is a free starter kit for Claude Code: a goal, a plan, tests, short contexts and a live dashboard, so your AI-built project keeps working as it grows.">
+<meta property="og:title" content="danfactory — vibe code with Claude, without the wall">
+<meta property="og:description" content="A free, open template for Claude Code projects: guided start, 18 agents, token economy, a traceability dashboard and git deploys to Cloudflare.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e0f0c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23f2a93b'/%3E%3Cpath d='M7 24V13l6 4v-4l6 4v-4l6 4v7z' fill='%230e0f0c'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#0e0f0c; --bg2:#15171299; --panel:#171914; --line:#2a2d25; --ink:#eeeee6; --mute:#a3a596;
+  --acc:#f2a93b; --acc-ink:#0e0f0c; --ok:#7bc96f; --warn:#e7c14d; --bad:#e8735c; --blue:#7aa7f0;
+  --code:#0a0b08; --shadow:0 20px 60px -20px #000c;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: light){
+  :root{--bg:#f7f5ee; --bg2:#efece199; --panel:#fffdf7; --line:#e0dccd; --ink:#1b1c17; --mute:#5d5f52;
+    --acc:#c97a0c; --acc-ink:#fff; --ok:#2f8a3a; --warn:#a07800; --bad:#c2452e; --blue:#2d63c8;
+    --code:#1b1c17; --shadow:0 20px 50px -25px #0003;}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--sans);overflow-x:hidden}
+a{color:var(--acc)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.hero .wrap>*,.grid>*,.steps>*,.adopt>*,.dsec>*,.who>*,.real>*{min-width:0}
+.mono{font-family:var(--mono)}
+code{font-family:var(--mono);font-size:.88em;background:var(--bg2);border:1px solid var(--line);padding:.08em .4em;border-radius:5px;word-break:break-word}
+h1,h2,h3{line-height:1.12;letter-spacing:-.02em;margin:0}
+h2{font-size:clamp(1.8rem,4.2vw,2.8rem);max-width:22ch}
+h3{font-size:1.15rem}
+.eyebrow{font:600 .78rem/1 var(--mono);text-transform:uppercase;letter-spacing:.14em;color:var(--acc);margin:0 0 14px}
+.lede{color:var(--mute);font-size:1.12rem;max-width:62ch;margin:14px 0 0}
+section{padding:96px 0;border-top:1px solid var(--line)}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:var(--acc);color:var(--acc-ink);padding:8px 12px;z-index:9}
+
+/* nav */
+nav.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;align-items:center;gap:22px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font:700 1.05rem var(--mono);color:var(--ink);text-decoration:none;margin-right:auto}
+.brand i{width:26px;height:26px;border-radius:6px;background:var(--acc);display:grid;place-items:center}
+.brand i svg{width:18px;height:18px}
+nav.top a.l{color:var(--mute);text-decoration:none;font-size:.93rem}
+nav.top a.l:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;text-decoration:none;border-radius:10px;padding:12px 18px;border:1px solid transparent;transition:transform .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn.p{background:var(--acc);color:var(--acc-ink)}
+.btn.g{border-color:var(--line);color:var(--ink)}
+.btn.s{padding:7px 13px;font-size:.9rem}
+@media (max-width:760px){nav.top a.l{display:none}}
+
+/* hero */
+.hero{padding:72px 0 88px;border:0;position:relative}
+.hero::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(600px 300px at 85% 10%,color-mix(in srgb,var(--acc) 18%,transparent),transparent 70%),
+  linear-gradient(var(--line) 1px,transparent 1px) 0 0/48px 48px,
+  linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/48px 48px;
+  opacity:.5;mask-image:linear-gradient(#000,transparent 85%);pointer-events:none}
+.hero .wrap{position:relative;display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center}
+.hero h1{font-size:clamp(2.5rem,6.4vw,4.6rem);letter-spacing:-.035em}
+.hero h1 em{font-style:normal;color:var(--acc)}
+.hero .lede{font-size:1.2rem}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.trust{margin-top:20px;color:var(--mute);font:.85rem var(--mono)}
+.trust b{color:var(--ok);font-weight:600}
+@media (max-width:920px){.hero .wrap{grid-template-columns:1fr}.hero{padding-top:44px}}
+
+/* dashboard mock */
+.dash{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;font-size:13px}
+.dash .bar{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--mute);font:12px var(--mono)}
+.dash .bar span{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.dash .bar b{margin-left:8px;font-weight:500}
+.dash .in{padding:16px}
+.dash .hd{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.dash .ttl{font-weight:700;font-size:16px}
+.pills{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);border-radius:99px;padding:2px 10px;color:var(--mute);font-size:12px}
+.pill.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.dash .ver{color:var(--mute);font:11.5px/1.5 var(--mono);text-align:right}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.tile{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg2)}
+.tile small{color:var(--mute);display:block;font-size:11px}
+.tile strong{font-size:20px;display:block;margin-top:2px}
+.tile .ok{color:var(--ok)}.tile .warn{color:var(--warn)}
+.tile em{font-style:normal;font-size:11px;color:var(--mute)}
+.ms{margin-top:14px;display:grid;gap:9px}
+.ms div{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:12px}
+.ms .track{grid-column:1/-1;height:6px;border-radius:9px;background:var(--line);overflow:hidden}
+.ms .track i{display:block;height:100%;background:var(--ok);border-radius:9px}
+.lanes{margin-top:14px;display:grid;gap:8px}
+.lane{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:start}
+.lane > b{font-size:11.5px;border-left:3px solid var(--blue);padding:6px 8px;background:var(--bg2);border-radius:6px}
+.lane.f > b{border-color:var(--acc)}
+.lane .cards{display:flex;gap:6px;flex-wrap:wrap}
+.lane .cards span{border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:11.5px;background:var(--panel)}
+.lane .cards span.d{opacity:.55;text-decoration:line-through}
+.mockcap{color:var(--mute);font:12px var(--mono);margin-top:10px;text-align:center}
+@media (max-width:520px){.tiles{grid-template-columns:repeat(2,1fr)}.lane{grid-template-columns:1fr}}
+
+/* grids */
+.grid{display:grid;gap:16px;margin-top:40px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
+@media (max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+.card p{margin:8px 0 0;color:var(--mute)}
+.card .n{font:700 .8rem var(--mono);color:var(--acc)}
+
+/* wall */
+.wall{display:grid;gap:12px;margin-top:40px}
+.wall .row{display:grid;grid-template-columns:44px 230px 1fr;gap:16px;align-items:baseline;padding:18px 20px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.wall .row .x{font:700 1rem var(--mono);color:var(--bad)}
+.wall .row b{font-size:1.1rem}
+.wall .row span{color:var(--mute)}
+@media (max-width:760px){.wall .row{grid-template-columns:32px 1fr}.wall .row span{grid-column:2}}
+.closer{margin-top:28px;font-size:1.15rem;max-width:60ch}
+.closer b{color:var(--acc)}
+
+/* who */
+.who{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;margin-top:40px}
+.who ul{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:12px}
+.who li{padding-left:28px;position:relative}
+.who li::before{content:"✓";position:absolute;left:0;color:var(--ok);font-weight:700}
+.who .no li::before{content:"–";color:var(--mute)}
+.quote{font-size:1.25rem;line-height:1.5;border-left:3px solid var(--acc);padding-left:20px;margin:0}
+@media (max-width:860px){.who{grid-template-columns:1fr}}
+
+/* phases */
+.phases{counter-reset:p}
+.phase{position:relative}
+.phase .out{margin-top:14px;font:.82rem var(--mono);color:var(--mute);border-top:1px dashed var(--line);padding-top:12px}
+.phase .out b{color:var(--ink);font-weight:500}
+.rigor{margin-top:24px;display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.rigor div{padding:16px;background:var(--panel);border-right:1px solid var(--line)}
+.rigor div:last-child{border:0}
+.rigor b{font:700 1.1rem var(--mono);display:block}
+.rigor span{color:var(--mute);font-size:.92rem}
+.rigor div:nth-child(1) b{color:var(--ok)}.rigor div:nth-child(2) b{color:var(--blue)}
+.rigor div:nth-child(3) b{color:var(--warn)}.rigor div:nth-child(4) b{color:var(--bad)}
+@media (max-width:760px){.rigor{grid-template-columns:1fr 1fr}.rigor div:nth-child(2){border-right:0}.rigor div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+.note{color:var(--mute);font-size:.93rem;margin-top:16px}
+
+/* agents */
+.team{margin-top:40px;display:grid;gap:10px}
+.team .row{display:grid;grid-template-columns:200px 1fr;gap:16px;padding:16px 20px;background:var(--panel);border:1px solid var(--line);border-radius:12px;align-items:center}
+.team .row b{font-size:.95rem}
+.team .row small{display:block;color:var(--mute);font:.75rem var(--mono)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:.8rem var(--mono);border:1px solid var(--line);border-radius:99px;padding:4px 10px;background:var(--bg2)}
+.chip.o{border-color:color-mix(in srgb,var(--acc) 60%,var(--line))}
+@media (max-width:700px){.team .row{grid-template-columns:1fr}}
+
+/* paths */
+.paths{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:40px}
+.path{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.path code{background:none;border:0;padding:0;color:var(--acc);font-weight:600}
+.path p{margin:6px 0 0;font-size:.9rem;color:var(--mute)}
+.path p.h{color:var(--ink);font-size:.86rem}
+@media (max-width:960px){.paths{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.paths{grid-template-columns:1fr}}
+
+/* dashboard section */
+.dsec{display:grid;grid-template-columns:1fr 1.15fr;gap:48px;align-items:start;margin-top:40px}
+.feat{list-style:none;margin:0;padding:0;display:grid;gap:16px}
+.feat li b{display:block}
+.feat li span{color:var(--mute)}
+.trace{margin-top:28px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;font:.85rem var(--mono)}
+.trace span{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 10px}
+.trace i{color:var(--acc);font-style:normal}
+figure{margin:0}
+figure img{width:100%;height:auto;border-radius:12px;border:1px solid var(--line);display:block}
+figcaption{color:var(--mute);font-size:.88rem;margin-top:10px}
+.real{margin-top:56px;display:grid;grid-template-columns:1fr 2fr;gap:32px;align-items:center}
+@media (max-width:900px){.dsec,.real{grid-template-columns:1fr}}
+
+/* tokens */
+.tok{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:40px}
+.tok .card b{font:700 1.6rem var(--mono);color:var(--acc);display:block}
+@media (max-width:860px){.tok{grid-template-columns:1fr}}
+.aside{margin-top:20px;padding:18px 20px;border:1px dashed var(--line);border-radius:12px;color:var(--mute);font-size:.95rem}
+.aside b{color:var(--ink)}
+
+/* habits */
+.habits{list-style:none;padding:0;margin:40px 0 0;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;counter-reset:h}
+.habits li{counter-increment:h;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 20px 20px 70px;position:relative}
+.habits li::before{content:"0" counter(h);position:absolute;left:20px;top:18px;font:700 1.3rem var(--mono);color:var(--acc)}
+.habits li b{display:block;font-size:1.05rem}
+.habits li span{color:var(--mute);display:block;margin-top:4px}
+.habits li small{display:block;margin-top:8px;font:.78rem var(--mono);color:var(--mute)}
+.habits li:last-child{grid-column:1/-1}
+@media (max-width:760px){.habits{grid-template-columns:1fr}}
+
+/* code */
+.code{position:relative;background:var(--code);color:#e9e8dd;border:1px solid var(--line);border-radius:12px;margin:12px 0 0}
+.code pre{margin:0;padding:16px 92px 16px 18px;overflow-x:auto;font:14px/1.6 var(--mono);white-space:pre}
+.code .lbl{position:absolute;left:18px;top:-10px;font:600 11px var(--mono);background:var(--acc);color:#0e0f0c;padding:2px 8px;border-radius:5px}
+.code .c{color:#8d8f80}
+.copy{position:absolute;right:10px;top:10px;font:600 12px var(--mono);background:#2a2d25;color:#e9e8dd;border:1px solid #3a3d33;border-radius:7px;padding:6px 10px;cursor:pointer;display:none}
+.js .copy{display:block}
+.copy.done{background:var(--ok);color:#0e0f0c}
+.steps{display:grid;gap:22px;margin-top:40px;max-width:860px}
+.adopt{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px}
+.adopt ol{padding-left:20px;margin:0;display:grid;gap:10px;color:var(--mute)}
+.adopt ol b{color:var(--ink)}
+@media (max-width:860px){.adopt{grid-template-columns:1fr}}
+
+/* final cta */
+.final{text-align:center;padding:110px 0;background:radial-gradient(500px 220px at 50% 0%,color-mix(in srgb,var(--acc) 16%,transparent),transparent)}
+.final h2{margin:0 auto;max-width:18ch}
+.final .lede{margin:14px auto 0}
+.final .cta{justify-content:center}
+
+.credits{list-style:none;padding:0;margin:32px 0 0;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.credits li{padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--mute);font-size:.94rem}
+.credits a{font-weight:600}
+@media (max-width:760px){.credits{grid-template-columns:1fr}}
+footer{border-top:1px solid var(--line);padding:36px 0 48px;color:var(--mute);font-size:.9rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:16px 28px;justify-content:space-between}
+footer nav{display:flex;gap:18px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<nav class="top" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#top"><i aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M5 26V12l7 4.5V12l7 4.5V12l8 5v9z" fill="#0e0f0c"/></svg></i>danfactory</a>
+    <a class="l" href="#why">Why</a>
+    <a class="l" href="#flow">Flow</a>
+    <a class="l" href="#dashboard">Dashboard</a>
+    <a class="l" href="#habits">Habits</a>
+    <a class="l" href="#start">Start</a>
+    <a class="btn p s" href="https://github.com/dalhhorn-ship-it/danfactory">GitHub</a>
+  </div>
+</nav>
+
+<main id="main">
+<!-- 1 hero -->
+<header class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">A free template for Claude Code, by Dan</p>
+      <h1>Vibe code with Claude. <em>Without the wall.</em></h1>
+      <p class="lede">danfactory is a free starter kit that gives your AI-built project a goal, a plan, tests, short contexts and a live dashboard, so it keeps working as it grows.</p>
+      <div class="cta">
+        <a class="btn p" href="https://github.com/dalhhorn-ship-it/danfactory">Get danfactory on GitHub →</a>
+        <a class="btn g" href="#start">Jump to the 3 commands</a>
+      </div>
+      <p class="trust"><b>●</b> Free. Open on GitHub. No signup, no tracking.</p>
+    </div>
+
+    <div>
+      <div class="dash" role="img" aria-label="Example danfactory dashboard with sample data: build phase, 62% progress, tests passing, coverage 84%, milestones and a roadmap with value and foundation swimlanes.">
+        <div class="bar" aria-hidden="true"><span></span><span></span><span></span><b>dashboard/index.html</b></div>
+        <div class="in" aria-hidden="true">
+          <div class="hd">
+            <div>
+              <div class="ttl">my-saas-app</div>
+              <div class="pills"><span class="pill">brainstorm</span><span class="pill">operating-model</span><span class="pill on">build</span><span class="pill">software-product · L2</span></div>
+            </div>
+            <div class="ver">v0.4.0 · main@3f9c2a1<br>decision tree v1.1.0</div>
+          </div>
+          <div class="tiles">
+            <div class="tile"><small>Progress</small><strong>62%</strong><em>13 done · 8 open</em></div>
+            <div class="tile"><small>Full test run</small><strong class="ok">41s</strong><em>budget 120s</em></div>
+            <div class="tile"><small>Coverage</small><strong class="ok">84%</strong><em>min 80%</em></div>
+            <div class="tile"><small>Tech debt</small><strong class="warn">3</strong><em>1 high impact</em></div>
+          </div>
+          <div class="ms">
+            <div>M1 — Accounts &amp; billing<span>8/8</span><b class="track"><i style="width:100%"></i></b></div>
+            <div>M2 — Team workspaces<span>5/9</span><b class="track"><i style="width:56%"></i></b></div>
+          </div>
+          <div class="lanes">
+            <div class="lane"><b>Value</b><div class="cards"><span class="d">Invite flow</span><span>Shared boards</span><span>Roles</span></div></div>
+            <div class="lane f"><b>Foundation</b><div class="cards"><span class="d">CI cache</span><span>TD-2 auth refactor</span></div></div>
+          </div>
+        </div>
+      </div>
+      <p class="mockcap">Example dashboard · sample data</p>
+    </div>
+  </div>
+</header>
+
+<!-- 2 wall -->
+<section id="wall">
+  <div class="wrap">
+    <p class="eyebrow">The wall</p>
+    <h2>Vibe coding is great, until the project gets big</h2>
+    <p class="lede">The first 80% feels like magic. Then this happens.</p>
+    <div class="wall">
+      <div class="row"><span class="x">01</span><b>Claude forgets.</b><span>Every chat has a "context": the text the AI can see right now. Long ones get fuzzy and expensive.</span></div>
+      <div class="row"><span class="x">02</span><b>Tokens burn.</b><span>Tokens are the small pieces of text you pay for. Re-reading the same big files every turn is how bills grow.</span></div>
+      <div class="row"><span class="x">03</span><b>Nothing is tested.</b><span>No checks means every change might quietly break something else.</span></div>
+      <div class="row"><span class="x">04</span><b>Nobody knows what was built.</b><span>No goal, no backlog, no record of why. You can't answer "where are we?"</span></div>
+      <div class="row"><span class="x">05</span><b>Deploys are chaos.</b><span>Push, wait, guess if it worked, repeat.</span></div>
+    </div>
+    <p class="closer"><b>danfactory is a set of rails for exactly these five problems.</b> Not a framework. A template you own.</p>
+  </div>
+</section>
+
+<!-- 3 why / who -->
+<section id="why">
+  <div class="wrap">
+    <p class="eyebrow">Why it exists</p>
+    <h2>Built by Dan, for builders</h2>
+    <div class="who">
+      <div>
+        <p class="quote">Dan built danfactory to start Claude Code projects with a guided plan instead of a blank prompt, and is sharing it back with the community for free.</p>
+        <p class="lede">One template that gives you a guided start, saves tokens by design, keeps your docs indexed, tracks delivery metrics, runs security audits when you ask, and deploys to Cloudflare via git.</p>
+      </div>
+      <div class="card">
+        <h3>It's for you if</h3>
+        <ul>
+          <li>You started in Lovable, Bolt, v0 or Claude and your project is outgrowing the chat.</li>
+          <li>You build with AI but aren't a professional engineer, and want guardrails, not a lecture.</li>
+          <li>You use Claude Code and want leaner sessions and numbers you can see.</li>
+        </ul>
+        <h3 style="margin-top:22px">Probably not for you if</h3>
+        <ul class="no"><li>You need a hosted product or support. This is a template you run yourself, and it needs git and python3.</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 phases -->
+<section id="flow">
+  <div class="wrap">
+    <p class="eyebrow">How it works</p>
+    <h2>Three phases, in order. No code until the goal is agreed.</h2>
+    <p class="lede">Say <b>"let's start"</b> and Claude knows which phase you're in.</p>
+    <div class="grid g3 phases">
+      <div class="card phase"><span class="n">PHASE 1</span><h3 style="margin-top:6px">Agree the goal</h3><p>The <code>brainstorm</code> skill talks it through with you until "done" is written down.</p><div class="out">→ <b>docs/GOAL.md</b></div></div>
+      <div class="card phase"><span class="n">PHASE 2</span><h3 style="margin-top:6px">Choose how to work</h3><p>The <code>choose-path</code> skill walks a decision tree and a rigor dial, then records why you decided (an ADR: a short decision note).</p><div class="out">→ <b>docs/OPERATING-MODEL.md</b>, factory.json, ADR</div></div>
+      <div class="card phase"><span class="n">PHASE 3</span><h3 style="margin-top:6px">Build</h3><p>Follow the path playbook with subagents. At milestones, <code>retro</code> and <code>metrics</code> record what you learned.</p><div class="out">→ code / workbook / document, <b>LEARNINGS.md</b></div></div>
+    </div>
+    <div class="rigor" aria-label="Rigor dial">
+      <div><b>L0</b><span>Throwaway, just you</span></div>
+      <div><b>L1</b><span>Personal, low risk</span></div>
+      <div><b>L2</b><span>Others depend on it</span></div>
+      <div><b>L3</b><span>Money, personal data, public internet</span></div>
+    </div>
+    <p class="note">The rigor dial: the highest signal wins. Also on demand: <code>security-audit-run</code> (audit report) and <code>ship</code> (live deploy).</p>
+  </div>
+</section>
+
+<!-- 5 agents -->
+<section id="agents">
+  <div class="wrap">
+    <p class="eyebrow">The agent team</p>
+    <h2>18 agents, but not all at once</h2>
+    <p class="lede">Cheap models do the heavy reading. Smart models make the calls. A routing table decides who works when.</p>
+    <div class="team">
+      <div class="row"><b>Plan &amp; design</b><div class="chips"><span class="chip">product-manager</span><span class="chip o">software-architect · Opus</span><span class="chip">spreadsheet-architect</span></div></div>
+      <div class="row"><b>Build</b><div class="chips"><span class="chip">developer</span><span class="chip">code-writer</span><span class="chip">data-builder</span></div></div>
+      <div class="row"><b>Cheap helpers<small>Haiku</small></b><div class="chips"><span class="chip">bulk-reader</span><span class="chip">test-runner</span><span class="chip">doc-keeper</span><span class="chip">deploy-watcher</span><span class="chip">claude-md-compliance-checker</span></div></div>
+      <div class="row"><b>Verify</b><div class="chips"><span class="chip">reviewer</span><span class="chip">task-completion-validator</span><span class="chip">code-quality-pragmatist</span><span class="chip">karen</span><span class="chip">jenny</span><span class="chip">ui-comprehensive-tester</span></div></div>
+      <div class="row"><b>Debug</b><div class="chips"><span class="chip o">ultrathink-debugger · Opus, only after a failed first attempt</span></div></div>
+    </div>
+    <p class="note">A verification ladder decides how many checkers a task gets: none at L0, up to five at L3. A <em>subagent</em> is a helper Claude with its own fresh context that returns a short answer. Verifiers and debugger adapted from <a href="https://github.com/darcyegb/ClaudeCodeAgents">darcyegb/ClaudeCodeAgents</a> (MIT).</p>
+  </div>
+</section>
+
+<!-- 6 paths -->
+<section id="paths">
+  <div class="wrap">
+    <p class="eyebrow">Paths</p>
+    <h2>A spreadsheet isn't run like a SaaS app</h2>
+    <p class="lede">Eight paths, each with its own playbook. Plus one for adopting what you already built.</p>
+    <div class="paths">
+      <div class="path"><code>software-product</code><p class="h">Apps, APIs, services</p><p>Vertical slices, TDD, CI, git → Cloudflare</p></div>
+      <div class="path"><code>library-cli</code><p class="h">Packages, SDKs, CLIs</p><p>API-first, semver, examples as tests</p></div>
+      <div class="path"><code>data-spreadsheet</code><p class="h">Workbooks, models, CSV/reports</p><p>Generator scripts + xlsx skill</p></div>
+      <div class="path"><code>documents-content</code><p class="h">Docs, decks, handbooks</p><p>Outline-first, docx/pptx/pdf skills</p></div>
+      <div class="path"><code>research-analysis</code><p class="h">Research, comparisons</p><p>Deep-research fan-out, sources ledger</p></div>
+      <div class="path"><code>automation-script</code><p class="h">Glue, jobs, bots</p><p>Idempotent, dry-run, cron on Cloudflare</p></div>
+      <div class="path"><code>infra-ops</code><p class="h">IaC, pipelines, DNS</p><p>Plan/apply split, least privilege</p></div>
+      <div class="path"><code>prototype-spike</code><p class="h">Throwaway learning</p><p>Time-box, kill/promote date</p></div>
+    </div>
+    <p class="note">TDD = write the test first, then the code that passes it. A vertical slice = one thin piece that works end to end.</p>
+  </div>
+</section>
+
+<!-- 7 dashboard -->
+<section id="dashboard">
+  <div class="wrap">
+    <p class="eyebrow">Traceability</p>
+    <h2>See where your project actually is</h2>
+    <p class="lede">Every build regenerates a single-page dashboard from your own files. No account, no service, no JavaScript, no network calls.</p>
+    <div class="dsec">
+      <div>
+        <ul class="feat">
+          <li><b>Versions and phase/progress</b><span>Know which phase you're in and how far along each milestone is.</span></li>
+          <li><b>Backlog</b><span>Read straight from <code>docs/BACKLOG.md</code>: todo, doing, blocked, done.</span></li>
+          <li><b>Tech debt</b><span>Shortcuts you chose on purpose, from <code>docs/TECH-DEBT.md</code>, plus automatic signals like TODO markers and oversized files.</span></li>
+          <li><b>Key metrics</b><span>Tests, coverage, deploys and tokens, with alerts when a budget is breached.</span></li>
+          <li><b>Roadmap tab</b><span>Your proposed sequence as two swimlanes, user value vs technical foundation, so you see if you're only shipping features and neglecting the base.</span></li>
+        </ul>
+        <div class="trace" aria-label="Traceability chain"><span>goal</span><i>→</i><span>backlog</span><i>→</i><span>tests</span><i>→</i><span>deploy</span><i>→</i><span>metrics</span></div>
+        <p class="note">All in plain files in git. CI rebuilds it on every push and uploads it as an artifact.</p>
+      </div>
+      <div>
+        <div class="code"><span class="lbl">build + open</span><pre>python3 scripts/dashboard.py --open   <span class="c"># build + open the project dashboard</span></pre><button class="copy" type="button" data-copy="python3 scripts/dashboard.py --open">copy</button></div>
+        <div class="code" style="margin-top:22px"><span class="lbl">cheap text status</span><pre>python3 scripts/dashboard.py --print</pre><button class="copy" type="button" data-copy="python3 scripts/dashboard.py --print">copy</button></div>
+        <div class="aside" style="margin-top:22px"><b>Tip for agents:</b> <code>--print</code> gives Claude a one-screen status instead of re-reading your whole repo. That's the token economy in action.</div>
+      </div>
+    </div>
+    <div class="real">
+      <div>
+        <h3>Real, not a render</h3>
+        <p class="lede" style="font-size:1rem">This is the actual dashboard of <em>this very page</em>, built with danfactory, on day one: phase brainstorm, the backlog written by the product-manager agent, metrics waiting for their first run. Honest by default.</p>
+      </div>
+      <figure>
+        <img src="img/dashboard-overview.webp" width="2400" height="1600" loading="lazy" alt="Screenshot of the real danfactory dashboard for this landing page on day one: brainstorm phase, 0% progress, 20 open backlog items across milestones M0, M1 and M2, no tech debt.">
+        <figcaption>Dashboard of this landing page, generated by <code>scripts/dashboard.py</code> on its first commit.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- 8 tokens -->
+<section id="tokens">
+  <div class="wrap">
+    <p class="eyebrow">Token economy &amp; short contexts</p>
+    <h2>Spend tokens on decisions, not on moving bytes</h2>
+    <p class="lede">Short contexts, cheap helpers, and a guard that stops Claude loading giant files. <em>Context</em> = what Claude can see right now. <em>Compacting</em> = summarising it to make room.</p>
+    <div class="tok">
+      <div class="card"><b>350</b><p>A hook blocks whole reads of files over 350 lines unless a slice is requested. Read the docs index first, then only the lines you need.</p></div>
+      <div class="card"><b>120k</b><p>Past 120k tokens of context, a nudge appears. The <code>handoff</code> skill writes a short note, you <code>/clear</code>, and the note reloads automatically.</p></div>
+      <div class="card"><b>Haiku</b><p>Big reads, test logs and deploy watching go to cheap helpers. Tokens per session are recorded with a weighted budget, so you see real cost.</p></div>
+    </div>
+    <p class="aside"><b>Why short contexts?</b> NVIDIA's "You don't need long context" kept agents within about 2 points of full history by compacting often; in one setting, 70.2% vs 70.0% on SWE-bench Verified with Claude Opus 4.5. That's one reported setting, not a promise for your project.</p>
+  </div>
+</section>
+
+<!-- 9 habits -->
+<section id="habits">
+  <div class="wrap">
+    <p class="eyebrow">Vibe coding with Claude</p>
+    <h2>7 habits that make vibe coding last</h2>
+    <p class="lede">Good habits first. The template makes them the default, so you don't have to remember them.</p>
+    <ol class="habits">
+      <li><b>Agree a goal first.</b><span>Write what "done" means before any code.</span><small>brainstorm → GOAL.md · no code until it's confirmed</small></li>
+      <li><b>Pick an operating model.</b><span>A prototype and a payment app need different care.</span><small>choose-path · rigor dial L0–L3</small></li>
+      <li><b>Keep contexts short, hand off often.</b><span>One task per session. Save a note, /clear, continue.</span><small>handoff · context-watch hook</small></li>
+      <li><b>Delegate big reads.</b><span>Don't make the smart model read logs.</span><small>bulk-reader · test-runner · file-size guard</small></li>
+      <li><b>Test before you call it done.</b><span>"Done" means tests pass, docs updated, backlog ticked.</span><small>definition of done in CLAUDE.md · metrics.py test</small></li>
+      <li><b>Push and keep going.</b><span>A push is the deploy; a background watcher reports back, with bounded waits.</span><small>ship · deploy-watcher · async-delivery policy</small></li>
+      <li><b>Retro, and feed learnings back.</b><span>At milestones write down what worked, tag shared lessons <code>[upstream]</code>, and send them to the template, so the next project starts smarter.</span><small>retro · upstream_learnings.py</small></li>
+    </ol>
+  </div>
+</section>
+
+<!-- 10 adopt -->
+<section id="adopt">
+  <div class="wrap">
+    <p class="eyebrow">Lovable · Bolt · v0</p>
+    <h2>Already built something? Bring it along</h2>
+    <p class="lede">Install danfactory as a Claude Code plugin and run one command inside your repo. It works on a <code>danfactory/adopt</code> branch and never overwrites your files.</p>
+    <div class="adopt">
+      <div>
+        <div class="code"><span class="lbl">once</span><pre>/plugin install danfactory --marketplace dalhhorn-ship-it/danfactory</pre><button class="copy" type="button" data-copy="/plugin install danfactory --marketplace dalhhorn-ship-it/danfactory">copy</button></div>
+        <div class="code" style="margin-top:22px"><span class="lbl">inside your repo</span><pre>/danfactory:adopt</pre><button class="copy" type="button" data-copy="/danfactory:adopt">copy</button></div>
+        <p class="note">Lovable specifics (two-way sync, Supabase RLS, moving hosting to Cloudflare) are in <code>docs/operating-model/paths/adopt-existing.md</code>. Without plugins, <code>bash scripts/install-adopt-skill.sh</code> from a danfactory clone installs <code>/danfactory-adopt</code>.</p>
+      </div>
+      <ol>
+        <li><b>Scans what was built</b> (origin, stack, tests, CI, hosting, security and quality findings) into <code>docs/ADOPTION-REPORT.md</code>.</li>
+        <li><b>Chooses the operating model</b> with the decision tree.</li>
+        <li><b>Installs</b> hooks, agents, skills, scripts, the docs index and CI; merges settings, <code>CLAUDE.md</code> and <code>.gitignore</code>.</li>
+        <li><b>Drafts GOAL.md</b> from the as-built state, seeds BACKLOG.md and TECH-DEBT.md, builds the dashboard and writes <code>docs/NEXT-BUILDS.md</code>.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- 11 start -->
+<section id="start">
+  <div class="wrap">
+    <p class="eyebrow">Get started</p>
+    <h2>Start in three commands</h2>
+    <p class="lede">Needs git and python3. That's it (Node only for optional extras like codegraph and wrangler).</p>
+    <div class="steps">
+      <div class="code"><span class="lbl">1 · copy the template</span><pre>git clone https://github.com/dalhhorn-ship-it/danfactory my-project &amp;&amp; cd my-project &amp;&amp; rm -rf .git &amp;&amp; git init</pre><button class="copy" type="button" data-copy="git clone https://github.com/dalhhorn-ship-it/danfactory my-project &amp;&amp; cd my-project &amp;&amp; rm -rf .git &amp;&amp; git init">copy</button></div>
+      <div class="code"><span class="lbl">2 · bootstrap</span><pre>bash scripts/bootstrap.sh "my-project" "one line description"   <span class="c"># flags: --codegraph, --cloudflare (auto-created Worker)</span></pre><button class="copy" type="button" data-copy='bash scripts/bootstrap.sh "my-project" "one line description"'>copy</button></div>
+      <div class="code"><span class="lbl">3 · start Claude Code</span><pre>claude</pre><button class="copy" type="button" data-copy="claude">copy</button></div>
+    </div>
+    <p class="lede">Then say <b>"let's start"</b>. The SessionStart hook tells Claude which phase you're in.</p>
+    <p class="note">Handy later: <code>bash scripts/check.sh</code> · <code>python3 scripts/metrics.py test</code> · <code>python3 scripts/dashboard.py --open</code></p>
+  </div>
+</section>
+
+<!-- final cta -->
+<section class="final">
+  <div class="wrap">
+    <h2>Give your next project rails, not rules</h2>
+    <p class="lede">Free, open, yours to fork. If it helps, share what you learn back: that's how the template gets smarter.</p>
+    <div class="cta">
+      <a class="btn p" href="https://github.com/dalhhorn-ship-it/danfactory">Get danfactory on GitHub →</a>
+      <a class="btn g" href="https://github.com/dalhhorn-ship-it/danfactory/issues">Share feedback</a>
+    </div>
+  </div>
+</section>
+
+<!-- 12 credits -->
+<section id="credits">
+  <div class="wrap">
+    <p class="eyebrow">Credits</p>
+    <h2>Standing on open-source shoulders</h2>
+    <p class="lede">danfactory borrows good ideas. Thank you to:</p>
+    <ul class="credits">
+      <li><a href="https://github.com/darcyegb/ClaudeCodeAgents">darcyegb/ClaudeCodeAgents</a> (MIT): the verifier and debugger agents</li>
+      <li><a href="https://github.com/spotify/portal-ai-plugins/tree/main/plugins/shunt">Spotify shunt</a>: the delegation idea behind the large-read guard</li>
+      <li><a href="https://github.com/colbymchenry/codegraph">codegraph</a> by colbymchenry: local code graph</li>
+      <li><a href="https://github.com/cloudflare/security-audit-skill">cloudflare/security-audit-skill</a>: on-request audits</li>
+      <li><a href="https://github.com/davila7/claude-code-templates/blob/main/cli-tool/components/skills/development/cloudflare-deploy/SKILL.md">davila7 cloudflare-deploy skill</a>: git-to-Cloudflare deploys</li>
+      <li>NVIDIA, "You don't need long context": short contexts and handoff notes</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p style="margin:0;max-width:62ch">danfactory is a free community give-back from Dan. Not affiliated with Anthropic, Lovable, Bolt, v0 or Cloudflare. No cookies, no tracking.</p>
+    <nav aria-label="Footer"><a href="https://github.com/dalhhorn-ship-it/danfactory">GitHub</a><a href="https://github.com/dalhhorn-ship-it/danfactory/issues">Issues</a><a href="#top">Back to top ↑</a></nav>
+  </div>
+</footer>
+
+<script>
+document.documentElement.classList.add('js');
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('.copy'); if (!b) return;
+  var t = b.getAttribute('data-copy');
+  var done = function () { b.textContent = 'copied'; b.classList.add('done'); setTimeout(function () { b.textContent = 'copy'; b.classList.remove('done'); }, 1600); };
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, function () {});
+});
+</script>
+</body>
+</html>
