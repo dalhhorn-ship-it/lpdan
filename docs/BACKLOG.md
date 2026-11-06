@@ -30,6 +30,7 @@ Order is riskiest-first: truth of the copy and the dashboard visual are the risk
 - [ ] Enable GitHub Issues/Discussions on danfactory with a "challenge" label and `[challenge-N]` title convention (S) #process
 - [ ] Open Graph/social preview tags and favicon (S). AC: link preview renders; image is local.
 - [ ] Truth pass: Dan reviews all copy; run check script (S) #quality.
+- [ ] S5: remove the campaign-check gate in tests/check_page.py (TD-001) (S) #quality
 
 ## Milestone: M2 — Ideas, not committed (target: )
 - [ ] Short screen recording or animated terminal of the 3 phases (M)

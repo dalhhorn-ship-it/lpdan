@@ -14,12 +14,24 @@ const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'publi
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.woff2': 'font/woff2',
   '.webp': 'image/webp', '.png': 'image/png', '.md': 'text/plain; charset=utf-8', '.txt': 'text/plain' };
 
+// Apply public/_headers (CSP etc.) like Cloudflare would: blocks of "<pattern>" then indented "Name: value".
+const rules = [];
+try {
+  let cur = null;
+  for (const line of fs.readFileSync(path.join(PUB, '_headers'), 'utf8').split('\n')) {
+    if (!line.trim()) continue;
+    if (!/^\s/.test(line)) { cur = { pat: line.trim(), h: {} }; rules.push(cur); }
+    else if (cur) { const i = line.indexOf(':'); cur.h[line.slice(0, i).trim().toLowerCase()] = line.slice(i + 1).trim(); }
+  }
+} catch { /* no _headers yet */ }
+const headersFor = (p) => Object.assign({}, ...rules.filter((r) => r.pat === '/*' || (r.pat.endsWith('*') && p.startsWith(r.pat.slice(0, -1)))).map((r) => r.h));
+
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
   const f = path.join(PUB, path.normalize(p));
   if (!f.startsWith(PUB) || !fs.existsSync(f) || !fs.statSync(f).isFile()) { res.writeHead(404); return res.end(); }
-  res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' });
+  res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream', ...headersFor(p) });
   fs.createReadStream(f).pipe(res);
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
@@ -36,12 +48,14 @@ try {
     const page = await ctx.newPage();
     const errors = [], foreign = [];
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+    await page.addInitScript(() => document.addEventListener('securitypolicyviolation', (e) => console.error('CSP violation: ' + e.violatedDirective + ' ' + e.blockedURI)));
     page.on('pageerror', (e) => errors.push(String(e)));
     page.on('request', (r) => { const u = r.url(); if (!u.startsWith(origin) && !u.startsWith('data:')) foreign.push(u); });
-    await page.goto(origin + '/', { waitUntil: 'networkidle' });
+    const resp = await page.goto(origin + '/', { waitUntil: 'networkidle' });
+    check(`CSP header applied @${w}`, !!(await resp.allHeaders())['content-security-policy']);
     const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     check(`no horizontal overflow @${w}`, ov <= 0, `(+${ov}px)`);
-    check(`no console errors @${w}`, errors.length === 0, errors.join('; '));
+    check(`no console/CSP errors @${w}`, errors.length === 0, errors.join('; '));
     check(`no non-local requests @${w}`, foreign.length === 0, foreign.join(', '));
     const fold = await page.evaluate((vh) => {
       const bottom = (s) => { const e = document.querySelector(s); return e ? e.getBoundingClientRect().bottom : Infinity; };
@@ -68,7 +82,7 @@ try {
     await ctx.close();
   }
 
-  // JS off: content present, copy buttons hidden, FAQ-style details open
+  // JS off: content present, copy buttons hidden
   const off = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 375, height: 667 } });
   const po = await off.newPage();
   await po.goto(origin + '/');

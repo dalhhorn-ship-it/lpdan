@@ -45,9 +45,9 @@
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--ground);color:var(--ink);font:var(--fs-body)/var(--lh-body) var(--font-sans);overflow-x:hidden}
 a{color:var(--ink)} a:hover{color:var(--cyan)}
-a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
+a:focus-visible,button:focus-visible,pre:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
 .wrap{max-width:1280px;margin:0 auto;padding:0 var(--space-gutter)}
-.hero .wrap>*,.grid>*,.steps>*,.adopt>*,.dsec>*,.who>*,.real>*,.camp>*{min-width:0}
+.hero .wrap>*,.grid>*,.steps>*,.adopt>*,.dsec>*,.who>*,.real>*{min-width:0}
 code{font-family:var(--font-mono);font-size:.95em;background:var(--ground-raised);border:1px solid var(--rule);padding:.06em .4em;word-break:break-word}
 h1,h2,h3{margin:0;font-weight:400}
 h1,h2{font-family:var(--font-display);text-transform:uppercase}
@@ -64,7 +64,7 @@ section.alt{background:var(--ground-raised)}
 .kicker{display:flex;align-items:center;gap:var(--space-3);font:800 var(--fs-kicker)/1.2 var(--font-sans);text-transform:uppercase;letter-spacing:.16em;color:var(--ink);margin:0 0 var(--space-3)}
 .kicker::before{content:"";flex:none;width:24px;height:6px;background:var(--magenta)}
 section.band .kicker::before{background:var(--ground)}
-.btn{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:var(--fs-body);text-decoration:none;padding:16px 28px;min-height:44px;border:2px solid transparent}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:var(--fs-body);text-decoration:none;padding:16px 24px;min-height:44px;border:2px solid transparent}
 .btn.p{background:var(--magenta);color:var(--on-magenta)}.btn.p:hover{background:var(--violet);color:var(--on-magenta)}
 .btn.g{border-color:var(--rule);color:var(--ink)}.btn.g:hover{border-color:var(--cyan)}
 .btn.s{padding:10px 20px;font-size:var(--fs-small)}
@@ -89,15 +89,6 @@ section:not(.alt) .code{background:var(--ground-raised)}
 .js .copy{display:block}
 .copy.done{background:var(--cyan);color:var(--ground)}
 .stat b{font:var(--fs-display)/var(--lh-display) var(--font-display);color:var(--magenta);display:block}
-.badge{display:inline-block;align-self:flex-start;font-weight:800;font-size:var(--fs-small);letter-spacing:.08em;text-transform:uppercase;background:var(--magenta-tint);color:var(--ink);padding:4px 10px}
-details{border-bottom:1px solid var(--rule)}
-details:first-of-type{border-top:1px solid var(--rule)}
-summary{cursor:pointer;list-style:none;padding:18px 40px 18px 0;font-weight:800;font-size:var(--fs-body);position:relative;min-height:44px}
-summary::-webkit-details-marker{display:none}
-summary::after{content:"+";position:absolute;right:4px;top:12px;font:1.75rem var(--font-display);color:var(--magenta)}
-details[open] summary::after{content:"\2013"}
-details > div{padding:0 0 20px;color:var(--ink-muted);font-size:var(--fs-small)}
-details > div p{margin:0 0 10px}
 
 /* nav */
 nav.top{position:sticky;top:0;z-index:5;background:var(--ground);border-bottom:1px solid var(--rule)}
@@ -109,12 +100,7 @@ nav.top a.l{text-decoration:none;font-weight:700;font-size:var(--fs-small)}
 
 /* hero */
 .hero{position:relative;padding:var(--space-8) 0 var(--space-section);overflow:hidden}
-.hero .deco{position:absolute;inset:0;pointer-events:none}
-.hero .deco i{position:absolute;display:block}
-.hero .deco .b1{right:-160px;top:0;width:min(34vw,480px);height:100%;background:var(--magenta)}
-.hero .deco .b2{right:calc(min(34vw,480px) - 160px);top:0;width:110px;height:40%;background:var(--violet)}
-.hero .deco .s1{right:120px;top:-40px;width:8px;height:130%;background:var(--cyan);transform:rotate(18deg)}
-.hero .deco .s2{right:40px;top:-40px;width:6px;height:130%;background:var(--ink);transform:rotate(18deg)}
+.hero .deco{display:none}
 .hero .wrap{position:relative;display:grid;grid-template-columns:1fr;gap:var(--space-12);align-items:center}
 .hero h1{font-size:var(--fs-display-xl);line-height:var(--lh-display);letter-spacing:-.01em}
 .hero h1 em{font-style:normal;color:var(--magenta)}
@@ -122,8 +108,17 @@ nav.top a.l{text-decoration:none;font-weight:700;font-size:var(--fs-small)}
 .cta{display:flex;flex-wrap:wrap;gap:var(--space-4);margin-top:var(--space-8)}
 .trust{display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-4);color:var(--ink-muted);font-size:var(--fs-small);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .trust::before{content:"";flex:none;width:12px;height:12px;background:var(--cyan)}
-@media (min-width:900px){.hero{padding-top:80px}.hero .wrap{grid-template-columns:1.1fr 1fr;gap:56px}}
-@media (max-width:899px){.hero .deco .b1{opacity:.18}.hero .deco .b2{display:none}}
+/* desktop: blocks and streaks live in a 176px strip at the right edge; the content column never goes under them */
+@media (min-width:1024px){
+  .hero{padding-top:80px}
+  .hero .wrap{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:var(--space-12);padding-right:calc(var(--space-gutter) + 144px)}
+  .hero .deco{display:block;position:absolute;inset:0;pointer-events:none}
+  .hero .deco i{position:absolute;display:block}
+  .hero .deco .b1{right:0;top:0;width:96px;height:100%;background:var(--magenta)}
+  .hero .deco .b2{right:96px;top:0;width:48px;height:35%;background:var(--violet)}
+  .hero .deco .s1{right:30px;top:-5%;width:8px;height:55%;background:var(--cyan);transform:rotate(18deg)}
+  .hero .deco .s2{right:12px;top:-5%;width:6px;height:55%;background:var(--ink);transform:rotate(18deg)}
+}
 
 /* dashboard mock (role=img; may go below 16px) */
 .dash{background:var(--ground);border:2px solid var(--rule);font-size:13px;position:relative}
@@ -137,7 +132,7 @@ nav.top a.l{text-decoration:none;font-weight:700;font-size:var(--fs-small)}
 .dash .pill{border:1px solid var(--rule);padding:2px 10px;color:var(--ink-muted);font-size:12px}
 .dash .pill.on{background:var(--magenta);border-color:var(--magenta);color:var(--on-magenta)}
 .dash .ver{color:var(--ink-muted);font:11.5px/1.5 var(--font-mono);text-align:right}
-.dash .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}
+.dash .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;margin-top:14px}
 .dash .tile{border-top:3px solid var(--rule);padding:10px;background:var(--ground-raised)}
 .dash .tile small{color:var(--ink-muted);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
 .dash .tile strong{font:22px var(--font-display);display:block;margin-top:4px}
@@ -156,7 +151,7 @@ nav.top a.l{text-decoration:none;font-weight:700;font-size:var(--fs-small)}
 .dash .cards span{border:1px solid var(--rule);padding:5px 8px;font-size:11.5px}
 .dash .cards span.d{opacity:.5;text-decoration:line-through}
 .mockcap{color:var(--ink-muted);font-size:var(--fs-small);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:var(--space-4);text-align:center}
-@media (min-width:520px){.dash .tiles{grid-template-columns:repeat(4,1fr)}.dash .lane{grid-template-columns:96px 1fr}}
+@media (min-width:520px){.dash .lane{grid-template-columns:96px 1fr}}
 
 /* 4 sections: layout per section */
 @media (min-width:900px){.g3{grid-template-columns:repeat(3,1fr)}}
@@ -165,9 +160,13 @@ nav.top a.l{text-decoration:none;font-weight:700;font-size:var(--fs-small)}
 .phase .out b{color:var(--ink);font-weight:500}
 section.band{background:var(--magenta);position:relative;overflow:hidden}
 section.band .lede,section.band .note{color:var(--on-magenta)}
-section.band .deco i{position:absolute;display:block;top:-40px;height:140%;transform:rotate(18deg)}
-section.band .deco .s1{right:-60px;width:8px;background:var(--cyan)}
-section.band .deco .s2{right:40px;width:6px;background:var(--ground)}
+section.band .deco{display:none}
+@media (min-width:900px){
+  section.band .deco{display:block}
+  section.band .deco i{position:absolute;display:block;top:0;height:50%;transform:rotate(18deg)}
+  section.band .deco .s1{right:20px;width:8px;background:var(--cyan)}
+  section.band .deco .s2{right:70px;width:6px;background:var(--ground)}
+}
 section.band .wrap{position:relative}
 section.band .card{background:var(--ground);border-top-color:var(--cyan)}
 section.band .card .n{color:var(--cyan);font:800 var(--fs-small) var(--font-sans);letter-spacing:.14em}
@@ -199,27 +198,25 @@ section.band code{background:var(--ground-raised)}
 .quote{font:var(--fs-headline-dense)/1.15 var(--font-display);text-transform:uppercase;margin:0}
 @media (min-width:900px){.who{grid-template-columns:1.2fr 1fr;gap:56px}}
 
-.team{margin-top:var(--space-12);display:grid;border:1px solid var(--rule)}
-.team .row{display:grid;grid-template-columns:1fr;gap:12px 20px;padding:22px 20px;border-bottom:1px solid var(--rule);align-items:center}
-.team .row:last-child{border:0}
-.team .row b{font-size:var(--fs-body);font-weight:800}
-.team .row small{display:block;color:var(--cyan);font-size:var(--fs-small);letter-spacing:.08em;text-transform:uppercase}
+.tbl{width:100%;border-collapse:collapse;margin-top:var(--space-12);border:1px solid var(--rule)}
+.tbl thead th{background:var(--magenta);color:var(--on-magenta);text-align:left;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:var(--fs-small);padding:14px 20px}
+.tbl th,.tbl td{padding:20px;text-align:left;vertical-align:top;border-top:1px solid var(--rule)}
+.tbl tbody th{font-weight:800;font-size:var(--fs-body)}
+.tbl tbody tr:nth-child(even){background:var(--ground-raised)}
+section.alt .tbl tbody tr:nth-child(even){background:var(--ground)}
+.tbl td{color:var(--ink-muted)}
+.tbl small{display:block;color:var(--cyan);font-size:var(--fs-small);letter-spacing:.08em;text-transform:uppercase}
+.tbl code{background:none;border:0;padding:0;font-weight:700;font-size:var(--fs-small);color:var(--ink)}
+@media (max-width:759px){
+  .tbl thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .tbl,.tbl tbody,.tbl tr,.tbl th,.tbl td{display:block}
+  .tbl tbody tr{border-top:1px solid var(--rule)}
+  .tbl th,.tbl td{border-top:0;padding:12px 20px 0}
+  .tbl td:last-child{padding-bottom:20px}
+}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{font:var(--fs-small) var(--font-mono);border:1px solid var(--rule);padding:6px 12px;background:var(--ground)}
 .chip.o{border-color:var(--magenta)}
-@media (min-width:760px){.team .row{grid-template-columns:220px 1fr;padding:22px 28px}}
-
-.paths{display:grid;grid-template-columns:1fr;margin-top:var(--space-12);border:1px solid var(--rule)}
-.path{padding:28px;border-bottom:1px solid var(--rule)}
-.path:last-child{border-bottom:0}
-.path::before{content:"";display:block;width:32px;height:32px;background:var(--magenta);margin-bottom:16px}
-.path:nth-child(4n+2)::before{background:var(--violet)}.path:nth-child(4n+3)::before{background:var(--cyan)}.path:nth-child(4n)::before{background:var(--yellow)}
-.path code{background:none;border:0;padding:0;font-weight:700;font-size:var(--fs-small);color:var(--ink)}
-.path p{margin:8px 0 0;font-size:var(--fs-small);color:var(--ink-muted)}
-.path p.h{color:var(--ink);font-weight:700}
-@media (min-width:600px){.paths{grid-template-columns:repeat(2,1fr)}.path:nth-child(odd){border-right:1px solid var(--rule)}.path:nth-last-child(-n+2){border-bottom:0}}
-@media (min-width:1200px){.paths{grid-template-columns:repeat(4,1fr)}.path{border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}.path:nth-child(4n){border-right:0}.path:nth-last-child(-n+4){border-bottom:0}}
-
 .dsec{display:grid;grid-template-columns:1fr;gap:var(--space-12);align-items:start;margin-top:var(--space-12)}
 .feat{list-style:none;margin:0;padding:0;display:grid;gap:22px}
 .feat li{border-left:4px solid var(--magenta);padding-left:18px}
@@ -243,7 +240,7 @@ figcaption{color:var(--ink-muted);font-size:var(--fs-small);margin-top:var(--spa
 @media (min-width:860px){.tok{grid-template-columns:repeat(3,1fr)}}
 
 .habits{list-style:none;padding:0;margin:var(--space-12) 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;counter-reset:h}
-.habits li{counter-increment:h;background:var(--ground);padding:28px 24px;display:flex;flex-direction:column;gap:8px}
+.habits li{counter-increment:h;background:var(--ground-raised);padding:28px 24px;display:flex;flex-direction:column;gap:8px}
 .habits li::before{content:"0" counter(h);font-weight:800;font-size:var(--fs-small);letter-spacing:.12em;color:var(--cyan)}
 .habits li b{font-size:var(--fs-title);font-weight:800}
 .habits li span{color:var(--ink-muted)}
@@ -256,29 +253,18 @@ figcaption{color:var(--ink-muted);font-size:var(--fs-small);margin-top:var(--spa
 .adopt ol b{color:var(--ink)}
 @media (min-width:900px){.adopt{grid-template-columns:1fr 1fr;gap:56px}}
 
-/* campaign (markup arrives in a later slice) */
-.ladder{list-style:none;margin:var(--space-12) 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:var(--space-8)}
-.lvl{background:var(--ground);border-top:6px solid var(--magenta);padding:32px;display:flex;flex-direction:column;gap:12px}
-.lvl:nth-child(n+5){border-color:var(--violet)}
-.lvl .num{font:3.5rem/.9 var(--font-display);color:var(--magenta)}
-.lvl:nth-child(n+5) .num{color:var(--lavender)}
-.lvl h3{font:var(--fs-headline-dense)/1.1 var(--font-display);text-transform:uppercase}
-.lvl p{margin:0;color:var(--ink-muted);font-size:var(--fs-small)}
-.camp{display:grid;grid-template-columns:1fr;gap:var(--space-12);margin-top:80px}
-@media (min-width:900px){.camp{grid-template-columns:1.3fr 1fr;gap:56px}}
-.help{background:var(--violet);padding:36px;display:flex;flex-direction:column;gap:14px}
-.help h3{font:var(--fs-headline-dense) var(--font-display);text-transform:uppercase}
-.help p{margin:0;color:var(--on-magenta);font-size:var(--fs-small)}
-.help .btn{align-self:flex-start;background:var(--ground);color:var(--on-magenta)}
-
 .final{position:relative;overflow:hidden;padding:calc(var(--space-section) * 1.2) 0}
-.final .deco i{position:absolute;display:block}
-.final .deco .b1{right:0;top:0;width:min(28vw,400px);height:100%;background:var(--violet)}
-.final .deco .b2{right:min(28vw,400px);bottom:0;width:96px;height:40%;background:var(--magenta)}
-.final .deco .s1{right:160px;top:-40px;width:8px;height:140%;background:var(--cyan);transform:rotate(18deg)}
+.final .deco{display:none}
+@media (min-width:1100px){
+  .final .deco{display:block}
+  .final .deco i{position:absolute;display:block}
+  .final .deco .b1{right:0;top:0;width:min(28vw,400px);height:100%;background:var(--violet)}
+  .final .deco .b2{right:min(28vw,400px);bottom:0;width:96px;height:40%;background:var(--magenta)}
+  .final .deco .s1{right:160px;top:-40px;width:8px;height:140%;background:var(--cyan);transform:rotate(18deg)}
+}
 .final .wrap{position:relative}
+.final .lede{max-width:34ch}
 .final h2{font-size:var(--fs-display);line-height:var(--lh-display);max-width:16ch}
-@media (max-width:799px){.final .deco .b1{opacity:.25}.final .deco .b2{display:none}}
 
 .credits{list-style:none;padding:0;margin:40px 0 0;display:grid;grid-template-columns:1fr;border:1px solid var(--rule)}
 .credits li{padding:20px 24px;color:var(--ink-muted);font-size:var(--fs-small);border-bottom:1px solid var(--rule)}
@@ -409,7 +395,7 @@ footer a{color:var(--ink-muted);text-decoration:none}
       <div class="card phase"><span class="n">02 · HOW</span><h3>Choose how to work</h3><p>The <code>choose-path</code> skill walks a decision tree and a rigor dial, then records why you decided (an ADR: a short decision note).</p><div class="out">Output: <b>docs/OPERATING-MODEL.md</b>, factory.json, ADR</div></div>
       <div class="card phase"><span class="n">03 · BUILD</span><h3>Build</h3><p>Follow the path playbook with subagents. At milestones, <code>retro</code> and <code>metrics</code> record what you learned.</p><div class="out">Output: code / workbook / document, <b>LEARNINGS.md</b></div></div>
     </div>
-    <div class="rigor" aria-label="Rigor dial">
+    <div class="rigor" role="group" aria-label="Rigor dial">
       <div><b>L0</b><span>Throwaway, just you</span></div>
       <div><b>L1</b><span>Personal, low risk</span></div>
       <div><b>L2</b><span>Others depend on it</span></div>
@@ -425,13 +411,17 @@ footer a{color:var(--ink-muted);text-decoration:none}
     <p class="kicker">The agent team</p>
     <h2>18 agents, but not all at once</h2>
     <p class="lede">Cheap models do the heavy reading. Smart models make the calls. A routing table decides who works when.</p>
-    <div class="team">
-      <div class="row"><b>Plan &amp; design</b><div class="chips"><span class="chip">product-manager</span><span class="chip o">software-architect · Opus</span><span class="chip">spreadsheet-architect</span></div></div>
-      <div class="row"><b>Build</b><div class="chips"><span class="chip">developer</span><span class="chip">code-writer</span><span class="chip">data-builder</span></div></div>
-      <div class="row"><b>Cheap helpers<small>Haiku</small></b><div class="chips"><span class="chip">bulk-reader</span><span class="chip">test-runner</span><span class="chip">doc-keeper</span><span class="chip">deploy-watcher</span><span class="chip">claude-md-compliance-checker</span></div></div>
-      <div class="row"><b>Verify</b><div class="chips"><span class="chip">reviewer</span><span class="chip">task-completion-validator</span><span class="chip">code-quality-pragmatist</span><span class="chip">karen</span><span class="chip">jenny</span><span class="chip">ui-comprehensive-tester</span></div></div>
-      <div class="row"><b>Debug</b><div class="chips"><span class="chip o">ultrathink-debugger · Opus, only after a failed first attempt</span></div></div>
-    </div>
+    <table class="tbl team">
+      <caption class="sr">Agents by role</caption>
+      <thead><tr><th scope="col">Role</th><th scope="col">Agents</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Plan &amp; design</th><td><div class="chips"><span class="chip">product-manager</span><span class="chip o">software-architect · Opus</span><span class="chip">spreadsheet-architect</span></div></td></tr>
+        <tr><th scope="row">Build</th><td><div class="chips"><span class="chip">developer</span><span class="chip">code-writer</span><span class="chip">data-builder</span></div></td></tr>
+        <tr><th scope="row">Cheap helpers<small>Haiku</small></th><td><div class="chips"><span class="chip">bulk-reader</span><span class="chip">test-runner</span><span class="chip">doc-keeper</span><span class="chip">deploy-watcher</span><span class="chip">claude-md-compliance-checker</span></div></td></tr>
+        <tr><th scope="row">Verify</th><td><div class="chips"><span class="chip">reviewer</span><span class="chip">task-completion-validator</span><span class="chip">code-quality-pragmatist</span><span class="chip">karen</span><span class="chip">jenny</span><span class="chip">ui-comprehensive-tester</span></div></td></tr>
+        <tr><th scope="row">Debug</th><td><div class="chips"><span class="chip o">ultrathink-debugger · Opus, only after a failed first attempt</span></div></td></tr>
+      </tbody>
+    </table>
     <p class="note">A verification ladder decides how many checkers a task gets: none at L0, up to five at L3. A <em>subagent</em> is a helper Claude with its own fresh context that returns a short answer. Verifiers and debugger adapted from <a href="https://github.com/darcyegb/ClaudeCodeAgents">darcyegb/ClaudeCodeAgents</a> (MIT).</p>
   </div>
 </section>
@@ -442,16 +432,20 @@ footer a{color:var(--ink-muted);text-decoration:none}
     <p class="kicker">Paths</p>
     <h2>A spreadsheet isn't run like a SaaS app</h2>
     <p class="lede">Eight paths, each with its own playbook. Plus one for adopting what you already built.</p>
-    <div class="paths">
-      <div class="path"><code>software-product</code><p class="h">Apps, APIs, services</p><p>Vertical slices, TDD, CI, git to Cloudflare</p></div>
-      <div class="path"><code>library-cli</code><p class="h">Packages, SDKs, CLIs</p><p>API-first, semver, examples as tests</p></div>
-      <div class="path"><code>data-spreadsheet</code><p class="h">Workbooks, models, CSV/reports</p><p>Generator scripts + xlsx skill</p></div>
-      <div class="path"><code>documents-content</code><p class="h">Docs, decks, handbooks</p><p>Outline-first, docx/pptx/pdf skills</p></div>
-      <div class="path"><code>research-analysis</code><p class="h">Research, comparisons</p><p>Deep-research fan-out, sources ledger</p></div>
-      <div class="path"><code>automation-script</code><p class="h">Glue, jobs, bots</p><p>Idempotent, dry-run, cron on Cloudflare</p></div>
-      <div class="path"><code>infra-ops</code><p class="h">IaC, pipelines, DNS</p><p>Plan/apply split, least privilege</p></div>
-      <div class="path"><code>prototype-spike</code><p class="h">Throwaway learning</p><p>Time-box, kill/promote date</p></div>
-    </div>
+    <table class="tbl paths">
+      <caption class="sr">The eight paths</caption>
+      <thead><tr><th scope="col">Path</th><th scope="col">For</th><th scope="col">Practice</th></tr></thead>
+      <tbody>
+        <tr><th scope="row"><code>software-product</code></th><td>Apps, APIs, services</td><td>Vertical slices, TDD, CI, git to Cloudflare</td></tr>
+        <tr><th scope="row"><code>library-cli</code></th><td>Packages, SDKs, CLIs</td><td>API-first, semver, examples as tests</td></tr>
+        <tr><th scope="row"><code>data-spreadsheet</code></th><td>Workbooks, models, CSV/reports</td><td>Generator scripts + xlsx skill</td></tr>
+        <tr><th scope="row"><code>documents-content</code></th><td>Docs, decks, handbooks</td><td>Outline-first, docx/pptx/pdf skills</td></tr>
+        <tr><th scope="row"><code>research-analysis</code></th><td>Research, comparisons</td><td>Deep-research fan-out, sources ledger</td></tr>
+        <tr><th scope="row"><code>automation-script</code></th><td>Glue, jobs, bots</td><td>Idempotent, dry-run, cron on Cloudflare</td></tr>
+        <tr><th scope="row"><code>infra-ops</code></th><td>IaC, pipelines, DNS</td><td>Plan/apply split, least privilege</td></tr>
+        <tr><th scope="row"><code>prototype-spike</code></th><td>Throwaway learning</td><td>Time-box, kill/promote date</td></tr>
+      </tbody>
+    </table>
     <p class="note">TDD = write the test first, then the code that passes it. A vertical slice = one thin piece that works end to end.</p>
   </div>
 </section>
@@ -471,13 +465,13 @@ footer a{color:var(--ink-muted);text-decoration:none}
           <li><b>Key metrics</b><span>Tests, coverage, deploys and tokens, with alerts when a budget is breached.</span></li>
           <li><b>Roadmap tab</b><span>Your proposed sequence as two swimlanes, user value vs technical foundation, so you see if you're only shipping features and neglecting the base.</span></li>
         </ul>
-        <div class="trace" aria-label="Traceability chain"><span>goal</span><i aria-hidden="true"></i><span>backlog</span><i aria-hidden="true"></i><span>tests</span><i aria-hidden="true"></i><span>deploy</span><i aria-hidden="true"></i><span>metrics</span></div>
+        <div class="trace" role="group" aria-label="Traceability chain"><span>goal</span><i aria-hidden="true"></i><span>backlog</span><i aria-hidden="true"></i><span>tests</span><i aria-hidden="true"></i><span>deploy</span><i aria-hidden="true"></i><span>metrics</span></div>
         <p class="note">All in plain files in git. CI rebuilds it on every push and uploads it as an artifact.</p>
       </div>
       <div>
-        <div class="code"><span class="lbl">build + open</span><pre>python3 scripts/dashboard.py --open    <span class="c"># build + open the project dashboard</span></pre><button class="copy" type="button" data-copy="python3 scripts/dashboard.py --open">copy</button></div>
-        <div class="code"><span class="lbl">cheap text status</span><pre>python3 scripts/dashboard.py --print</pre><button class="copy" type="button" data-copy="python3 scripts/dashboard.py --print">copy</button></div>
-        <div class="aside"><b>Tip for agents:</b> <code>--print</code> gives Claude a one-screen status instead of re-reading your whole repo. That's the token economy in action.</div>
+        <div class="code"><span class="lbl">build + open</span><pre tabindex="0" aria-label="Command: build + open">python3 scripts/dashboard.py --open    <span class="c"># build + open the project dashboard</span></pre><button class="copy" type="button" aria-label="Copy command" data-copy="python3 scripts/dashboard.py --open">copy</button></div>
+        <div class="code"><span class="lbl">cheap text status</span><pre tabindex="0" aria-label="Command: cheap text status">python3 scripts/dashboard.py --print</pre><button class="copy" type="button" aria-label="Copy command" data-copy="python3 scripts/dashboard.py --print">copy</button></div>
+        <div class="aside"><b>Tip:</b> <code>--print</code> gives a cheap text status, handy for agents.</div>
       </div>
     </div>
     <div class="real">
@@ -505,7 +499,7 @@ footer a{color:var(--ink-muted);text-decoration:none}
 </section>
 
 <!-- 9 habits -->
-<section id="habits" class="alt">
+<section id="habits">
   <div class="wrap">
     <p class="kicker">Vibe coding with Claude</p>
     <h2>7 habits that make vibe coding last</h2>
@@ -523,15 +517,15 @@ footer a{color:var(--ink-muted);text-decoration:none}
 </section>
 
 <!-- 10 adopt -->
-<section id="adopt">
+<section id="adopt" class="alt">
   <div class="wrap">
     <p class="kicker">Lovable · Bolt · v0</p>
     <h2>Already built something? Bring it along</h2>
     <p class="lede">Install danfactory as a Claude Code plugin and run one command inside your repo. It works on a <code>danfactory/adopt</code> branch and never overwrites your files.</p>
     <div class="adopt">
       <div>
-        <div class="code"><span class="lbl">once</span><pre>/plugin install danfactory --marketplace dalhhorn-ship-it/danfactory</pre><button class="copy" type="button" data-copy="/plugin install danfactory --marketplace dalhhorn-ship-it/danfactory">copy</button></div>
-        <div class="code"><span class="lbl">inside your repo</span><pre>/danfactory:adopt</pre><button class="copy" type="button" data-copy="/danfactory:adopt">copy</button></div>
+        <div class="code"><span class="lbl">once</span><pre tabindex="0" aria-label="Command: once">/plugin install danfactory --marketplace dalhhorn-ship-it/danfactory</pre><button class="copy" type="button" aria-label="Copy command" data-copy="/plugin install danfactory --marketplace dalhhorn-ship-it/danfactory">copy</button></div>
+        <div class="code"><span class="lbl">inside your repo</span><pre tabindex="0" aria-label="Command: inside your repo">/danfactory:adopt</pre><button class="copy" type="button" aria-label="Copy command" data-copy="/danfactory:adopt">copy</button></div>
         <p class="note">Lovable specifics (two-way sync, Supabase RLS, moving hosting to Cloudflare) are in <code>docs/operating-model/paths/adopt-existing.md</code>. Without plugins, <code>bash scripts/install-adopt-skill.sh</code> from a danfactory clone installs <code>/danfactory-adopt</code>.</p>
       </div>
       <ol>
@@ -551,9 +545,9 @@ footer a{color:var(--ink-muted);text-decoration:none}
     <h2>Start in three commands</h2>
     <p class="lede">Needs git and python3. That's it (Node only for optional extras like codegraph and wrangler).</p>
     <div class="steps">
-      <div class="code"><span class="lbl">1 · copy the template</span><pre>git clone https://github.com/dalhhorn-ship-it/danfactory my-project &amp;&amp; cd my-project &amp;&amp; rm -rf .git &amp;&amp; git init</pre><button class="copy" type="button" data-copy="git clone https://github.com/dalhhorn-ship-it/danfactory my-project &amp;&amp; cd my-project &amp;&amp; rm -rf .git &amp;&amp; git init">copy</button></div>
-      <div class="code"><span class="lbl">2 · bootstrap</span><pre>bash scripts/bootstrap.sh "my-project" "one line description"   <span class="c"># flags: --codegraph, --cloudflare (auto-created Worker)</span></pre><button class="copy" type="button" data-copy='bash scripts/bootstrap.sh "my-project" "one line description"'>copy</button></div>
-      <div class="code"><span class="lbl">3 · start Claude Code</span><pre>claude</pre><button class="copy" type="button" data-copy="claude">copy</button></div>
+      <div class="code"><span class="lbl">1 · copy the template</span><pre tabindex="0" aria-label="Command: copy the template">git clone https://github.com/dalhhorn-ship-it/danfactory my-project &amp;&amp; cd my-project &amp;&amp; rm -rf .git &amp;&amp; git init</pre><button class="copy" type="button" aria-label="Copy command" data-copy="git clone https://github.com/dalhhorn-ship-it/danfactory my-project &amp;&amp; cd my-project &amp;&amp; rm -rf .git &amp;&amp; git init">copy</button></div>
+      <div class="code"><span class="lbl">2 · bootstrap</span><pre tabindex="0" aria-label="Command: bootstrap">bash scripts/bootstrap.sh "my-project" "one line description"   <span class="c"># flags: --codegraph, --cloudflare (auto-created Worker)</span></pre><button class="copy" type="button" aria-label="Copy command" data-copy='bash scripts/bootstrap.sh "my-project" "one line description"'>copy</button></div>
+      <div class="code"><span class="lbl">3 · start Claude Code</span><pre tabindex="0" aria-label="Command: start Claude Code">claude</pre><button class="copy" type="button" aria-label="Copy command" data-copy="claude">copy</button></div>
     </div>
     <p class="lede">Then say <b>"let's start"</b>. The SessionStart hook tells Claude which phase you're in.</p>
     <p class="note">Handy later: <code>bash scripts/check.sh</code> · <code>python3 scripts/metrics.py test</code> · <code>python3 scripts/dashboard.py --open</code></p>

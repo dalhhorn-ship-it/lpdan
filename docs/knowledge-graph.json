@@ -1,7 +1,7 @@
 {"generated_by": "scripts/docs_index.py", "code_graph": "codegraph (docs/CODEMAP.md)",
  "nodes": [
   {"id": "CLAUDE.md", "title": "CLAUDE.md", "lines": 37},
-  {"id": "docs/BACKLOG.md", "title": "Backlog", "lines": 44},
+  {"id": "docs/BACKLOG.md", "title": "Backlog", "lines": 45},
   {"id": "docs/GOAL.md", "title": "Goal", "lines": 59},
   {"id": "docs/OPERATING-MODEL.md", "title": "Operating model", "lines": 76},
   {"id": "docs/TECH-DEBT.md", "title": "Tech debt register", "lines": 13},
@@ -26,7 +26,7 @@
   {"id": "docs/policies/security.md", "title": "Policy: security", "lines": 20},
   {"id": "docs/policies/testing-and-metrics.md", "title": "Policy: testing and delivery metrics", "lines": 17},
   {"id": "docs/policies/token-economy.md", "title": "Policy: token economy", "lines": 28},
-  {"id": "docs/specs/landing-page.md", "title": "Spec: danfactory landing page", "lines": 231}
+  {"id": "docs/specs/landing-page.md", "title": "Spec: danfactory landing page", "lines": 232}
  ],
  "edges": [
   {"from": "docs/policies/documentation.md", "to": "docs/INDEX.md"},

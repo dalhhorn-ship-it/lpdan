@@ -25,9 +25,10 @@ EXTERNAL_ALLOW = {
     "https://github.com/davila7/claude-code-templates/blob/main/cli-tool/components/skills/development/cloudflare-deploy/SKILL.md",
 }
 # Commands not in the README fixture: command -> repo file it must appear in.
+# Exact line (stripped) that must exist in the named file; no substring matching.
 SNIPPET_ALLOW = {
-    "python3 scripts/dashboard.py --print": "CLAUDE.md",
-    "claude": "tests/fixtures/danfactory-README.md",
+    "python3 scripts/dashboard.py --print": ("CLAUDE.md", "`python3 scripts/dashboard.py --print` for a cheap status; `dashboard` skill to show the full page."),
+    "claude": ("tests/fixtures/danfactory-README.md", "3. Start Claude Code (`claude`) and say **\"let's start\"**. The SessionStart hook tells Claude which phase you're in."),
 }
 CHALLENGES = [
     "01-setup.md", "02-farm-game.md", "03-tests-green.md", "04-ship-cloudflare.md",
@@ -179,7 +180,9 @@ def main():
         ok = pre in fenced
         if not ok:
             src = SNIPPET_ALLOW.get(pre)
-            ok = bool(src) and pre in (ROOT / src).read_text(encoding="utf-8")
+            if src:
+                lines = [ln.strip() for ln in (ROOT / src[0]).read_text(encoding="utf-8").splitlines()]
+                ok = src[1] in lines and pre in src[1]
         if not ok:
             bad.append(("not in README fixture/allowlist", pre))
         elif c["copy"] is not None and re.sub(r"\s+#\s.*$", "", pre) != c["copy"]:
@@ -223,7 +226,7 @@ def main():
 
     # 4 design rules in CSS
     check("no box-shadow/text-shadow/drop-shadow", not re.search(r"(box|text)-shadow\s*:\s*(?!none)|drop-shadow", css_nc))
-    radii = re.findall(r"border-radius\s*:\s*([^;}]+)", css_nc)
+    radii = re.findall(r"border(?:-[a-z]+){0,2}-radius\s*:\s*([^;}]+)", css_nc)
     check("no border-radius other than 0", all(r.strip() in ("0", "0px") for r in radii), radii)
     check("no gradients/backdrop-filter", not re.search(r"-gradient\(|backdrop-filter", css_nc))
     root = re.search(r":root\s*\{([^}]*)\}", css_nc)
@@ -232,7 +235,12 @@ def main():
     tokens = json.loads(TOKENS.read_text(encoding="utf-8"))["color"]["tokens"]
     dark = {t["value"]["dark"].upper() for t in tokens}
     outside = re.findall(r"#[0-9a-fA-F]{3,8}\b", css_nc.replace(root_css, ""))
-    check("hex colours only in :root", not outside, outside)
+    outside += re.findall(r"\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color-mix)\(", css_nc.replace(root_css, ""))
+    named = r"\b(?:red|blue|green|black|white|gray|grey|magenta|cyan|yellow|orange|purple|pink|navy|teal|lime|aqua|silver|maroon|olive|fuchsia)\b"
+    for _, body in css_rules(css_nc.replace(root_css, "")):
+        for m in re.finditer(r"(?<![-\w])(?:color|background(?:-color)?|border(?:-[a-z]+)?(?:-color)?|outline(?:-color)?|fill|stroke)\s*:\s*([^;]+)", body):
+            outside += re.findall(named, re.sub(r"var\([^)]*\)", "", m.group(1)), flags=re.I)
+    check("colours only via tokens (no hex/rgb()/hsl()/named outside :root)", not outside, outside)
     unknown = [h for h in re.findall(r"#[0-9a-fA-F]{3,8}\b", root_css) if h.upper() not in dark]
     check("root hex colours are tokens.json dark values", not unknown, unknown)
     small = []

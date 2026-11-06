@@ -92,16 +92,17 @@ Brand: "danfactory". Links: Why, Flow, Dashboard, Habits, Start. Button: "GitHub
 
 ### 7. Dashboard / traceability (hero feature)
 - Headline: See where your project actually is
-- Subline: Every build regenerates a single-page dashboard from your own files. No account, no service.
+- Subline: Every build regenerates a single-page dashboard from your own files. No account, no service, no JavaScript, no network calls. (source: scripts/dashboard.py docstring: self-contained HTML file, no JS, no network)
 - Bullets:
   - **Versions and phase/progress.** Know which phase you're in and how far along.
   - **Backlog.** Read straight from `docs/BACKLOG.md`.
-  - **Tech debt.** Shortcuts you chose on purpose, from `docs/TECH-DEBT.md`.
+  - **Tech debt.** Shortcuts you chose on purpose, from `docs/TECH-DEBT.md`, plus automatic signals like TODO/FIXME markers and oversized files. (source: scripts/dashboard.py)
   - **Key metrics.** Tests, coverage, deploys, tokens, with alerts when budgets are breached.
   - **Roadmap tab.** The proposed sequence as two swimlanes: user value vs technical foundation, so you can see if you're only shipping features and neglecting the base.
 - Traceability line: Goal -> backlog item -> tests -> deploy -> metrics, all in plain files in git.
 - Code: `python3 scripts/dashboard.py --open   # build + open the project dashboard`
 - Cheap text version: `python3 scripts/dashboard.py --print`
+- Tip: `--print` gives a cheap text status, handy for agents. (source: CLAUDE.md)
 - Developer note: use a real screenshot of a generated dashboard (run the script on a sample project) or a faithful mock captioned "Example dashboard". Do not show invented real-project numbers without the caption.
 
 ### 8. Token economy and short contexts
