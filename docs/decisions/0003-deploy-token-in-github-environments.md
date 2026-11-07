@@ -14,6 +14,6 @@ The security audit of 2026-11-07 (SEC-002, docs/security/latest.json) found that
 Option 1. The preview job declares `environment: preview` and skips the upload when that environment has no token. The deploy job stays in `production`. The template, cf_scaffold.py, the ship skill and docs/policies/security.md tell new projects to set it up this way.
 
 ## Consequences
-- The owner must move the token: create it under the `production` environment, set the branch rule to `main`, then delete the repo-level secret. Until then, nothing changes functionally, but the hole stays open.
+- The owner must move the token: create it under the `production` environment, set the branch rule to `main`, then delete the repo-level secret. Done by Dan on 2026-11-07.
 - PR previews are skipped until a separate preview token is added to environment `preview`.
 - Same-repo branches can no longer reach a token that can deploy to production.

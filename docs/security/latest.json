@@ -24,12 +24,12 @@
   },
   {
    "id": "SEC-002",
-   "verdict": "needs_validation",
+   "verdict": "confirmed",
    "title": "PR preview job shared the production Cloudflare token (repo-level secret, confirmed by owner)",
    "location": ".github/workflows/deploy-cloudflare.yml:55-80,97",
    "boundary": "Same-repo PR branch author -> production Worker (bypasses the production environment gate)",
-   "fix": "Code fixed (ADR 0003): preview job uses environment \"preview\" and skips without its own token. OWNER: move CLOUDFLARE_API_TOKEN from repo secrets to environment \"production\" (deployment branches: main), then delete the repo secret",
-   "state": "owner action"
+   "fix": "Code fixed (ADR 0003): preview job uses environment \"preview\" and skips without its own token. Owner moved CLOUDFLARE_API_TOKEN into environment \"production\" (deployment branches: main) and deleted the repo secret (confirmed by Dan 2026-11-07).",
+   "state": "fixed"
   },
   {
    "id": "SEC-003",
