@@ -29,3 +29,11 @@ Dan said "ok" to the next slice: **"Problem, audience, 3-phase flow sections wit
 
 ## Pointers
 - docs/BACKLOG.md:18-37 (M1), tests/check_page.py:37 (budgets), docs/security/latest.json
+
+<!-- auto-snapshot:start -->
+## Auto snapshot before compaction (2026-11-07 06:51 UTC, manual)
+- Branch: claude/blissful-tesla-9vxexu @ a5c0193
+- Uncommitted: none
+- In progress/blocked (BACKLOG): none
+- Last commits: a5c0193 metrics: record prod deploy c8d8cbf (CI ok, live check unverified) | c8d8cbf chore: handoff | 9b6c84d S4: dashboard section shows real Overview and Roadmap screenshots
+<!-- auto-snapshot:end -->
