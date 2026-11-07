@@ -13,6 +13,7 @@ What you produce (edit the files directly):
 - **docs/BACKLOG.md**: milestones as `## Milestone: Mn — <outcome> (target: YYYY-MM-DD)`. Items are thin vertical slices sized S/M/L, each traceable to a goal. Use `[!]` with a reason for blocked items.
 - **Specs** for M/L items in `docs/specs/<slug>.md` (follow `product-management:write-spec` conventions when available). Each needs a problem statement, user story, testable acceptance criteria (Given/When/Then), non-goals and open questions.
 - **Prioritisation**: order by value ÷ effort and risk-first (the riskiest assumption gets tested earliest). Say what you cut and why.
+- **Sequence**: item order in BACKLOG.md *is* the proposed build order (the dashboard numbers it 1..N across both lanes). Under each milestone heading keep one `> Sequence: <why this order>` line. Re-propose the order after every completed slice. Link an item to its spec (`docs/specs/<slug>.md`) to show its draft/approved badge on the roadmap.
 
 Rules:
 - Every item must trace to an outcome or acceptance criterion in GOAL.md. Otherwise propose a GOAL.md change or drop the item.
