@@ -4,6 +4,7 @@
   python3 scripts/metrics.py test [--affected]          run tests (+coverage), record time/result
   python3 scripts/metrics.py deploy [--env prod]        run commands.deploy, record time/result
   python3 scripts/metrics.py deploy --seconds 312 --status ok   record an external deploy (CI)
+                                                    [--error "reason"] [--smoke "result"] optional notes
   python3 scripts/metrics.py report                     write metrics/REPORT.md (alerts + suggestions)
 
 Each command also regenerates dashboard/ (scripts/dashboard.py) unless --no-dashboard.
@@ -178,7 +179,12 @@ def cmd_deploy(a, f):
         ok = code == 0
         if not ok:
             print("\n".join(lines[-TAIL:]))
-    append(HISTORY, {"ts": now(), "kind": "deploy", "env": a.env, "sha": git_sha(), "ok": ok, "seconds": secs})
+    rec = {"ts": now(), "kind": "deploy", "env": a.env, "sha": git_sha(), "ok": ok, "seconds": secs}
+    if a.error:
+        rec["error"] = a.error
+    if a.smoke:
+        rec["smoke"] = a.smoke
+    append(HISTORY, rec)
     print("deploy %s in %.1fs" % ("OK" if ok else "FAILED", secs))
     return 0 if ok else 1
 
@@ -250,8 +256,9 @@ def analyse(f, hist, toks):
         table.append(("Affected test run", "%.1fs" % last["seconds"], "%ss" % b["affected_test_seconds"], "-"))
         if last["seconds"] > b["affected_test_seconds"]:
             alerts.append("Affected tests take %.0fs (budget %ss)." % (last["seconds"], b["affected_test_seconds"]))
-    if deps:
-        last = deps[-1]
+    deps_t = [r for r in deps if r.get("seconds") is not None]
+    if deps_t:
+        last = deps_t[-1]
         recent = deps[-10:]
         fail = 100.0 * sum(not r["ok"] for r in recent) / len(recent)
         table.append(("Deploy duration", "%.0fs" % last["seconds"], "%ss" % b["deploy_seconds"],
@@ -323,6 +330,8 @@ def main():
     d.add_argument("--env", default="default")
     d.add_argument("--seconds", type=float)
     d.add_argument("--status", choices=["ok", "fail"], default="ok")
+    d.add_argument("--error", help="failure reason to store with the record")
+    d.add_argument("--smoke", help="post-deploy smoke check result to store with the record")
     sub.add_parser("report")
     ap.add_argument("--no-dashboard", action="store_true", help="skip regenerating dashboard/")
     a = ap.parse_args()

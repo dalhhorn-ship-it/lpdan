@@ -19,6 +19,7 @@ import json
 import os
 import re
 import shutil
+import statistics
 import subprocess
 import sys
 import webbrowser
@@ -203,7 +204,59 @@ def metric_view(f):
         "series": {"test_seconds": [r["seconds"] for r in full[-30:]], "coverage": cov[-30:],
                    "tokens": [metrics.wt(r) for r in toks[-30:]]},
         "alerts": alerts, "suggestions": ideas,
+        "deploy_tab": deploy_view(f, deps, metrics.now()),
     }
+
+
+def github_repo():
+    """owner/repo from the origin remote (https or ssh form), or ''."""
+    m = re.search(r"github\.com[:/]+([^/\s]+)/([^/\s]+?)(?:\.git)?/?$", git("remote", "get-url", "origin"))
+    return "%s/%s" % m.groups() if m else ""
+
+
+def deploy_view(f, deps, now_iso):
+    """Data for the Deploy tab: links, stats and history, from integrations.deploy and deploy records."""
+    cfg = f.get("integrations", {}).get("deploy", {})
+    worker, prod = cfg.get("worker_name"), (cfg.get("production_url") or "").rstrip("/")
+    acct = cfg.get("account_id")
+    dash = ("https://dash.cloudflare.com/%s/workers/services/view/%s/production" % (acct, worker) if acct
+            else "https://dash.cloudflare.com/?to=/:account/workers/services/view/%s/production" % worker) if worker else ""
+    repo = github_repo()
+    okr = [r for r in deps if r["ok"]]
+    secs = sorted(r["seconds"] for r in okr if r.get("seconds") is not None)
+    last_ok = okr[-1] if okr else None
+    ago = None
+    if deps:
+        try:
+            t = lambda x: datetime.datetime.fromisoformat(x)
+            ago = max(0, int((t(now_iso) - t(deps[-1]["ts"])).total_seconds()))
+        except ValueError:
+            ago = None
+    smoke = next((r["smoke"] for r in reversed(deps) if r.get("smoke")), None)
+    return {
+        "links": {"live": prod, "cloudflare": dash, "version": prod + "/version" if prod else "",
+                  "actions": "https://github.com/%s/actions/workflows/deploy-cloudflare.yml" % repo if repo else ""},
+        "info": {"worker": worker, "route": cfg.get("route"), "branch": cfg.get("production_branch"),
+                 "subdomain": cfg.get("workers_subdomain")},
+        "total": len(deps), "ok": len(okr),
+        "success_rate": round(100.0 * len(okr) / len(deps)) if deps else None,
+        "last_seconds": next((r["seconds"] for r in reversed(deps) if r.get("seconds") is not None), None),
+        "budget": f.get("budgets", {}).get("deploy_seconds"),
+        "median": round(statistics.median(secs), 1) if secs else None, "best": min(secs) if secs else None,
+        "last_ok": last_ok, "ago_seconds": ago, "smoke": smoke,
+        "history": list(reversed(deps[-30:])),
+    }
+
+
+def fmt_ago(sec):
+    if sec is None:
+        return "–"
+    d, r = divmod(sec, 86400)
+    h, r = divmod(r, 3600)
+    m = r // 60
+    if d:
+        return "%dd %dh ago" % (d, h)
+    return ("%dh %dm ago" % (h, m)) if h else ("%dm ago" % m if m else "%ds ago" % r)
 
 
 def lane_of(tags):
@@ -328,6 +381,55 @@ def bar(pct, label):
 
 def f_codegraph():
     return bool(metrics.factory().get("integrations", {}).get("codegraph"))
+
+
+def render_deploy(m):
+    dv = m["deploy_tab"]
+    L, info = dv["links"], dv["info"]
+
+    def link(url, text):
+        return '<a href="%s" rel="noopener">%s</a>' % (e(url), e(text)) if url else '<span class="muted">not configured</span>'
+
+    live = ('<a class="live" href="%s" rel="noopener">%s</a>' % (e(L["live"]), e(L["live"]))
+            if L["live"] else '<span class="muted">no production_url in factory.json</span>')
+    route = {"B-github-actions": "B (GitHub Actions)"}.get(info["route"] or "", info["route"] or "–")
+    links = ('<div class="live-row"><span class="muted small">Live site</span>%s</div>'
+             '<ul class="plain links">'
+             '<li><span class="muted">Cloudflare Worker</span> %s</li>'
+             '<li><span class="muted">GitHub Actions deploy runs</span> %s</li>'
+             '<li><span class="muted">/version endpoint</span> %s</li></ul>'
+             '<dl class="kv"><dt>Worker</dt><dd class="mono">%s</dd><dt>Route</dt><dd>%s</dd>'
+             '<dt>Production branch</dt><dd class="mono">%s</dd><dt>workers.dev subdomain</dt><dd class="mono">%s</dd></dl>'
+             % (live, link(L["cloudflare"], "dashboard"), link(L["actions"], "deploy-cloudflare.yml"),
+                link(L["version"], "/version"), e(info["worker"] or "–"), e(route), e(info["branch"] or "–"),
+                e(info["subdomain"] or "–")))
+    ok = dv["last_ok"]
+    last_ok = ("%s · %s · %s" % (ok["ts"][:16].replace("T", " "), ok.get("sha") or "–", ok.get("env") or "–")) if ok else "–"
+    ls, bud = dv["last_seconds"], dv["budget"]
+    tiles = "".join([
+        tile("Deploys", "%d / %d" % (dv["ok"], dv["total"]) if dv["total"] else "–", "succeeded / attempts"),
+        tile("Success rate", fmt_num(dv["success_rate"], "%"), "all attempts" if dv["total"] else "not enough data yet",
+             "na" if dv["success_rate"] is None else ("ok" if dv["success_rate"] >= 80 else "warn"),
+             words=("healthy", "failures seen", "failing")),
+        tile("Last push-to-live", fmt_num(ls, "s"), "budget %ss" % e(bud) if ls is not None else "not enough data yet",
+             "na" if ls is None or bud is None else ("ok" if ls <= bud else "bad")),
+        tile("Median / best", "%s / %s" % (fmt_num(dv["median"], "s"), fmt_num(dv["best"], "s")),
+             "successful deploys" if dv["median"] is not None else "not enough data yet"),
+        tile("Last successful", ok["ts"][5:16].replace("T", " ") if ok else "–", last_ok if ok else "not enough data yet"),
+        tile("Since last deploy", fmt_ago(dv["ago_seconds"]), "any result" if dv["total"] else "not enough data yet"),
+    ])
+    rows = "".join(
+        '<tr><td class="nowrap">%s</td><td>%s</td><td class="mono">%s</td><td>%s</td><td>%s</td><td class="note">%s</td></tr>'
+        % (e(r["ts"][:16].replace("T", " ")), e(r.get("env") or "–"), e(r.get("sha") or "–"),
+           '<span class="imp %s">%s</span>' % ("low" if r["ok"] else "high", "ok" if r["ok"] else "failed"),
+           fmt_num(r.get("seconds"), "s"), e(r.get("error") or r.get("smoke") or "–")) for r in dv["history"]) \
+        or '<tr><td colspan="6" class="muted">No deploys recorded (python3 scripts/metrics.py deploy).</td></tr>'
+    return ('<section class="card"><h2>Links</h2>%s</section>'
+            '<section class="tiles dtiles" aria-label="Deploy stats">%s</section>'
+            '<section class="card"><h2>Deploy history</h2><div class="scroll"><table><thead><tr><th>When (UTC)</th><th>Env</th>'
+            '<th>Commit</th><th>Result</th><th>Time</th><th>Error / note</th></tr></thead><tbody>%s</tbody></table></div>'
+            '<p class="small"><b>Live checks:</b> %s</p></section>'
+            % (links, tiles, rows, e(dv["smoke"]) if dv["smoke"] else '<span class="muted">not recorded</span>'))
 
 
 def render_roadmap(rm):
@@ -456,7 +558,7 @@ def render(d):
         tree=e(d["template"].get("decision_tree_version", "")), tiles=tiles, milestones=ms_rows,
         backlog=backlog, debt=debt_html, tags=tag_rows, deploys=dep_rows,
         commits=commits or '<li class="muted">No commits yet.</li>', alerts=alerts, ideas=ideas,
-        commit_count=v["commit_count"], roadmap=render_roadmap(d["roadmap"]))
+        commit_count=v["commit_count"], roadmap=render_roadmap(d["roadmap"]), deploy_tab=render_deploy(m))
 
 
 def summary(d):
@@ -561,9 +663,16 @@ footer {{ margin-top:24px; font-size:12px; color:var(--muted); }}
 .tabs label {{ padding:8px 14px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; font-weight:600; font-size:14px; }}
 .tab-input {{ position:absolute; opacity:0; pointer-events:none; }}
 .panel {{ display:none; }}
-#tab-overview:checked ~ .panel-overview, #tab-roadmap:checked ~ .panel-roadmap {{ display:block; }}
-#tab-overview:checked ~ .tabs label[for="tab-overview"], #tab-roadmap:checked ~ .tabs label[for="tab-roadmap"] {{ color:var(--text); border-bottom-color:var(--accent); }}
-#tab-overview:focus-visible ~ .tabs label[for="tab-overview"], #tab-roadmap:focus-visible ~ .tabs label[for="tab-roadmap"] {{ outline:2px solid var(--accent); outline-offset:2px; }}
+#tab-overview:checked ~ .panel-overview, #tab-roadmap:checked ~ .panel-roadmap, #tab-deploy:checked ~ .panel-deploy {{ display:block; }}
+#tab-overview:checked ~ .tabs label[for="tab-overview"], #tab-roadmap:checked ~ .tabs label[for="tab-roadmap"], #tab-deploy:checked ~ .tabs label[for="tab-deploy"] {{ color:var(--text); border-bottom-color:var(--accent); }}
+#tab-overview:focus-visible ~ .tabs label[for="tab-overview"], #tab-roadmap:focus-visible ~ .tabs label[for="tab-roadmap"], #tab-deploy:focus-visible ~ .tabs label[for="tab-deploy"] {{ outline:2px solid var(--accent); outline-offset:2px; }}
+.panel-deploy .card {{ margin-bottom:16px; }}
+.live-row {{ display:flex; flex-direction:column; margin-bottom:8px; }}
+a.live {{ font-size:20px; font-weight:650; overflow-wrap:anywhere; }}
+.links a, .panel-deploy .mono {{ overflow-wrap:anywhere; }}
+.kv {{ display:grid; grid-template-columns:max-content 1fr; gap:4px 16px; margin:12px 0 0; font-size:14px; }}
+.kv dt {{ color:var(--muted); }} .kv dd {{ margin:0; min-width:0; }}
+td.note {{ min-width:180px; overflow-wrap:anywhere; font-size:13px; color:var(--muted); }}
 .rm {{ --lane-w:minmax(150px,180px); --col-w:minmax(220px,1fr); display:grid; gap:8px; min-width:max-content;
   grid-template-columns:var(--lane-w) repeat(var(--cols),var(--col-w)); }}
 .rm-col-h {{ display:flex; flex-direction:column; font-size:14px; padding:4px 2px; border-bottom:2px solid var(--border); }}
@@ -607,9 +716,12 @@ footer {{ margin-top:24px; font-size:12px; color:var(--muted); }}
 
 <input type="radio" name="tab" id="tab-overview" class="tab-input" checked>
 <input type="radio" name="tab" id="tab-roadmap" class="tab-input">
-<nav class="tabs" aria-label="Dashboard views"><label for="tab-overview">Overview</label><label for="tab-roadmap">Roadmap</label></nav>
+<input type="radio" name="tab" id="tab-deploy" class="tab-input">
+<nav class="tabs" aria-label="Dashboard views"><label for="tab-overview">Overview</label><label for="tab-roadmap">Roadmap</label><label for="tab-deploy">Deploy</label></nav>
 
 <div class="panel panel-roadmap">{roadmap}</div>
+
+<div class="panel panel-deploy">{deploy_tab}</div>
 
 <div class="panel panel-overview">
 <section class="tiles" aria-label="Key metrics">{tiles}</section>

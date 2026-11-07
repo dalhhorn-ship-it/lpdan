@@ -172,6 +172,31 @@ def dashboard_checks(check):
     out = dashboard.render_roadmap(rm)
     check("dashboard roadmap: sequence subtitle and done line", "ship hero first" in out and "Done: M0 — Set up (2/2)" in out)
 
+    # Deploy tab: failed attempts have null seconds; links come from factory.json + git remote.
+    deps = [{"ts": "2026-11-06T19:40:21+00:00", "kind": "deploy", "env": "prod", "sha": "aaa1111", "ok": False,
+             "seconds": None, "error": "Auth error <10000>"},
+            {"ts": "2026-11-07T05:54:46+00:00", "kind": "deploy", "env": "prod", "sha": "bbb2222", "ok": True,
+             "seconds": 24.0, "smoke": "ok: 200 /"}]
+    cfg = {"budgets": {"deploy_seconds": 120}, "integrations": {"deploy": {
+        "production_url": "https://x.workers.dev", "worker_name": "wk", "route": "B-github-actions",
+        "production_branch": "main", "workers_subdomain": "sub"}}}
+    dv = dashboard.deploy_view(cfg, deps, "2026-11-07T07:54:46+00:00")
+    out = dashboard.render_deploy({"deploy_tab": dv})
+    check("dashboard deploy: stats", (dv["total"], dv["ok"], dv["success_rate"], dv["median"], dv["best"], dv["last_seconds"])
+          == (2, 1, 50, 24.0, 24.0, 24.0) and dv["ago_seconds"] == 7200, dv)
+    check("dashboard deploy: links", "https://dash.cloudflare.com/?to=/:account/workers/services/view/wk/production" in out
+          and "https://x.workers.dev/version" in out and "/actions/workflows/deploy-cloudflare.yml" in out
+          and "B (GitHub Actions)" in out)
+    cfg["integrations"]["deploy"]["account_id"] = "acc123"
+    check("dashboard deploy: account_id link", "dash.cloudflare.com/acc123/workers/services/view/wk/production"
+          in dashboard.deploy_view(cfg, deps, deps[-1]["ts"])["links"]["cloudflare"])
+    check("dashboard deploy: failed row null seconds, escaped error, smoke",
+          "failed" in out and "Auth error &lt;10000&gt;" in out and "ok: 200 /" in out and "None" not in out)
+    empty = dashboard.render_deploy({"deploy_tab": dashboard.deploy_view({}, [], "2026-11-07T00:00:00+00:00")})
+    check("dashboard deploy: empty data", "not enough data yet" in empty and "not recorded" in empty and "None" not in empty)
+    tpl = dashboard.TEMPLATE
+    check("dashboard deploy: tab wired in page", 'id="tab-deploy"' in tpl and 'for="tab-deploy"' in tpl)
+
 
 def main():
     results = []

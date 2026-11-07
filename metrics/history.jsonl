@@ -12,4 +12,8 @@
 {"ts": "2026-11-06T19:34:47+00:00", "kind": "test", "scope": "full", "sha": "482adbc", "command": "python3 tests/check_page.py && node tests/smoke.mjs", "ok": true, "seconds": 2.92, "passed": 57, "failed": 0, "coverage_pct": null}
 {"ts": "2026-11-06T19:35:58+00:00", "kind": "test", "scope": "full", "sha": "482adbc", "command": "python3 tests/check_page.py && node tests/smoke.mjs", "ok": true, "seconds": 2.82, "passed": 57, "failed": 0, "coverage_pct": null}
 {"ts": "2026-11-06T19:36:24+00:00", "kind": "test", "scope": "full", "sha": "482adbc", "command": "python3 tests/check_page.py && node tests/smoke.mjs", "ok": true, "seconds": 3.02, "passed": 57, "failed": 0, "coverage_pct": null}
-{"ts": "2026-11-07T05:54:46+00:00", "kind": "deploy", "env": "prod", "sha": "51e9a9a", "ok": true, "seconds": 24.0}
+{"ts": "2026-11-06T19:40:21+00:00", "kind": "deploy", "env": "prod", "sha": "ef1f8af", "ok": false, "seconds": null, "error": "Cloudflare Authentication error [code: 10000]: CLOUDFLARE_ACCOUNT_ID secret pointed at a different account"}
+{"ts": "2026-11-07T05:47:27+00:00", "kind": "deploy", "env": "prod", "sha": "ef1f8af", "ok": false, "seconds": null, "error": "Cloudflare Authentication error [code: 10000]: CLOUDFLARE_ACCOUNT_ID secret pointed at a different account"}
+{"ts": "2026-11-07T05:54:46+00:00", "kind": "deploy", "env": "prod", "sha": "ef1f8af", "ok": true, "seconds": 24.0, "smoke": "ok: /version sha, 200 /, x-robots-tag noindex, .md text/plain, CSP present"}
+{"ts": "2026-11-07T05:57:47+00:00", "kind": "test", "scope": "full", "sha": "8d0bbb2", "command": "python3 tests/check_page.py && node tests/smoke.mjs", "ok": false, "seconds": 0.11, "coverage_pct": null}
+{"ts": "2026-11-07T05:57:59+00:00", "kind": "test", "scope": "full", "sha": "8d0bbb2", "command": "python3 tests/check_page.py && node tests/smoke.mjs", "ok": true, "seconds": 3.26, "passed": 57, "failed": 0, "coverage_pct": null}
