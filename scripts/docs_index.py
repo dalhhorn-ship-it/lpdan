@@ -96,7 +96,7 @@ def parse(path):
             full = os.path.normpath(os.path.join(base, target))
             if lm.group(4) and not os.path.isfile(full):  # bare path: try repo-root relative, then docs/
                 full = next((c for c in (os.path.join(ROOT, target), os.path.join(ROOT, "docs", target))
-                             if os.path.isfile(c)), full)
+                             if os.path.isfile(c) or os.path.normpath(c) == INDEX), full)  # INDEX: as below
             if (os.path.isfile(full) or full == INDEX) and full != path:  # INDEX may not exist yet on a first run
                 links.add(rel(full))
     return {"file": rel(path), "title": title, "summary": summary, "lines": len(lines),

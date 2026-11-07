@@ -14,7 +14,7 @@
   {"id": "docs/design/ARCHITECTURE.md", "title": "Architecture: danfactory landing page", "lines": 190},
   {"id": "docs/operating-model/AGENT-ROUTING.md", "title": "Agent routing", "lines": 81},
   {"id": "docs/operating-model/DECISION-TREE.md", "title": "Decision tree", "lines": 68},
-  {"id": "docs/operating-model/LEARNINGS.md", "title": "Learnings", "lines": 24},
+  {"id": "docs/operating-model/LEARNINGS.md", "title": "Learnings", "lines": 25},
   {"id": "docs/operating-model/paths/adopt-existing.md", "title": "Path: adopt-existing", "lines": 59},
   {"id": "docs/operating-model/paths/automation-script.md", "title": "Path: automation-script", "lines": 25},
   {"id": "docs/operating-model/paths/data-spreadsheet.md", "title": "Path: data-spreadsheet", "lines": 32},
