@@ -8,8 +8,9 @@
 Sources (all in the repo, so every build can regenerate it):
   factory.json, docs/BACKLOG.md, docs/TECH-DEBT.md, metrics/*.jsonl, git tags/log,
   plus automated debt signals (TODO/FIXME markers, oversized files, codegraph import cycles).
-Output is a self-contained HTML file (no JS, no network) with two tabs: Overview and Roadmap
-(two swimlanes, value vs technical foundation, in proposed sequence). dashboard/ is git-ignored;
+Output is a self-contained HTML file (no JS, no network) with three tabs: Overview, Roadmap
+(two swimlanes, value vs technical foundation, in proposed sequence) and Security (latest
+security audit from docs/security/latest.json; summaries only, never payloads or secrets). dashboard/ is git-ignored;
 CI uploads it as a build artifact and writes SUMMARY.md to the job summary.
 """
 import argparse
@@ -300,6 +301,14 @@ def roadmap(backlog, open_debt):
     return {"columns": columns, "done": done_ms, "next": upcoming[:3], "sequence": sequence, "open": opened}
 
 
+def security():
+    """Latest audit summary (docs/security/latest.json), or None when no audit has run."""
+    try:
+        return json.loads(read("docs/security/latest.json") or "null")
+    except ValueError:
+        return None
+
+
 def collect():
     f = metrics.factory()
     backlog = parse_backlog(read("docs/BACKLOG.md"))
@@ -323,6 +332,7 @@ def collect():
                  "by_impact": {k: sum(d["impact"] == k for d in open_debt) for k in ("high", "medium", "low")},
                  "signals": debt_signals(f)},
         "roadmap": roadmap(backlog, open_debt),
+        "security": security(),
         "metrics": metric_view(f),
     }
 
@@ -473,6 +483,55 @@ def render_roadmap(rm):
             % (e(sub), done, nxt, grid))
 
 
+SEV_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "informational": 4}
+SEV_CLASS = {"critical": "high", "high": "high", "medium": "medium", "low": "low", "informational": "low"}
+
+
+def render_security(sec):
+    if not sec:
+        return ('<div class="card"><h2>Security</h2><p class="muted">No security audit has run yet. '
+                'Run the security-audit-run skill to fill this tab.</p></div>')
+    recs = sorted(sec.get("records", []), key=lambda r: (r.get("verdict") != "confirmed",
+                  SEV_ORDER.get(r.get("severity"), 9), r.get("id", "")))
+    n_conf = sum(r.get("verdict") == "confirmed" for r in recs)
+    n_nv = sum(r.get("verdict") == "needs_validation" for r in recs)
+    n_open = sum(r.get("state", "open") == "open" for r in recs)
+    tiles = "".join([
+        tile("Confirmed findings", str(n_conf), "verified by an independent agent", "bad" if n_conf else "ok",
+             words=("none", "", "fix needed")),
+        tile("Needs validation", str(n_nv), "blocked on a fact outside the repo", "warn" if n_nv else "ok",
+             words=("none", "owner check", "")),
+        tile("Open items", str(n_open), "of %d records" % len(recs), "bad" if n_open else "ok",
+             words=("all closed", "", "open")),
+        tile("Coverage", "%s/%s" % (sec.get("coverage", {}).get("closed", 0), sec.get("coverage", {}).get("units", 0)),
+             "units closed (%s profile)" % sec.get("profile", "?"), "na")])
+    rows = []
+    for r in recs:
+        sev = r.get("severity") if r.get("verdict") == "confirmed" else None
+        label = sev or ("needs validation" if r.get("verdict") == "needs_validation" else r.get("verdict", ""))
+        cls = SEV_CLASS.get(sev, "medium" if r.get("verdict") == "needs_validation" else "low")
+        rows.append('<tr><td><span class="imp %s">%s</span></td><td>%s<div class="muted mono">%s</div></td>'
+                    '<td>%s</td><td>%s</td><td>%s</td></tr>' % (
+                        cls, e(label), e(r.get("title")), e(r.get("location")), e(r.get("boundary")),
+                        e(r.get("fix")), e(r.get("state", "open"))))
+    table = ('<div class="scroll"><table><thead><tr><th>Severity</th><th>Finding</th><th>Boundary</th>'
+             '<th>Smallest fix</th><th>State</th></tr></thead><tbody>%s</tbody></table></div>' % "".join(rows)
+             if rows else '<p class="muted">No findings survived independent verification.</p>')
+    hard = "".join("<li><b>%s</b> %s</li>" % (e(h.get("area")), e(h.get("note"))) for h in sec.get("hardening", []))
+    good = "".join("<li>%s</li>" % e(g) for g in sec.get("positive", []))
+    limits = "".join("<li>%s</li>" % e(x) for x in sec.get("limits", []))
+    meta = "%s · %s profile · <span class=\"mono\">%s</span> · run %s" % (
+        e(sec.get("date")), e(sec.get("profile")), e(sec.get("source_ref", "")[:12]), e(sec.get("status")))
+    return ('<section class="tiles" aria-label="Security summary">%s</section>'
+            '<section class="grid">'
+            '<div class="card" style="grid-column:1/-1"><h2>Findings</h2><p class="muted">%s</p>%s</div>'
+            '<div class="card"><h2>Hardening notes</h2><ul class="plain">%s</ul></div>'
+            '<div class="card"><h2>What is already solid</h2><ul class="plain">%s</ul>'
+            '<h3>Limits of this run</h3><ul class="plain">%s</ul></div>'
+            '</section>' % (tiles, meta, table, hard or '<li class="muted">None.</li>',
+                            good or '<li class="muted">None recorded.</li>', limits or '<li class="muted">None.</li>'))
+
+
 def render(d):
     m, v, bl, debt = d["metrics"], d["versions"], d["backlog"], d["debt"]
     name = d["project"].get("name") or "Untitled project"
@@ -558,7 +617,8 @@ def render(d):
         tree=e(d["template"].get("decision_tree_version", "")), tiles=tiles, milestones=ms_rows,
         backlog=backlog, debt=debt_html, tags=tag_rows, deploys=dep_rows,
         commits=commits or '<li class="muted">No commits yet.</li>', alerts=alerts, ideas=ideas,
-        commit_count=v["commit_count"], roadmap=render_roadmap(d["roadmap"]), deploy_tab=render_deploy(m))
+        commit_count=v["commit_count"], roadmap=render_roadmap(d["roadmap"]), deploy_tab=render_deploy(m),
+        security=render_security(d.get("security")))
 
 
 def summary(d):
@@ -663,9 +723,9 @@ footer {{ margin-top:24px; font-size:12px; color:var(--muted); }}
 .tabs label {{ padding:8px 14px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; font-weight:600; font-size:14px; }}
 .tab-input {{ position:absolute; opacity:0; pointer-events:none; }}
 .panel {{ display:none; }}
-#tab-overview:checked ~ .panel-overview, #tab-roadmap:checked ~ .panel-roadmap, #tab-deploy:checked ~ .panel-deploy {{ display:block; }}
-#tab-overview:checked ~ .tabs label[for="tab-overview"], #tab-roadmap:checked ~ .tabs label[for="tab-roadmap"], #tab-deploy:checked ~ .tabs label[for="tab-deploy"] {{ color:var(--text); border-bottom-color:var(--accent); }}
-#tab-overview:focus-visible ~ .tabs label[for="tab-overview"], #tab-roadmap:focus-visible ~ .tabs label[for="tab-roadmap"], #tab-deploy:focus-visible ~ .tabs label[for="tab-deploy"] {{ outline:2px solid var(--accent); outline-offset:2px; }}
+#tab-overview:checked ~ .panel-overview, #tab-roadmap:checked ~ .panel-roadmap, #tab-deploy:checked ~ .panel-deploy, #tab-security:checked ~ .panel-security {{ display:block; }}
+#tab-overview:checked ~ .tabs label[for="tab-overview"], #tab-roadmap:checked ~ .tabs label[for="tab-roadmap"], #tab-deploy:checked ~ .tabs label[for="tab-deploy"], #tab-security:checked ~ .tabs label[for="tab-security"] {{ color:var(--text); border-bottom-color:var(--accent); }}
+#tab-overview:focus-visible ~ .tabs label[for="tab-overview"], #tab-roadmap:focus-visible ~ .tabs label[for="tab-roadmap"], #tab-deploy:focus-visible ~ .tabs label[for="tab-deploy"], #tab-security:focus-visible ~ .tabs label[for="tab-security"] {{ outline:2px solid var(--accent); outline-offset:2px; }}
 .panel-deploy .card {{ margin-bottom:16px; }}
 .live-row {{ display:flex; flex-direction:column; margin-bottom:8px; }}
 a.live {{ font-size:20px; font-weight:650; overflow-wrap:anywhere; }}
@@ -717,11 +777,14 @@ td.note {{ min-width:180px; overflow-wrap:anywhere; font-size:13px; color:var(--
 <input type="radio" name="tab" id="tab-overview" class="tab-input" checked>
 <input type="radio" name="tab" id="tab-roadmap" class="tab-input">
 <input type="radio" name="tab" id="tab-deploy" class="tab-input">
-<nav class="tabs" aria-label="Dashboard views"><label for="tab-overview">Overview</label><label for="tab-roadmap">Roadmap</label><label for="tab-deploy">Deploy</label></nav>
+<input type="radio" name="tab" id="tab-security" class="tab-input">
+<nav class="tabs" aria-label="Dashboard views"><label for="tab-overview">Overview</label><label for="tab-roadmap">Roadmap</label><label for="tab-deploy">Deploy</label><label for="tab-security">Security</label></nav>
 
 <div class="panel panel-roadmap">{roadmap}</div>
 
 <div class="panel panel-deploy">{deploy_tab}</div>
+
+<div class="panel panel-security">{security}</div>
 
 <div class="panel panel-overview">
 <section class="tiles" aria-label="Key metrics">{tiles}</section>
@@ -737,7 +800,7 @@ td.note {{ min-width:180px; overflow-wrap:anywhere; font-size:13px; color:var(--
   <div class="card"><h2>Recent commits</h2><ul class="plain">{commits}</ul></div>
 </section>
 </div>
-<footer>Built by scripts/dashboard.py from factory.json, docs/BACKLOG.md, docs/TECH-DEBT.md, metrics/ and git.</footer>
+<footer>Built by scripts/dashboard.py from factory.json, docs/BACKLOG.md, docs/TECH-DEBT.md, docs/security/, metrics/ and git.</footer>
 </main>
 </body>
 </html>
