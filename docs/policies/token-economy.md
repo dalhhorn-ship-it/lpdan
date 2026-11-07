@@ -3,7 +3,7 @@
 > Spend tokens on decisions, not on moving bytes. Adapted from Spotify's `shunt` plugin (delegate I/O-heavy work to a cheaper worker) using native Claude Code subagents.
 
 ## Rules
-1. **Index first.** Read `docs/INDEX.md`, then targeted reads (`Read` with offset/limit) at the `file:line` it lists.
+1. **Index first.** Read `docs/INDEX.md`, then targeted reads (`Read` with offset/limit) at the `file:line` it lists. To see what a doc links to and from (with summaries) without opening files: `python3 scripts/docs_index.py --related <doc>`.
 2. **No whole large files in the main context.** Files over `budgets.large_read_lines` (350) are blocked by `.claude/hooks/guard_large_read.py` unless offset/limit is given. Escape hatch: `touch .claude/.allow-large-read` allows the next large read once (say why). The guard also catches `tail -n +K`, big `head`/`tail` counts and big `sed -n` ranges.
 3. **Delegate bulk reading** to `bulk-reader` (Haiku): big files, 3+ files, long diffs, logs, API specs. Ask a precise question; get `file:line` bullets back.
 4. **Delegate boilerplate** to `code-writer` with a reference file. Run tests directly via `metrics.py test` (one line when green); **delegate failing or noisy runs** to `test-runner`.
@@ -26,3 +26,6 @@ Debugging, edits that need exact text, architecture and trade-off decisions, any
 
 ## Measured
 Tokens per session, including subagents, land in `metrics/tokens.jsonl` (SessionEnd hook). Budgets use **weighted tokens** (input-equivalents: output ×5, cache write ×1.25, cache read ×0.1), because raw totals are dominated by cheap cache reads. `metrics.py report` flags sessions over `budgets.session_weighted_tokens_warn` and low cache-hit rates.
+
+## Measuring index-first navigation (docs/specs/agents-index-first.md)
+Compare 5 sessions before and 5 after the change (2026-11-07): weighted tokens per session (metrics/tokens.jsonl, dashboard Cost tab) and whole reads of files over 350 lines by subagents (their transcripts). Expect a modest effect; record the result in LEARNINGS.md before upstreaming.

@@ -1,6 +1,6 @@
 # PRD: Agents navigate docs index-first
 
-> Status: draft · 2026-11-07 · Owner: product-manager · Backlog: M1 / "Agents navigate docs index-first" (#process)
+> Status: approved · 2026-11-07 · by user in chat · Owner: product-manager · Backlog: M2 / "Agents navigate docs index-first" (#process)
 
 ## Problem
 The main agent is told to read docs/INDEX.md first and use offset/limit reads (CLAUDE.md, session_start hook, token-economy.md lines 6-10). 9 of 19 subagents never mention the index (developer, reviewer, product-manager, code-writer, bulk-reader, test-runner, data-builder, spreadsheet-architect, deploy-watcher). The large-read guard deliberately lets subagents through, so they can read whole big files. This session delegations stayed directed only because briefs named files and lines. That is luck, not a rule. Also, docs/knowledge-graph.json (104 edges) is used by no agent, so finding neighbouring docs means reading files.

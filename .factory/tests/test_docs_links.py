@@ -36,5 +36,59 @@ class Links(unittest.TestCase):
         self.assertEqual(out["orphans"], ["docs/a.md"])
 
 
+INDEX_FIRST = ("developer", "reviewer", "product-manager", "code-writer", "data-builder", "spreadsheet-architect",
+               "bulk-reader")  # docs/specs/agents-index-first.md; test-runner/deploy-watcher read logs, not docs
+
+
+class IndexFirst(unittest.TestCase):
+    G = {"nodes": [{"id": "docs/a.md", "title": "A", "summary": "about a"}, {"id": "docs/b.md", "title": "B", "summary": "about b"},
+                   {"id": "docs/c.md", "title": "C"}, {"id": "docs/lone.md", "title": "Lone"}],
+         "edges": [{"from": "docs/a.md", "to": "docs/b.md"}, {"from": "docs/c.md", "to": "docs/a.md"},
+                   {"from": "docs/b.md", "to": "docs/c.md"}]}
+
+    def test_agents_point_at_the_index(self):  # AC1
+        for a in INDEX_FIRST:
+            with open(os.path.join(ROOT, ".claude", "agents", a + ".md"), encoding="utf-8") as fh:
+                self.assertIn("docs/INDEX.md", fh.read(), a)
+
+    def test_related_lists_exact_neighbours_with_summaries(self):  # AC2
+        self.assertEqual(docs_index.related(self.G, "docs/a.md"),
+                         [("from", "docs/c.md", "C"), ("to", "docs/b.md", "about b")])
+
+    def test_related_no_edges_and_unknown(self):  # AC3, AC4 (pure part)
+        self.assertEqual(docs_index.related(self.G, "docs/lone.md"), [])
+        self.assertIsNone(docs_index.related(self.G, "docs/nope.md"))
+
+    def run_cli(self, *args):
+        import subprocess
+        return subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "docs_index.py"), *args],
+                              cwd=ROOT, capture_output=True, text=True)
+
+    def test_cli_unknown_doc_exits_nonzero(self):  # AC4
+        r = self.run_cli("--related", "docs/does-not-exist.md")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("not a doc", r.stdout)
+
+    def test_cli_real_doc_and_stale_warning(self):  # AC2 on the repo, AC5
+        r = self.run_cli("--related", "docs/policies/token-economy.md")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertIn("<- CLAUDE.md", r.stdout)
+        self.assertNotIn("stale", r.stdout)  # the committed graph is current (check.sh enforces it)
+        graph = os.path.join(ROOT, "docs", "knowledge-graph.json")
+        with open(graph, encoding="utf-8") as fh:
+            keep = fh.read()
+        try:
+            with open(graph, "w", encoding="utf-8") as fh:
+                fh.write(keep.replace('"lines": ', '"lines": 1', 1))
+            self.assertIn("stale", self.run_cli("--related", "docs/policies/token-economy.md").stdout)
+        finally:
+            with open(graph, "w", encoding="utf-8") as fh:
+                fh.write(keep)
+
+    def test_token_economy_mentions_related(self):  # AC6
+        with open(os.path.join(ROOT, "docs", "policies", "token-economy.md"), encoding="utf-8") as fh:
+            self.assertIn("docs_index.py --related", fh.read())
+
+
 if __name__ == "__main__":
     unittest.main()

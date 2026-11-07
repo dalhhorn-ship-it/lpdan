@@ -36,7 +36,8 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 
 
 ## Milestone: M2 — Ideas, not committed (target: )
-- [ ] Agents navigate docs index-first: INDEX line in 7 agents + `docs_index.py --related` (S-M, [PRD draft](specs/agents-index-first.md)) #process
+- [x] Agents navigate docs index-first: INDEX line in 7 agents + `docs_index.py --related` (S-M, [PRD approved](specs/agents-index-first.md)) #process
+- [ ] Measure index-first navigation over 5 sessions (docs/policies/token-economy.md), then upstream the change to danfactory as one branch with the result (S) #process
 - [ ] Short screen recording or animated terminal of the 3 phases (M)
 - [ ] "Worked example": a small project run through the flow, honest about results (L)
 - [ ] Dark/light toggle and print-friendly cheat sheet of the 7 habits (S)
