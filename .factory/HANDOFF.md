@@ -1,4 +1,4 @@
-# Handoff — 2026-11-07 06:20 — Security audit (quick) done + dashboard Security tab
+# Handoff — 2026-11-07 06:40 — Security audit done, SEC-001..003 fixed (d2ba4f0)
 
 ## Task
 Dan asked: "run the security-audit-run", then "add this to the dashboard in a new tab". Both are done.
@@ -16,15 +16,15 @@ Dan asked: "run the security-audit-run", then "add this to the dashboard in a ne
 ## Decisions (and why)
 - Quick profile: Dan picked it.
 - Hunters were source-only. Verifiers used a parent-built sandbox (/srv/sbx/sbx.sh: unshare, read-only mounts, tmpfs scratch, nobody, prlimit, timeout) because bwrap and nsjail are missing.
-- Fixes are not applied: an audit describes fixes, and Dan decides.
+- Dan approved the fixes; they are applied in d2ba4f0 (ADR 0003 covers the token). SEC-002 still needs Dan to move the token in GitHub settings.
 
 ## Open questions for Dan
-- Fix SEC-001/003 now? Is CLOUDFLARE_API_TOKEN a repo secret or a production-environment secret (SEC-002)?
+- Has Dan moved CLOUDFLARE_API_TOKEN into environment "production" (deployment branches: main), deleted the repo secret, and optionally added a preview token in environment "preview"?
 - Merge this branch into landing-draft? (Needs a PR or merge; force-push was denied.)
 - Earlier ones: copyable install command in the hero; no-JS phone menu (TD-005); backlog item for TD-003.
 
 ## Next steps
-1. Get Dan's answers, then fix TD-006..008 (smallest fixes are in docs/security/latest.json and docs/TECH-DEBT.md).
+1. Once Dan confirms the token move, set SEC-002 to "fixed" in docs/security/latest.json and tick TD-007.
 2. Resume the build: S4 dashboard section (PM sequence #1).
 
 ## Watch out
