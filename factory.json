@@ -62,9 +62,9 @@
       "production_branch": "main",
       "product": "workers",
       "project_name": "danfactory",
-      "production_url": "",
+      "production_url": "https://danfactory.dalhhorn.workers.dev",
       "worker_name": "danfactory",
-      "workers_subdomain": "",
+      "workers_subdomain": "dalhhorn",
       "preview_url_pattern": "https://{alias}-{worker}.{subdomain}.workers.dev",
       "route": "B-github-actions"
     },
