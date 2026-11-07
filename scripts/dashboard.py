@@ -8,8 +8,8 @@
 Sources (all in the repo, so every build can regenerate it):
   factory.json, docs/BACKLOG.md, docs/TECH-DEBT.md, metrics/*.jsonl, git tags/log,
   plus automated debt signals (TODO/FIXME markers, oversized files, codegraph import cycles).
-Output is a self-contained HTML file (no JS, no network) with three tabs: Overview, Roadmap
-(two swimlanes, value vs technical foundation, in proposed sequence) and Security (latest
+Output is a self-contained HTML file (no JS, no network) with four tabs: Overview, Roadmap
+(two swimlanes, value vs technical foundation, in proposed sequence), Deploy (live links, deploy history) and Security (latest
 security audit from docs/security/latest.json; summaries only, never payloads or secrets). dashboard/ is git-ignored;
 CI uploads it as a build artifact and writes SUMMARY.md to the job summary.
 """
