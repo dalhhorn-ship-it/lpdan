@@ -26,7 +26,7 @@
 | File | Lines | Summary |
 |---|---:|---|
 | CLAUDE.md | 39 | Always-loaded instructions. Keep short and stable (it is paid every turn). Details live… |
-| docs/BACKLOG.md | 45 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
+| docs/BACKLOG.md | 46 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
 | docs/GOAL.md | 59 | Status: confirmed by Dan on 2026-11-06. |
 | docs/OPERATING-MODEL.md | 77 | Approved by Dan on 2026-11-06, with rigor raised to L2. How this project is built:… |
 | docs/TECH-DEBT.md | 17 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
@@ -55,4 +55,5 @@
 | docs/policies/testing-and-metrics.md | 17 | Fast feedback is a feature. Measure test time, coverage, deploys and tokens; act on the… |
 | docs/policies/token-economy.md | 28 | Spend tokens on decisions, not on moving bytes. Adapted from Spotify's `shunt` plugin… |
 | docs/specs/_TEMPLATE.md | 33 | Status: draft \| approved · YYYY-MM-DD · by user in chat \| dropped · Owner:… |
+| docs/specs/landing-latest-features.md | 58 | Status: draft · 2026-11-07 · Owner: product-manager · Backlog: M1 / "Landing: latest… |
 | docs/specs/landing-page.md | 232 | Status: confirmed by Dan on 2026-11-06 (see Decisions). Traces to docs/GOAL.md outcome… — sections: Problem statement:5, User story:8, Build constraints:11, Acceptance criteria:14, Non-goals:28, Sections in order (copy below):31, Truth rules for the developer:215, Scope cuts (recommended):219, Decisions (Dan, 2026-11-06):226 |
