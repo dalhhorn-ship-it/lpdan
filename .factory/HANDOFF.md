@@ -1,39 +1,30 @@
-# Handoff — 2026-11-07 06:50 — S4 done, SEC-002 closed, PR open
+# Handoff — 2026-11-07 07:40 — M1 build done except Dan's items
 
 ## Task
-Dan said "ok" to the next slice: **"Problem, audience, 3-phase flow sections with final copy"** (M1 seq #2, docs/BACKLOG.md). AC: matches spec; every claim traceable to README/docs.
+Dan: "build M1". Everything buildable in M1 is done and live on main (d95a9a8). Left: Dan's own items.
 
 ## State
-- Done:
-  - SEC-002 closed: Dan moved CLOUDFLARE_API_TOKEN into environment "production" (main only) and deleted the repo secret. latest.json, TD-007 and ADR 0003 updated (5ca0a8a).
-  - PR https://github.com/dalhhorn-ship-it/lpdan/pull/2 opens claude/blissful-tesla-9vxexu into landing-draft. Dan reviews and merges it.
-  - S4 dashboard section done (9b6c84d): the real screenshots public/img/dashboard-overview.webp and dashboard-roadmap.webp (1800x1200, about 90 KB each), two figures in #dashboard .real, and the backlog item ticked. scripts/dashboard.py's .rm grid now uses min-width:min-content, which fixes the roadmap text running off the card.
-  - The dashboard artifact https://claude.ai/artifact/FmN8SMHSu89S6yQdjmmUKW is republished (v12).
-- In progress: nothing.
-- Branch: claude/blissful-tesla-9vxexu, uncommitted: none (except this note).
+- Done (all pushed to claude/blissful-tesla-9vxexu and main):
+  - Upstream dashboard pulled: roadmap v2, template mode, PRD gate (7d73f58, 39a6f54). ADR 0004 = upstream 0002.
+  - Clickable dashboard at /dashboard/ via scripts/site_dashboard.py; screenshots removed (9242277). PRD docs/specs/landing-latest-features.md approved.
+  - M1 copy sections verified against spec (c1d0f88); #campaign + 8 FAQ + TD-001 closed (7fc794c); OG/twitter tags, img/og.png, favicon.svg, Lighthouse mobile / = 99/100/100/100, /dashboard/ = 100/96/100/100 (d95a9a8).
+  - Deploys 39a6f54 and 9242277 succeeded in GitHub Actions; d95a9a8 queued at handoff. Live URL not checkable from sandbox (proxy blocks the host).
+  - Dashboard artifact https://claude.ai/artifact/FmN8SMHSu89S6yQdjmmUKW v15.
+- In progress: nothing. Uncommitted: none (except this note).
 
 ## Decisions (and why)
-- Screenshots are real, not mocked, so no "example" label is needed. Re-shoot them before launch because the numbers go stale.
-- Images were cut to 1800px wide to fit the public/ budget of 300 KB; public/ is now about 287 KB.
-- PM re-sequence skipped after S4: the order was unchanged.
+- M1 page items need no new PRD: docs/specs/landing-page.md is Dan-confirmed (2026-11-06).
+- FAQ uses challenge 1's 8 items; spec's "blank page on localhost" FAQ dropped (not in challenge 1). Ask Dan.
+- Contrast issues inside dashboard.py logged as tech debt (fix upstream in danfactory, then pull).
 
 ## Next steps
-1. Start the Problem, audience and 3-phase flow copy: the sections #why, #flow and #wall in public/index.html (about lines 346–408). Check every claim against the README and docs.
-2. After each slice: PM re-sequence, then dashboard.py, then republish the artifact (publish dashboard/index.html with the url above).
-3. Open from earlier: a copyable install command in the hero, a no-JS phone menu (TD-005), and a backlog item for TD-003. Flaky tests and the deploy failure rate are on the dashboard alerts.
+1. Dan: review challenge files (02 farm brief), enable Issues + "challenge" label on danfactory, dogfood challenges 1-2 on a clean machine, final truth pass.
+2. Before launch: `python3 scripts/site_dashboard.py` to refresh the snapshot; remove noindex in public/_headers only after the truth pass.
+3. Optional: upstream the Deploy/Security tabs to danfactory so the page label can go.
 
 ## Watch out
-- public/ budget headroom is only about 13 KB, so don't add images without removing something.
-- Force-push is denied; merge instead.
-- Dan: they/them; English/Dutch.
+- Characters must be in the latin font subset (no U+2192 arrow) — tests/check_page.py LATIN.
+- Force-push denied. Dan: they/them; English/Dutch.
 
 ## Pointers
-- docs/BACKLOG.md:18-37 (M1), tests/check_page.py:37 (budgets), docs/security/latest.json
-
-<!-- auto-snapshot:start -->
-## Auto snapshot before compaction (2026-11-07 06:51 UTC, manual)
-- Branch: claude/blissful-tesla-9vxexu @ a5c0193
-- Uncommitted: none
-- In progress/blocked (BACKLOG): none
-- Last commits: a5c0193 metrics: record prod deploy c8d8cbf (CI ok, live check unverified) | c8d8cbf chore: handoff | 9b6c84d S4: dashboard section shows real Overview and Roadmap screenshots
-<!-- auto-snapshot:end -->
+- docs/BACKLOG.md M1, docs/specs/landing-page.md §9b, scripts/site_dashboard.py, docs/TECH-DEBT.md
