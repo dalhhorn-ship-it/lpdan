@@ -1,33 +1,31 @@
-# Handoff — 2026-11-07 06:40 — Security audit done, SEC-001..003 fixed (d2ba4f0)
+# Handoff — 2026-11-07 06:50 — S4 done, SEC-002 closed, PR open
 
 ## Task
-Dan asked: "run the security-audit-run", then "add this to the dashboard in a new tab". Both are done.
+Dan said "ok" to the next slice: **"Problem, audience, 3-phase flow sections with final copy"** (M1 seq #2, docs/BACKLOG.md). AC: matches spec; every claim traceable to README/docs.
 
 ## State
-- Done: a full quick-profile audit of ef1f8af. Reports are outside the repo at ~/security-audit-skill/lpdan/run-1/ (REPORT.md, FINDINGS-DETAIL.md, NEEDS-VALIDATION.md, findings.json, coverage-ledger.json). Both validators pass. The reports are lost when the container is reclaimed; only the summary is committed.
-- Results:
-  - SEC-001 confirmed, medium: adopt_scan.py and adopt.py follow symlinks planted in the adopted repo.
-  - SEC-002 needs validation: the PR preview job may use the same CLOUDFLARE_API_TOKEN as production.
-  - SEC-003 needs validation: the guard_bash_policy.py deploy guard is bypassable.
-  - These are tracked as TD-006..008.
-- Dashboard Security tab: scripts/dashboard.py render_security() reads docs/security/latest.json. Commits 28a9b2b, d1b46ff, 428afc3 and merge 32641f8 are on claude/blissful-tesla-9vxexu, which is based on origin/landing-draft (it keeps the Deploy tab). The artifact https://claude.ai/artifact/FmN8SMHSu89S6yQdjmmUKW is republished (v10).
-- Branch claude/blissful-tesla-9vxexu has nothing uncommitted. It has not been merged into landing-draft and has no PR.
+- Done:
+  - SEC-002 closed: Dan moved CLOUDFLARE_API_TOKEN into environment "production" (main only) and deleted the repo secret. latest.json, TD-007 and ADR 0003 updated (5ca0a8a).
+  - PR https://github.com/dalhhorn-ship-it/lpdan/pull/2 opens claude/blissful-tesla-9vxexu into landing-draft. Dan reviews and merges it.
+  - S4 dashboard section done (9b6c84d): the real screenshots public/img/dashboard-overview.webp and dashboard-roadmap.webp (1800x1200, about 90 KB each), two figures in #dashboard .real, and the backlog item ticked. scripts/dashboard.py's .rm grid now uses min-width:min-content, which fixes the roadmap text running off the card.
+  - The dashboard artifact https://claude.ai/artifact/FmN8SMHSu89S6yQdjmmUKW is republished (v12).
+- In progress: nothing.
+- Branch: claude/blissful-tesla-9vxexu, uncommitted: none (except this note).
 
 ## Decisions (and why)
-- Quick profile: Dan picked it.
-- Hunters were source-only. Verifiers used a parent-built sandbox (/srv/sbx/sbx.sh: unshare, read-only mounts, tmpfs scratch, nobody, prlimit, timeout) because bwrap and nsjail are missing.
-- Dan approved the fixes; they are applied in d2ba4f0 (ADR 0003 covers the token). SEC-002 still needs Dan to move the token in GitHub settings.
-
-## Open questions for Dan
-- Has Dan moved CLOUDFLARE_API_TOKEN into environment "production" (deployment branches: main), deleted the repo secret, and optionally added a preview token in environment "preview"?
-- Merge this branch into landing-draft? (Needs a PR or merge; force-push was denied.)
-- Earlier ones: copyable install command in the hero; no-JS phone menu (TD-005); backlog item for TD-003.
+- Screenshots are real, not mocked, so no "example" label is needed. Re-shoot them before launch because the numbers go stale.
+- Images were cut to 1800px wide to fit the public/ budget of 300 KB; public/ is now about 287 KB.
+- PM re-sequence skipped after S4: the order was unchanged.
 
 ## Next steps
-1. Once Dan confirms the token move, set SEC-002 to "fixed" in docs/security/latest.json and tick TD-007.
-2. Resume the build: S4 dashboard section (PM sequence #1).
+1. Start the Problem, audience and 3-phase flow copy: the sections #why, #flow and #wall in public/index.html (about lines 346–408). Check every claim against the README and docs.
+2. After each slice: PM re-sequence, then dashboard.py, then republish the artifact (publish dashboard/index.html with the url above).
+3. Open from earlier: a copyable install command in the hero, a no-JS phone menu (TD-005), and a backlog item for TD-003. Flaky tests and the deploy failure rate are on the dashboard alerts.
 
 ## Watch out
-- Force-push is denied by the auto-mode classifier: merge instead.
-- After every slice: PM re-sequence, then dashboard.py, then republish the artifact.
+- public/ budget headroom is only about 13 KB, so don't add images without removing something.
+- Force-push is denied; merge instead.
 - Dan: they/them; English/Dutch.
+
+## Pointers
+- docs/BACKLOG.md:18-37 (M1), tests/check_page.py:37 (budgets), docs/security/latest.json
