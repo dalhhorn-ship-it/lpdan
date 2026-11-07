@@ -21,3 +21,4 @@ Design choice from the template build (not yet measured): agents would idle whil
 
 ### 2026-11-06 — Delegate big reads by default  [all] [tooling] [upstream]
 Seeded from the template, not yet measured here: Spotify reports 82–94% token savings from delegating large reads (shunt README benchmarks). Guard hook + bulk-reader subagent added. Verify with weighted tokens/session in metrics/REPORT.md after a few sessions.
+- 2026-11-07 [upstream] [docs] docs_index.py only counted Markdown links and backticked docs/ paths, so 22 of 36 docs showed as orphans on the Docs health tab although they were referenced in plain text. Bare `.md` paths that resolve to a file now count, and tab_docs.py ignores edges from the generated INDEX.md (it lists everything). 13 -> 104 edges, 0 orphans. Fix: scripts/docs_index.py LINK_RE + scripts/obs/tab_docs.py; tests in .factory/tests/test_docs_links.py.

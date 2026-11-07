@@ -34,7 +34,7 @@ Roster: product-manager, software-architect, developer, test-runner, reviewer, t
 - Challenge files in public/challenges/ are the source of truth and ship unchanged.
 
 ## Policies
-All of docs/policies/* apply. Security: no secrets in the repo; `CLOUDFLARE_API_TOKEN` lives only in the GitHub `production` environment (main only), never as a repo-level secret. No security audit required at L2 (only on request or before an L3 release). Async delivery: never wait on deploys.
+All of docs/policies/* apply (policies/security.md, policies/async-delivery.md, policies/testing-and-metrics.md, policies/token-economy.md, policies/documentation.md, policies/prd-approval.md). Security: no secrets in the repo; `CLOUDFLARE_API_TOKEN` lives only in the GitHub `production` environment (main only), never as a repo-level secret. No security audit required at L2 (only on request or before an L3 release). Async delivery: never wait on deploys.
 
 ## Commands (set in factory.json on approval)
 | Key | Value | Note |

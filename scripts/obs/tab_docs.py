@@ -41,6 +41,7 @@ def collect(root, base):
     if not isinstance(g, dict) or not g.get("nodes"):
         return {"graph": False, "nodes": 0, "edges": 0, "orphans": [], "stale": [], "uncovered": [], "components": 0}
     nodes, edges = g["nodes"], g.get("edges", [])
+    edges = [x for x in edges if x["from"] not in GENERATED]  # the generated index lists every doc; it proves nothing
     linked = {x["from"] for x in edges} | {x["to"] for x in edges}
     orphans = sorted(n["id"] for n in nodes if n["id"] not in linked and n["id"] not in ENTRY)
     stale = stale_docs(root, nodes, S.commit_times(root))

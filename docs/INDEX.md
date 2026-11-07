@@ -39,7 +39,7 @@
 | docs/design/ARCHITECTURE.md | 190 | Proposed (awaiting Dan's approval), 2026-11-06. Technical shape of the static landing… — sections: Context:5, File layout:8, CSS architecture:29, Design-token mapping…:41, Responsive type scale and…:60, Section → component mapping:78, Changes needed in the…:99, Accessibility plan (contrast…:113, Performance budget…:127, Content truth:137, Test strategy:143, Deploy:159, Build plan (vertical slices…:168, Risks and open questions:183 |
 | docs/operating-model/AGENT-ROUTING.md | 81 | Which agent gets involved when. The main agent coordinates and decides; subagents are… |
 | docs/operating-model/DECISION-TREE.md | 68 | Picks the operating model for a goal. Version 1.1.0. Keep this file short: details live… |
-| docs/operating-model/LEARNINGS.md | 23 | Append-only log written by `retro`. Each entry tags path(s) and a type; `[upstream]`… |
+| docs/operating-model/LEARNINGS.md | 24 | Append-only log written by `retro`. Each entry tags path(s) and a type; `[upstream]`… |
 | docs/operating-model/paths/adopt-existing.md | 59 | Bringing an existing build (Lovable, Bolt, v0, or any half-finished repo) into… |
 | docs/operating-model/paths/automation-script.md | 25 | Glue code, integrations, scheduled jobs, bots, one-purpose scripts. Default rigor L1. |
 | docs/operating-model/paths/data-spreadsheet.md | 32 | Spreadsheets, financial/data models, workbooks, CSV outputs, generated reports. Default… |
