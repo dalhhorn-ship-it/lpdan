@@ -4,6 +4,8 @@
 settings.json deny rules match command prefixes, so `bunx wrangler deploy`, `npm run deploy`
 or `git push origin main --no-verify` slip through. This hook checks anywhere in the command
 (including package.json scripts that wrap a deploy). Rollback stays allowed.
+Quoted strings and heredoc bodies are treated as data, except when a shell executes them
+(`bash -c "..."`, `sh <<EOF`, `eval "..."`, `... | bash`): those are checked too.
 """
 import json
 import os
@@ -13,7 +15,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import ROOT, block, read_event  # noqa: E402
 
-DEPLOY = re.compile(r"\bwrangler\s+(pages\s+)?deploy\b")
+# wrangler deploy, wrangler@4 deploy, wrangler pages deploy, wrangler versions deploy (promotes a version)
+DEPLOY = re.compile(r"\bwrangler(?:@\S+)?\s+(?:(?:pages|versions)\s+)?deploy\b")
 RUN_SCRIPT = re.compile(r"\b(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?([\w:.-]+)")
 PUSH_NO_VERIFY = re.compile(r"\bgit\s+push\b[^;&|]*\s--no-verify\b")
 COMMIT_NO_VERIFY = re.compile(r"\bgit\s+commit\b[^;&|]*\s(--no-verify|-n)\b")  # -n is --no-verify for commit only
@@ -28,6 +31,36 @@ def executable_text(cmd):
     return QUOTED.sub("''", HEREDOC.sub("", cmd))
 
 
+SHELL = r"(?:ba|z|da|k)?sh"
+SHELL_C = re.compile(r"\b(?:%s)\s+(?:-\w+\s+)*-\w*c\w*\s*$|\beval\s*$" % SHELL)  # text right before a quoted arg
+SHELL_HEREDOC = re.compile(r"\b(?:%s|eval)\b[^;&|]*$" % SHELL)  # shell command that a heredoc feeds
+PIPE_TO_SHELL = re.compile(r"\|\s*(?:%s)\b" % SHELL)
+
+
+def executed_payloads(cmd):
+    """Quoted strings and heredoc bodies that a shell will run, so their text counts as commands."""
+    out = []
+    for m in HEREDOC.finditer(cmd):
+        line_start = cmd.rfind("\n", 0, m.start()) + 1
+        if SHELL_HEREDOC.search(cmd[line_start:m.start()]) or PIPE_TO_SHELL.search(cmd[m.start():m.end()].split("\n", 1)[0]):
+            out.append(m.group(0).split("\n", 1)[1].rsplit("\n", 1)[0] if "\n" in m.group(0) else "")
+    rest = HEREDOC.sub("", cmd)
+    piped = bool(PIPE_TO_SHELL.search(QUOTED.sub("''", rest)))
+    for m in QUOTED.finditer(rest):
+        if piped or SHELL_C.search(rest[:m.start()]):
+            out.append(m.group(0)[1:-1].replace('\\"', '"'))
+    return out
+
+
+def command_texts(cmd, depth=0):
+    """The executable text of cmd plus, recursively, of every string a shell runs."""
+    texts = [executable_text(cmd)]
+    if depth < 3:
+        for p in executed_payloads(cmd):
+            texts += command_texts(p, depth + 1)
+    return texts
+
+
 def package_scripts():
     try:
         with open(os.path.join(ROOT, "package.json"), encoding="utf-8") as fh:
@@ -40,11 +73,16 @@ def main():
     ev = read_event()
     if ev.get("tool_name") != "Bash":
         return
-    cmd = executable_text((ev.get("tool_input") or {}).get("command", ""))
+    raw = (ev.get("tool_input") or {}).get("command", "")
+    scripts = package_scripts()
+    for cmd in command_texts(raw):
+        check(cmd, scripts)
+
+
+def check(cmd, scripts):
     if DEPLOY.search(cmd) and not re.search(r"\s--dry-run\b", cmd):  # dry runs build locally, upload nothing
         block("Direct `wrangler deploy` is not allowed: production deploys go through git "
               "(push/merge to the production branch). See the `ship` skill. Rollback: `npx wrangler rollback`.")
-    scripts = package_scripts()
     for name in RUN_SCRIPT.findall(cmd):
         if DEPLOY.search(scripts.get(name, "")):
             block("`%s` runs `wrangler deploy` (package.json script). Deploy via git instead (`ship` skill)." % name)

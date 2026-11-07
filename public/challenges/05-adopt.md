@@ -42,7 +42,7 @@ No existing build? Use your Challenge 2 farm game, or any small app you or a fri
 - [ ] Nothing of yours was overwritten (check the branch diff).
 
 ## Submit as proof
-Issue or Discussion titled `[challenge-5] Rescue - <project>` with repo link (or say it is private), dashboard screenshot, `python3 scripts/dashboard.py --print` output, and one finding from ADOPTION-REPORT.md that surprised you. Do not paste secrets or private data.
+Issue titled `[challenge-5] Rescue - <project>` with repo link (or say it is private), dashboard screenshot, `python3 scripts/dashboard.py --print` output, and one finding from ADOPTION-REPORT.md that surprised you. Do not paste secrets or private data.
 
 ## Next
 Challenge 6: a feature built with a verification team (`06-verified-feature.md`).

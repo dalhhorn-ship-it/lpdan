@@ -25,6 +25,9 @@
       "Bash(npx wrangler deploy*)",
       "Bash(wrangler pages deploy*)",
       "Bash(npx wrangler pages deploy*)",
+      "Bash(wrangler versions deploy*)",
+      "Bash(npx wrangler versions deploy*)",
+      "Bash(npx wrangler@*)",
       "Read(./.dev.vars)"
     ]
   },

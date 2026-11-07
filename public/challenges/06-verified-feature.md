@@ -34,7 +34,7 @@ A "market": crop prices change on a timer, and a sell screen lets you sell harve
 - [ ] BACKLOG item ticked; dashboard regenerated.
 
 ## Submit as proof
-Issue or Discussion titled `[challenge-6] Crew - <feature>` with repo link, link or paste of the spec, dashboard screenshot, `python3 scripts/dashboard.py --print` output, and the list of agents you ran with one-line findings.
+Issue titled `[challenge-6] Crew - <feature>` with repo link, link or paste of the spec, dashboard screenshot, `python3 scripts/dashboard.py --print` output, and the list of agents you ran with one-line findings.
 
 ## Next
 Challenge 7: retro and give back (`07-retro-upstream.md`).

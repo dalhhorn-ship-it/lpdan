@@ -34,10 +34,10 @@ git clone https://github.com/dalhhorn-ship-it/danfactory my-project && cd my-pro
 ## Done when
 - [ ] `retro` ran and LEARNINGS.md has dated entries from your project.
 - [ ] At least one entry was upstreamed with the script.
-- [ ] A pull request to https://github.com/dalhhorn-ship-it/danfactory exists (or a Discussion proposing it, if you are not ready to code it).
+- [ ] A pull request to https://github.com/dalhhorn-ship-it/danfactory exists (or an Issue proposing it, if you are not ready to code it).
 
 ## Submit as proof
-Issue or Discussion titled `[challenge-7] Giveback - <your handle>` with the PR link, the learning in one paragraph, a dashboard screenshot, and `python3 scripts/dashboard.py --print` output.
+Issue titled `[challenge-7] Giveback - <your handle>` with the PR link, the learning in one paragraph, a dashboard screenshot, and `python3 scripts/dashboard.py --print` output.
 
 ## You finished the ladder
 Collect your badges: Spark, Sprout, Greenhouse, Lift-off, Rescue, Crew, Giveback. Badges are self-reported honour-system fun, not certificates.

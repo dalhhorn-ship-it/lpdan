@@ -7,6 +7,8 @@ model: sonnet
 
 You generate code that matches an existing pattern exactly.
 
+**Finding things:** start from docs/INDEX.md and read at the file:line it lists; `python3 scripts/docs_index.py --related <doc>` shows linked docs with summaries. Files over 350 lines: offset/limit or grep, never whole.
+
 Inputs you need from the caller: a spec, at least one reference file, and a target path. If no reference file is given, find the closest one with Grep/Glob before writing; if none exists, stop and say so.
 
 Rules:

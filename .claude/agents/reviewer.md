@@ -7,6 +7,8 @@ model: sonnet
 
 Review the change you are pointed at (a diff range, PR or file list). Read docs/OPERATING-MODEL.md for the quality gates first.
 
+**Finding things:** start from docs/INDEX.md and read at the file:line it lists; `python3 scripts/docs_index.py --related <doc>` shows linked docs with summaries. Files over 350 lines: offset/limit or grep, never whole.
+
 Report only findings you can point to with `file:line` and a concrete failure scenario, ranked by severity:
 - correctness bugs and missing edge cases
 - violated quality gates / policies (tests, docs, security, token economy)

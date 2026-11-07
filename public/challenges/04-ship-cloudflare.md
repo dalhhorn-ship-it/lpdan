@@ -30,7 +30,7 @@ Use your tested Challenge 3 project. Run `claude`, say **"let's start"**, and as
 - [ ] Tests still pass (`python3 scripts/metrics.py test`) and the dashboard shows the deploy.
 
 ## Submit as proof
-Issue or Discussion titled `[challenge-4] Lift-off - <your game name>` with the live URL, repo link, dashboard screenshot showing deploys, and `python3 scripts/dashboard.py --print` output.
+Issue titled `[challenge-4] Lift-off - <your game name>` with the live URL, repo link, dashboard screenshot showing deploys, and `python3 scripts/dashboard.py --print` output.
 
 ## Next
 Challenge 5: adopt an existing build (`05-adopt.md`).

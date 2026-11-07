@@ -25,18 +25,21 @@
 
 | File | Lines | Summary |
 |---|---:|---|
-| CLAUDE.md | 37 | Always-loaded instructions. Keep short and stable (it is paid every turn). Details live… |
-| docs/BACKLOG.md | 45 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
+| CLAUDE.md | 39 | Always-loaded instructions. Keep short and stable (it is paid every turn). Details live… |
+| docs/BACKLOG.md | 50 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
 | docs/GOAL.md | 59 | Status: confirmed by Dan on 2026-11-06. |
-| docs/OPERATING-MODEL.md | 77 | Approved by Dan on 2026-11-06, with rigor raised to L2. How this project is built:… |
-| docs/TECH-DEBT.md | 14 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
+| docs/OPERATING-MODEL.md | 78 | Approved by Dan on 2026-11-06, with rigor raised to L2. How this project is built:… |
+| docs/TECH-DEBT.md | 18 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
 | docs/decisions/0000-template.md | 15 | Status: proposed \| accepted \| superseded by NNNN · Date: YYYY-MM-DD |
 | docs/decisions/0001-use-danfactory-template.md | 12 | Status: accepted · Date: 2026-11-06 |
 | docs/decisions/0002-static-page-worker-assets-no-build.md | 27 | Status: accepted (Dan, 2026-11-06) · Date: 2026-11-06 |
-| docs/design/ARCHITECTURE.md | 188 | Proposed (awaiting Dan's approval), 2026-11-06. Technical shape of the static landing… — sections: Context:5, File layout:8, CSS architecture:27, Design-token mapping…:39, Responsive type scale and…:58, Section → component mapping:76, Changes needed in the…:97, Accessibility plan (contrast…:111, Performance budget…:125, Content truth:135, Test strategy:141, Deploy:157, Build plan (vertical slices…:166, Risks and open questions:181 |
-| docs/operating-model/AGENT-ROUTING.md | 80 | Which agent gets involved when. The main agent coordinates and decides; subagents are… |
+| docs/decisions/0003-deploy-token-in-github-environments.md | 19 | Status: accepted (Dan asked for the SEC findings to be fixed, 2026-11-07) · Date:… |
+| docs/decisions/0004-prd-approval-gate.md | 16 | Status: accepted · Date: 2026-11-06 |
+| docs/decisions/0005-dashboard-observability-design.md | 43 | Status: accepted · Date: 2026-11-07 |
+| docs/design/ARCHITECTURE.md | 190 | Proposed (awaiting Dan's approval), 2026-11-06. Technical shape of the static landing… — sections: Context:5, File layout:8, CSS architecture:29, Design-token mapping…:41, Responsive type scale and…:60, Section → component mapping:78, Changes needed in the…:99, Accessibility plan (contrast…:113, Performance budget…:127, Content truth:137, Test strategy:143, Deploy:159, Build plan (vertical slices…:168, Risks and open questions:183 |
+| docs/operating-model/AGENT-ROUTING.md | 81 | Which agent gets involved when. The main agent coordinates and decides; subagents are… |
 | docs/operating-model/DECISION-TREE.md | 68 | Picks the operating model for a goal. Version 1.1.0. Keep this file short: details live… |
-| docs/operating-model/LEARNINGS.md | 23 | Append-only log written by `retro`. Each entry tags path(s) and a type; `[upstream]`… |
+| docs/operating-model/LEARNINGS.md | 25 | Append-only log written by `retro`. Each entry tags path(s) and a type; `[upstream]`… |
 | docs/operating-model/paths/adopt-existing.md | 59 | Bringing an existing build (Lovable, Bolt, v0, or any half-finished repo) into… |
 | docs/operating-model/paths/automation-script.md | 25 | Glue code, integrations, scheduled jobs, bots, one-purpose scripts. Default rigor L1. |
 | docs/operating-model/paths/data-spreadsheet.md | 32 | Spreadsheets, financial/data models, workbooks, CSV outputs, generated reports. Default… |
@@ -48,7 +51,14 @@
 | docs/operating-model/paths/software-product.md | 40 | Apps, APIs, services with users. Default rigor L2 (L3 if money/PII/public). Goes live… |
 | docs/policies/async-delivery.md | 23 | The agent's time is the most expensive part of a deploy. Push, hand off, keep working;… |
 | docs/policies/documentation.md | 11 | Docs are part of done. Small, true, linked — and indexed so agents never read more than… |
-| docs/policies/security.md | 20 | Secure defaults always; full audits on request or before L3 releases. |
+| docs/policies/prd-approval.md | 25 | No feature work starts until the product-manager has written a PRD and the user has… |
+| docs/policies/security.md | 21 | Secure defaults always; full audits on request or before L3 releases. |
 | docs/policies/testing-and-metrics.md | 17 | Fast feedback is a feature. Measure test time, coverage, deploys and tokens; act on the… |
-| docs/policies/token-economy.md | 28 | Spend tokens on decisions, not on moving bytes. Adapted from Spotify's `shunt` plugin… |
-| docs/specs/landing-page.md | 232 | Status: confirmed by Dan on 2026-11-06 (see Decisions). Traces to docs/GOAL.md outcome… — sections: Problem statement:5, User story:8, Build constraints:11, Acceptance criteria:14, Non-goals:28, Sections in order (copy below):31, Truth rules for the developer:215, Scope cuts (recommended):219, Decisions (Dan, 2026-11-06):226 |
+| docs/policies/token-economy.md | 31 | Spend tokens on decisions, not on moving bytes. Adapted from Spotify's `shunt` plugin… |
+| docs/reviews/2026-11-07-truth-pass.md | 22 | Delegated by Dan in chat ("launch content review agent … to signoff that work, I wont… |
+| docs/specs/_TEMPLATE.md | 33 | Status: draft \| approved · YYYY-MM-DD · by user in chat \| dropped · Owner:… |
+| docs/specs/agents-index-first.md | 49 | Status: approved · 2026-11-07 · by user in chat · Owner: product-manager · Backlog: M2 /… |
+| docs/specs/dashboard-observability-design.md | 175 | Status: accepted · 2026-11-07 · Owner: software-architect · PRD:… — sections: Module layout:7, Model file:…:34, How each layer is derived:50, SVG diagram (`obs/svg.py`):79, Traceability keys (ADR 0005):88, data.json additions…:105, --print rows (one per tab):110, Empty states (AC2):114, Test strategy:118, Risks and spikes:134, Slice 1 build order (one…:142, Slice 2 as built:165, Slice 3 as built:171 |
+| docs/specs/dashboard-observability-tabs.md | 78 | Status: approved · 2026-11-07 · by user in chat (all three slices; open questions… |
+| docs/specs/landing-latest-features.md | 64 | Status: approved · 2026-11-07 · by user in chat (options: 1A drop both screenshots, 2… |
+| docs/specs/landing-page.md | 233 | Status: confirmed by Dan on 2026-11-06 (see Decisions). Traces to docs/GOAL.md outcome… — sections: Problem statement:5, User story:8, Build constraints:11, Acceptance criteria:14, Non-goals:28, Sections in order (copy below):31, Truth rules for the developer:216, Scope cuts (recommended):220, Decisions (Dan, 2026-11-06):227 |

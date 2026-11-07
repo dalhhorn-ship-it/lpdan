@@ -8,8 +8,14 @@
 <meta property="og:title" content="danfactory — vibe code with Claude, without the wall">
 <meta property="og:description" content="A free, open template for Claude Code projects: guided start, 18 agents, token economy, a traceability dashboard and git deploys to Cloudflare.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://danfactory.dalhhorn.workers.dev/">
+<meta property="og:image" content="https://danfactory.dalhhorn.workers.dev/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="danfactory: Vibe code with Claude. Without the wall.">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0B0B2E">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23E6007E'/%3E%3C/svg%3E">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/archivo-black-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
@@ -232,6 +238,9 @@ figure{margin:0}
 figure img{width:100%;height:auto;display:block;border:2px solid var(--rule)}
 figcaption{color:var(--ink-muted);font-size:var(--fs-small);margin-top:var(--space-4)}
 .real{margin-top:var(--space-12)}
+.demo{display:grid;gap:8px;position:relative;padding:28px;border:2px solid var(--rule);border-left:8px solid var(--magenta);color:var(--ink);text-decoration:none}
+.demo:hover{border-color:var(--cyan);border-left-color:var(--magenta)}
+.demo b{font-size:var(--fs-title);font-weight:800}.demo span{color:var(--ink-muted)}.demo .kicker{margin:0}
 @media (min-width:900px){.dsec{grid-template-columns:1fr 1.2fr;gap:64px}}
 
 .tok{display:grid;grid-template-columns:1fr;gap:var(--space-8);margin-top:var(--space-12)}
@@ -265,6 +274,24 @@ figcaption{color:var(--ink-muted);font-size:var(--fs-small);margin-top:var(--spa
 .final .wrap{position:relative}
 .final .lede{max-width:34ch}
 .final h2{font-size:var(--fs-display);line-height:var(--lh-display);max-width:16ch}
+
+#campaign{border-top:1px solid var(--rule)}
+.ladder{list-style:none;padding:0;margin:var(--space-12) 0 var(--space-8);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:var(--space-8)}
+.ch{display:flex;flex-direction:column}
+.ch .n{font-size:var(--fs-headline-dense)}
+.ch h3{margin-top:6px}
+.ch dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:16px 0 0;font-size:var(--fs-small)}
+.ch dt{font-weight:800;color:var(--cyan);text-transform:uppercase;letter-spacing:.08em}
+.ch dd{margin:0;color:var(--ink-muted)}
+.ch .cta{margin-top:auto;padding-top:var(--space-8);gap:var(--space-3)}
+.sub{margin-top:var(--space-12);max-width:900px}
+.sub ol{padding-left:22px;margin:var(--space-4) 0 0;display:grid;gap:10px;color:var(--ink-muted)}
+.sub ol b{color:var(--ink)}
+.sub .code{margin-top:var(--space-8)}
+.sub .cta{margin-top:var(--space-4)}
+.faq{background:var(--ground-raised);border-left:4px solid var(--magenta);margin-top:12px}
+.faq summary{cursor:pointer;font-weight:800;padding:16px 20px;min-height:44px}
+.faq p{margin:0;padding:0 20px 18px;color:var(--ink-muted)}
 
 .credits{list-style:none;padding:0;margin:40px 0 0;display:grid;grid-template-columns:1fr;border:1px solid var(--rule)}
 .credits li{padding:20px 24px;color:var(--ink-muted);font-size:var(--fs-small);border-bottom:1px solid var(--rule)}
@@ -393,7 +420,7 @@ footer a{color:var(--ink-muted);text-decoration:none}
     <div class="grid g3 phases">
       <div class="card phase"><span class="n">01 · WHY</span><h3>Agree the goal</h3><p>The <code>brainstorm</code> skill talks it through with you until "done" is written down.</p><div class="out">Output: <b>docs/GOAL.md</b></div></div>
       <div class="card phase"><span class="n">02 · HOW</span><h3>Choose how to work</h3><p>The <code>choose-path</code> skill walks a decision tree and a rigor dial, then records why you decided (an ADR: a short decision note).</p><div class="out">Output: <b>docs/OPERATING-MODEL.md</b>, factory.json, ADR</div></div>
-      <div class="card phase"><span class="n">03 · BUILD</span><h3>Build</h3><p>Follow the path playbook with subagents. At milestones, <code>retro</code> and <code>metrics</code> record what you learned.</p><div class="out">Output: code / workbook / document, <b>LEARNINGS.md</b></div></div>
+      <div class="card phase"><span class="n">03 · BUILD</span><h3>Build</h3><p>Every feature starts as a short PRD from the <code>product-manager</code> agent that you approve in chat. No approval, no build. Then follow the path playbook with subagents; at milestones, <code>retro</code> and <code>metrics</code> record what you learned.</p><div class="out">Output: <b>docs/specs/</b> PRDs, code / workbook / document, <b>LEARNINGS.md</b></div></div>
     </div>
     <div class="rigor" role="group" aria-label="Rigor dial">
       <div><b>L0</b><span>Throwaway, just you</span></div>
@@ -401,7 +428,7 @@ footer a{color:var(--ink-muted);text-decoration:none}
       <div><b>L2</b><span>Others depend on it</span></div>
       <div><b>L3</b><span>Money, personal data, public internet</span></div>
     </div>
-    <p class="note">The rigor dial: the highest signal wins. Also on demand: <code>security-audit-run</code> (audit report) and <code>ship</code> (live deploy).</p>
+    <p class="note">The rigor dial: the highest signal wins. Also on demand: <code>security-audit-run</code> (audit report) and <code>ship</code> (live deploy). The deploy token lives in a GitHub <code>production</code> environment limited to <code>main</code>, so pull-request code can't read it.</p>
   </div>
 </section>
 
@@ -463,7 +490,8 @@ footer a{color:var(--ink-muted);text-decoration:none}
           <li><b>Backlog</b><span>Read straight from <code>docs/BACKLOG.md</code>: todo, doing, blocked, done.</span></li>
           <li><b>Tech debt</b><span>Shortcuts you chose on purpose, from <code>docs/TECH-DEBT.md</code>, plus automatic signals like TODO markers and oversized files.</span></li>
           <li><b>Key metrics</b><span>Tests, coverage, deploys and tokens, with alerts when a budget is breached.</span></li>
-          <li><b>Roadmap tab</b><span>Your proposed sequence as two swimlanes, user value vs technical foundation, so you see if you're only shipping features and neglecting the base.</span></li>
+          <li><b>Roadmap tab</b><span>One numbered build order across two swimlanes, user value vs technical foundation, so you see if you're only shipping features and neglecting the base. A <i>Next up</i> strip shows the first three, each milestone says why it's in that order, finished milestones fold away, and items linked to a PRD show a draft or approved badge.</span></li>
+          <li><b>Re-planned after every slice</b><span>The <code>product-manager</code> agent re-proposes the order after each finished piece of work, then the dashboard is rebuilt.</span></li>
         </ul>
         <div class="trace" role="group" aria-label="Traceability chain"><span>goal</span><i aria-hidden="true"></i><span>backlog</span><i aria-hidden="true"></i><span>tests</span><i aria-hidden="true"></i><span>deploy</span><i aria-hidden="true"></i><span>metrics</span></div>
         <p class="note">All in plain files in git. CI rebuilds it on every push and uploads it as an artifact.</p>
@@ -475,10 +503,12 @@ footer a{color:var(--ink-muted);text-decoration:none}
       </div>
     </div>
     <div class="real">
-      <figure>
-        <img src="img/dashboard-overview.webp" width="2400" height="1600" loading="lazy" alt="Screenshot of the real danfactory dashboard for this landing page on day one: brainstorm phase, 0% progress, 20 open backlog items across milestones M0, M1 and M2, no tech debt.">
-        <figcaption>Dashboard of this landing page, generated by <code>scripts/dashboard.py</code> on its first commit.</figcaption>
-      </figure>
+      <a class="demo" href="dashboard/">
+        <span class="kicker">Try it</span>
+        <b>Open this site's own dashboard &gt;</b>
+        <span>Click through every tab: Overview, Roadmap, Deploy and Security, plus the observability views for architecture, traceability, decisions, gates, docs health, flow, delivery, cost and hotspots. A real snapshot, red numbers included. No JavaScript.</span>
+      </a>
+      <p class="note">Generated by <code>scripts/dashboard.py</code> from this landing page's own repo. Deploy and Security are this site's own tabs; the observability tabs come from a danfactory branch that isn't merged into the template yet.</p>
     </div>
   </div>
 </section>
@@ -491,7 +521,7 @@ footer a{color:var(--ink-muted);text-decoration:none}
     <p class="lede">Short contexts, cheap helpers, and a guard that stops Claude loading giant files. <em>Context</em> = what Claude can see right now. <em>Compacting</em> = summarising it to make room.</p>
     <div class="tok">
       <div class="stat"><b>350</b><p>A hook blocks whole reads of files over 350 lines unless a slice is requested. Read the docs index first, then only the lines you need.</p></div>
-      <div class="stat"><b>120k</b><p>Past 120k tokens of context, a nudge appears. The <code>handoff</code> skill writes a short note, you <code>/clear</code>, and the note reloads automatically.</p></div>
+      <div class="stat"><b>120k</b><p>Past 120k tokens of context, a nudge appears. The <code>handoff</code> skill writes a note of 40 lines or fewer, you <code>/clear</code>, and the note reloads automatically. A snapshot is saved before any compaction.</p></div>
       <div class="stat"><b>Haiku</b><p>Big reads, test logs and deploy watching go to cheap helpers. Tokens per session are recorded with a weighted budget, so you see real cost.</p></div>
     </div>
     <p class="aside"><b>Why short contexts?</b> NVIDIA's "You don't need long context" kept agents within about 2 points of full history by compacting often; in one setting, 70.2% vs 70.0% on SWE-bench Verified with Claude Opus 4.5. That's one reported setting, not a promise for your project.</p>
@@ -505,7 +535,7 @@ footer a{color:var(--ink-muted);text-decoration:none}
     <h2>7 habits that make vibe coding last</h2>
     <p class="lede">Good habits first. The template makes them the default, so you don't have to remember them.</p>
     <ol class="habits">
-      <li><b>Agree a goal first.</b><span>Write what "done" means before any code.</span><small>brainstorm, GOAL.md · no code until it's confirmed</small></li>
+      <li><b>Agree a goal first.</b><span>Write what "done" means before any code.</span><small>brainstorm, GOAL.md · no code until it's confirmed · then a PRD you approve per feature</small></li>
       <li><b>Pick an operating model.</b><span>A prototype and a payment app need different care.</span><small>choose-path · rigor dial L0–L3</small></li>
       <li><b>Keep contexts short, hand off often.</b><span>One task per session. Save a note, /clear, continue.</span><small>handoff · context-watch hook</small></li>
       <li><b>Delegate big reads.</b><span>Don't make the smart model read logs.</span><small>bulk-reader · test-runner · file-size guard</small></li>
@@ -513,6 +543,68 @@ footer a{color:var(--ink-muted);text-decoration:none}
       <li><b>Push and keep going.</b><span>A push is the deploy; a background watcher reports back, with bounded waits.</span><small>ship · deploy-watcher · async-delivery policy</small></li>
       <li><b>Retro, and feed learnings back.</b><span>At milestones write down what worked, tag shared lessons <code>[upstream]</code>, and send them to the template, so the next project starts smarter.</span><small>retro · upstream_learnings.py</small></li>
     </ol>
+  </div>
+</section>
+
+<!-- 9b campaign -->
+<section id="campaign">
+  <div class="wrap">
+    <p class="kicker">Campaign</p>
+    <h2>Learn by shipping: the Vibe Ladder</h2>
+    <p class="lede">Seven small challenges, from "does my laptop work?" to "I improved the template". Each one teaches a skill, each one is done with danfactory, and you prove it with your own dashboard.</p>
+    <p class="note">Free, for fun, honour system. No signup, no leaderboard service, no prizes promised.</p>
+    <ol class="ladder">
+      <li class="card ch"><span class="n">Level 1</span><h3>Set up: git + Claude Code + danfactory</h3><p>Get your tools working and see your first dashboard.</p>
+        <dl><dt>Time</dt><dd>30-45 min</dd><dt>Skills</dt><dd>terminal, git, starting Claude Code</dd><dt>Badge</dt><dd>Spark</dd></dl>
+        <div class="cta"><a class="btn p s" href="challenges/01-setup.md">Read the challenge</a><a class="btn g s" href="challenges/01-setup.md" download>Download .md</a></div></li>
+      <li class="card ch"><span class="n">Level 2</span><h3>Your first farm game</h3><p>Plant, grow, harvest, earn coins in a small original 3D world, running on localhost. Includes a ready-made brief that seeds your goal.</p>
+        <dl><dt>Time</dt><dd>2-3 h</dd><dt>Skills</dt><dd>briefing, goal setting, small builds</dd><dt>Badge</dt><dd>Sprout</dd></dl>
+        <div class="cta"><a class="btn p s" href="challenges/02-farm-game.md">Read the challenge</a><a class="btn g s" href="challenges/02-farm-game.md" download>Download .md</a></div></li>
+      <li class="card ch"><span class="n">Level 3</span><h3>Tests and a green dashboard</h3><p>Test the game rules and get tests and coverage on the dashboard. Localhost.</p>
+        <dl><dt>Time</dt><dd>1-2 h</dd><dt>Skills</dt><dd>testing, TDD, metrics</dd><dt>Badge</dt><dd>Greenhouse</dd></dl>
+        <div class="cta"><a class="btn p s" href="challenges/03-tests-green.md">Read the challenge</a><a class="btn g s" href="challenges/03-tests-green.md" download>Download .md</a></div></li>
+      <li class="card ch"><span class="n">Level 4</span><h3>Ship to Cloudflare via git</h3><p>Push is the deploy; a background watcher reports.</p>
+        <dl><dt>Time</dt><dd>1-2 h</dd><dt>Skills</dt><dd>deploys, not waiting</dd><dt>Badge</dt><dd>Lift-off</dd></dl>
+        <div class="cta"><a class="btn p s" href="challenges/04-ship-cloudflare.md">Read the challenge</a><a class="btn g s" href="challenges/04-ship-cloudflare.md" download>Download .md</a></div></li>
+      <li class="card ch"><span class="n">Level 5</span><h3>Adopt an existing build</h3><p>Bring a Lovable, Bolt or v0 project (or any repo) under danfactory with <code>/danfactory:adopt</code>.</p>
+        <dl><dt>Time</dt><dd>1-2 h</dd><dt>Skills</dt><dd>reading an audit, backlog and tech debt</dd><dt>Badge</dt><dd>Rescue</dd></dl>
+        <div class="cta"><a class="btn p s" href="challenges/05-adopt.md">Read the challenge</a><a class="btn g s" href="challenges/05-adopt.md" download>Download .md</a></div></li>
+      <li class="card ch"><span class="n">Level 6</span><h3>A feature with a verification team</h3><p>One L2 feature with spec, reviewer, validator, karen and jenny.</p>
+        <dl><dt>Time</dt><dd>2-4 h</dd><dt>Skills</dt><dd>specs, delegation, verification</dd><dt>Badge</dt><dd>Crew</dd></dl>
+        <div class="cta"><a class="btn p s" href="challenges/06-verified-feature.md">Read the challenge</a><a class="btn g s" href="challenges/06-verified-feature.md" download>Download .md</a></div></li>
+      <li class="card ch"><span class="n">Level 7</span><h3>Retro and give back</h3><p>Run a retro and send an <code>[upstream]</code> learning to the template.</p>
+        <dl><dt>Time</dt><dd>1 h</dd><dt>Skills</dt><dd>retros, open-source contribution</dd><dt>Badge</dt><dd>Giveback</dd></dl>
+        <div class="cta"><a class="btn p s" href="challenges/07-retro-upstream.md">Read the challenge</a><a class="btn g s" href="challenges/07-retro-upstream.md" download>Download .md</a></div></li>
+    </ol>
+    <p class="note">Challenges 1 to 3 run on localhost (for example <code>python3 -m http.server 8000</code> in your game folder, then open http://localhost:8000). Cloudflare comes in challenge 4.</p>
+    <div class="sub">
+      <h3>Show your work, honestly</h3>
+      <ol>
+        <li><b>Do the challenge</b> with danfactory.</li>
+        <li><b>Open a GitHub Issue</b> on dalhhorn-ship-it/danfactory titled <code>[challenge-N] &lt;name&gt; - &lt;your project&gt;</code>.</li>
+        <li><b>Include</b> a repo link, a dashboard screenshot, and the output of the command below (that is the <code>dashboard/SUMMARY.md</code> table).</li>
+      </ol>
+      <div class="code"><span class="lbl">your proof</span><pre tabindex="0" aria-label="Command: your proof">python3 scripts/dashboard.py --print</pre><button class="copy" type="button" aria-label="Copy command" data-copy="python3 scripts/dashboard.py --print">copy</button></div>
+      <p class="note">Optional fun scoring, self-reported: one badge per challenge, plus bonus points for green tests, coverage at or above the budget, and low weighted tokens per session (from <code>python3 scripts/metrics.py report</code>). Everything is self-reported. The dashboard is your receipt, not a lie detector.</p>
+      <div class="cta"><a class="btn g" href="https://github.com/dalhhorn-ship-it/danfactory/issues">Open the challenge board on GitHub</a></div>
+    </div>
+    <div class="sub">
+      <h3>Stuck? Ask in public</h3>
+      <p class="lede">No phone, no email. Open an Issue at <a href="https://github.com/dalhhorn-ship-it/danfactory/issues">github.com/dalhhorn-ship-it/danfactory/issues</a> titled <code>[challenge-N] help: &lt;problem&gt;</code> with your operating system, the command, and the exact error.</p>
+    </div>
+    <div class="sub">
+      <h3>Common snags</h3>
+      <div class="faqs">
+      <details class="faq"><summary><code>git: command not found</code></summary><p>Install git from the official git site (git-scm.com) or your system's package manager, then open a new terminal.</p></details>
+      <details class="faq"><summary><code>python3: command not found</code></summary><p>Install Python 3 from the official Python site (python.org) or your package manager. On some systems the command is <code>python</code>; check with <code>python --version</code>. The template needs python3 only (standard library, no pip installs).</p></details>
+      <details class="faq"><summary>Claude Code won't start or asks to log in</summary><p>Run <code>claude</code> and follow the login prompt. Follow the official Claude Code docs for install and account requirements; they change, so we do not copy them here.</p></details>
+      <details class="faq"><summary>I'm on Windows</summary><p>The template's scripts are bash scripts. Using WSL (Windows Subsystem for Linux) is the simplest route; see Microsoft's WSL docs and the official Claude Code docs for Windows notes. Do the whole challenge inside the WSL terminal.</p></details>
+      <details class="faq"><summary><code>bootstrap.sh: Permission denied</code></summary><p>Run it through bash as written: <code>bash scripts/bootstrap.sh ...</code>. That does not need the executable bit.</p></details>
+      <details class="faq"><summary>Where is the dashboard?</summary><p><code>dashboard/index.html</code> in your project. <code>python3 scripts/dashboard.py --open</code> builds and opens it. The text version is <code>dashboard/SUMMARY.md</code>.</p></details>
+      <details class="faq"><summary><code>git init</code> complains or I lost the template history</summary><p>That is expected: <code>rm -rf .git &amp;&amp; git init</code> starts your own history on purpose.</p></details>
+      <details class="faq"><summary>Claude doesn't mention a phase</summary><p>Make sure you started <code>claude</code> inside the project folder, and say "let's start".</p></details>
+      </div>
+    </div>
   </div>
 </section>
 

@@ -103,7 +103,8 @@ Brand: "danfactory". Links: Why, Flow, Dashboard, Habits, Start. Button: "GitHub
 - Code: `python3 scripts/dashboard.py --open   # build + open the project dashboard`
 - Cheap text version: `python3 scripts/dashboard.py --print`
 - Tip: `--print` gives a cheap text status, handy for agents. (source: CLAUDE.md)
-- Developer note: use a real screenshot of a generated dashboard (run the script on a sample project) or a faithful mock captioned "Example dashboard". Do not show invented real-project numbers without the caption.
+- Update 2026-11-07 (docs/specs/landing-latest-features.md, approved): the screenshots are replaced by a clickable snapshot at /dashboard/ (scripts/site_dashboard.py); the Roadmap bullet covers the global sequence, Next up, why-lines, folded milestones and PRD badges.
+- Developer note (original): use a real screenshot of a generated dashboard (run the script on a sample project) or a faithful mock captioned "Example dashboard". Do not show invented real-project numbers without the caption.
 
 ### 8. Token economy and short contexts
 - Headline: Spend tokens on decisions, not on moving bytes

@@ -48,7 +48,7 @@ bash scripts/bootstrap.sh "my-project" "one line description"   # flags: --codeg
 - [ ] The game still plays as in Challenge 2.
 
 ## Submit as proof
-Issue or Discussion titled `[challenge-3] Greenhouse - <your game name>` with repo link, dashboard screenshot (tests and coverage visible), and the `python3 scripts/dashboard.py --print` output.
+Issue titled `[challenge-3] Greenhouse - <your game name>` with repo link, dashboard screenshot (tests and coverage visible), and the `python3 scripts/dashboard.py --print` output.
 
 Optional self-reported bonus: coverage above the budget; weighted tokens for the session below the budget (see `metrics.py report`).
 

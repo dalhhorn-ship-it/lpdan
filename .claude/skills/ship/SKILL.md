@@ -21,7 +21,7 @@ description: Take software live on Cloudflare via git, without waiting on it. Pu
      - **Build watch paths**: include `src/**`, `public/**`, `package.json`, `package-lock.json`, `wrangler.jsonc`; exclude `docs/**`, `**/*.md`, `metrics/**` (docs-only pushes don't build)
      - **Build cache**: on
      - Tests: GitHub CI runs them on the PR; make that check required in branch protection for `main`.
-   - **B. GitHub Actions: fully automatic, the default for new projects.** Run `python3 scripts/cf_scaffold.py` (or bootstrap with `--cloudflare`). It writes `wrangler.jsonc`, `worker/index.ts` (with `/version` and `/health`) and the workflow, and fills factory.json. The user adds repo secret `CLOUDFLARE_API_TOKEN` (and optionally `CLOUDFLARE_ACCOUNT_ID`, which must not be a Zone ID; see docs/policies/security.md) and marks `test` as required for `main`. **The first merge to main creates the Worker**; no dashboard step. PR previews work from then on.
+   - **B. GitHub Actions: fully automatic, the default for new projects.** Run `python3 scripts/cf_scaffold.py` (or bootstrap with `--cloudflare`). It writes `wrangler.jsonc`, `worker/index.ts` (with `/version` and `/health`) and the workflow, and fills factory.json. The user adds `CLOUDFLARE_API_TOKEN` as a secret of the GitHub environment `production` restricted to `main` (never a repo-level secret: PR jobs could read it), optionally a separate preview token in environment `preview` (and optionally `CLOUDFLARE_ACCOUNT_ID`, which must not be a Zone ID; see docs/policies/security.md) and marks `test` as required for `main`. **The first merge to main creates the Worker**; no dashboard step. PR previews work from then on.
 4. Fill `factory.json` → `integrations.deploy` (`product`, `project_name`, `production_url`, `worker_name`, `workers_subdomain`), `commands.build`, `commands.lint`, `commands.test_affected`. Leave `commands.deploy` empty (git is the deploy).
 5. Speed basics: commit the lockfile, `npm ci`, keep dev tooling out of the production build, let wrangler bundle (esbuild). Target `budgets.deploy_seconds` (180s push-to-live).
 6. Secrets: `wrangler secret put NAME` or the dashboard; local `.dev.vars` (git-ignored). Never in `wrangler.jsonc`, docs or chat.
@@ -29,7 +29,8 @@ description: Take software live on Cloudflare via git, without waiting on it. Pu
 ## 2. Every change
 
 1. Inner loop: affected tests via `test-runner` (`metrics.py test --affected`). The pre-push hook runs lint + affected tests, capped at 2× `affected_test_seconds`; don't bypass it with `--no-verify`.
-2. Push the branch with the push time captured, then hand off and keep working:
+2. Commit messages carry a `Refs: <ITEM-ID>` trailer (backlog item ID, e.g. `Refs: OBS-1`; PRD slug if none) so the dashboard's Traceability tab can link commits to items.
+   Push the branch with the push time captured, then hand off and keep working:
    ```bash
    PUSHED_AT=$(date +%s); git push -u origin HEAD && echo "pushed_at=$PUSHED_AT sha=$(git rev-parse --short HEAD)"
    ```

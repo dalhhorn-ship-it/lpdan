@@ -41,7 +41,7 @@ Template clone, `scripts/bootstrap.sh`, the SessionStart hook ("which phase am I
 - [ ] The dashboard opens in your browser (file: `dashboard/index.html`).
 
 ## Submit as proof
-Open a GitHub Issue (or Discussion if enabled) on https://github.com/dalhhorn-ship-it/danfactory titled `[challenge-1] Spark - <your name or handle>` with:
+Open a GitHub Issue on https://github.com/dalhhorn-ship-it/danfactory titled `[challenge-1] Spark - <your name or handle>` with:
 1. Link to your project repo (public) or say it stays local.
 2. Screenshot of the dashboard.
 3. The output of `python3 scripts/dashboard.py --print` pasted in a code block.

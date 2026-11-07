@@ -82,6 +82,15 @@ class BashPolicy(unittest.TestCase):
                     "git push origin main --no-verify", "git commit -n -m x"):
             self.assertEqual(self.check(cmd), 2, cmd)
 
+    def test_blocks_wrapped_and_alternative_deploys(self):  # SEC-003
+        w = "wrangler " + "deploy"
+        for cmd in ('bash -c "npx %s"' % w, "sh -c 'npx %s'" % w, 'eval "npx %s"' % w,
+                    'echo "npx %s" | sh' % w, "bash <<EOF\nnpx %s\nEOF" % w, "cat <<EOF | bash\nnpx %s\nEOF" % w,
+                    "npx wrangler versions " + "deploy", "npx wrangler@4 " + "deploy", 'bash -lc "git push --no-verify"'):
+            self.assertEqual(self.check(cmd), 2, cmd)
+        for cmd in ("npx wrangler versions upload", 'bash -c "npx %s --dry-run"' % w):
+            self.assertEqual(self.check(cmd), 0, cmd)
+
     def test_ignores_text_being_written(self):
         w = "wrangler " + "deploy"
         self.assertEqual(self.check("cat > notes.md <<'EOF'\nnever run npx %s\nEOF" % w), 0)
@@ -127,6 +136,30 @@ class RecordTokens(unittest.TestCase):
         before = os.path.exists(os.path.join(ROOT, "metrics", "tokens.jsonl"))
         hook("record_tokens.py", {"transcript_path": main_t, "session_id": "x"})
         self.assertEqual(os.path.exists(os.path.join(ROOT, "metrics", "tokens.jsonl")), before)
+
+    def test_session_shas_window_and_git_failure(self):
+        sys.path.insert(0, HOOKS)
+        import datetime
+        import record_tokens
+        tmp = tempfile.mkdtemp()
+        tp = os.path.join(tmp, "t.jsonl")
+        with open(tp, "w") as fh:
+            fh.write(json.dumps({"timestamp": "2026-11-07T10:00:00Z"}) + "\n")
+            fh.write(json.dumps({"timestamp": "2026-11-07T09:00:00Z"}) + "\n")
+            fh.write("junk\n")
+        self.assertEqual(record_tokens.first_timestamp(tp),
+                         datetime.datetime(2026, 11, 7, 9, 0, tzinfo=datetime.timezone.utc))
+        end = datetime.datetime.now(datetime.timezone.utc)
+        self.assertIsInstance(record_tokens.session_shas(tp, end), list)
+        empty = os.path.join(tmp, "e.jsonl")
+        open(empty, "w").close()
+        self.assertEqual(record_tokens.session_shas(empty, end), [])
+        old = record_tokens.ROOT
+        record_tokens.ROOT = os.path.join(tmp, "missing")  # git cannot run there
+        try:
+            self.assertEqual(record_tokens.session_shas(tp, end), [])
+        finally:
+            record_tokens.ROOT = old
 
     def test_dedupes_and_sums(self):
         tmp = tempfile.mkdtemp()
@@ -205,10 +238,11 @@ class Dashboard(unittest.TestCase):
 
     def test_roadmap_swimlanes_and_sequence(self):
         ms = self.d.parse_backlog("""## Milestone: M1
+> Sequence: riskiest first, then polish
 - [x] Login works #value
 - [ ] Set up CI (S) #ci
 - [-] Dropped idea
-- [ ] Share a list
+- [ ] Share a list AC: can share via link
 ## Milestone: M2
 - [~] Split storage layer #arch
 - [ ] Export to CSV #feature
@@ -217,16 +251,59 @@ class Dashboard(unittest.TestCase):
         rm = self.d.roadmap(ms, debt)
         cols = rm["columns"]
         self.assertEqual([c["name"] for c in cols], ["M1", "M2", "Tech debt to schedule"])
+        self.assertEqual((cols[0]["sequence"], cols[1]["sequence"]), ("riskiest first, then polish", ""))  # AC1
         lane = lambda i, k: [(x["title"], x["seq"]) for x in cols[i]["lanes"][k]]
-        self.assertEqual(lane(0, "value"), [("Share a list", 2), ("Login works", None)])
+        # AC2/AC8: one global number in file order, open cards first, done ones trail
+        self.assertEqual(lane(0, "value"), [("Share a list AC: can share via link", 2), ("Login works", None)])
         self.assertEqual(lane(0, "foundation"), [("Set up CI", 1)])
         self.assertEqual(lane(1, "foundation"), [("Split storage layer", 3)])
         self.assertEqual(lane(1, "value"), [("Export to CSV", 4)])
-        self.assertEqual(lane(2, "foundation"), [("TD-001 No retries", 5)])
+        self.assertEqual(lane(2, "foundation"), [("TD-001 No retries", 5)])  # AC3: debt continues the sequence
         self.assertEqual(rm["open"], {"value": 2, "foundation": 3})
+        # AC6/AC7: next up = three lowest numbers, short title cut before " AC:"
+        self.assertEqual([(x["seq"], x["short"], x["lane"]) for x in rm["next"]],
+                         [(1, "Set up CI", "foundation"), (2, "Share a list", "value"), (3, "Split storage layer", "foundation")])
         html = self.d.render_roadmap(rm)
-        self.assertIn("Technical foundation", html)
-        self.assertIn("Value-driven features", html)
+        for text in ("Technical foundation", "Value-driven features", "Next up", "riskiest first, then polish"):
+            self.assertIn(text, html)
+        self.assertNotIn("<script", html)  # AC12
+
+    def test_roadmap_done_collapse_and_empty_states(self):
+        ms = self.d.parse_backlog("""## Milestone: M0 — Setup
+- [x] a
+- [-] dropped does not block done
+## Milestone: M1
+- [ ] b <i>
+""")
+        rm = self.d.roadmap(ms, [])
+        self.assertEqual(rm["done"], [{"name": "M0 — Setup", "done": 1, "total": 1}])  # AC4
+        self.assertEqual([c["name"] for c in rm["columns"]], ["M1"])
+        self.assertEqual(len(rm["next"]), 1)  # AC6: fewer than three
+        html = self.d.render_roadmap(rm)
+        self.assertIn("Done: M0 — Setup (1/1)", html)
+        self.assertIn("b &lt;i&gt;", html)  # AC12: escaped
+        all_done = self.d.roadmap(self.d.parse_backlog("## Milestone: M0\n- [x] a\n"), [])
+        self.assertEqual((all_done["columns"], all_done["next"]), ([], []))  # AC5, AC6 (none)
+        html = self.d.render_roadmap(all_done)
+        self.assertIn("Everything planned is done", html)
+        self.assertNotIn("Next up", html)
+
+    def test_roadmap_prd_badge(self):
+        import tempfile
+        rel = "docs/specs/_test-badge-%d.md" % os.getpid()
+        path = os.path.join(ROOT, rel)
+        try:
+            with open(path, "w") as fh:
+                fh.write("# PRD\n\n> Status: approved · 2026-11-07 · by user in chat\n")
+            ms = self.d.parse_backlog("## Milestone: M1\n- [ ] Linked item (%s) (S)\n- [ ] [Linked text](docs/specs/missing.md)\n- [ ] Plain\n" % rel)
+            items = ms[0]["items"]
+            self.assertEqual([(i["title"], i["spec"]) for i in items],
+                             [("Linked item", rel), ("Linked text", "docs/specs/missing.md"), ("Plain", "")])
+            cards = self.d.roadmap(ms, [])["columns"][0]["lanes"]["value"]
+            self.assertEqual([c["prd"] for c in cards], ["approved", "", ""])  # AC9: missing file -> no badge
+            self.assertIn("PRD approved", self.d.render_roadmap(self.d.roadmap(ms, [])))
+        finally:
+            os.remove(path)
 
     def test_build_writes_artefacts(self):
         d = self.d.build()
@@ -238,6 +315,17 @@ class Dashboard(unittest.TestCase):
         self.assertIn("progress", d)
         self.assertIn("roadmap", d)
         self.assertIn('id="tab-roadmap"', page)
+        for tab in ("architecture", "traceability", "decisions", "gates", "docs", "flow", "cost", "hotspots"):
+            self.assertIn('id="tab-%s"' % tab, page)
+            self.assertIn(tab, d)
+        self.assertIn("layers", d["architecture"])
+        self.assertIn("chains", d["traceability"])
+        self.assertIn("adrs", d["decisions"])
+        self.assertIn("deps", d["gates"])
+        self.assertIn("orphans", d["docs"])
+        self.assertIn("unattributed", d["cost"])
+        self.assertIn("deploys", d["flow"])
+        self.assertIn("files", d["hotspots"])
 
 
 class AsyncDelivery(unittest.TestCase):
@@ -372,6 +460,60 @@ class Adopt(unittest.TestCase):
         self.assertEqual(chk.returncode, 0, chk.stdout[-800:] + chk.stderr[-800:])
 
 
+
+class AdoptSymlinks(unittest.TestCase):
+    def _sym_repo(self, files, links):
+        d = tempfile.mkdtemp()
+        out = tempfile.mkdtemp()
+        for rel, body in files.items():
+            os.makedirs(os.path.dirname(os.path.join(d, rel)) or d, exist_ok=True)
+            with open(os.path.join(d, rel), "w") as fh:
+                fh.write(body)
+        for rel, dest in links.items():
+            os.makedirs(os.path.dirname(os.path.join(d, rel)) or d, exist_ok=True)
+            os.symlink(dest.replace("OUT", out), os.path.join(d, rel))
+        subprocess.run(["git", "init", "-q"], cwd=d, check=True)
+        return d, out
+
+    def test_scan_refuses_symlinked_report_and_sanitises_name(self):
+        d, out = self._sym_repo({"package.json": json.dumps({"name": "x\nINJECT"})},
+                                {"docs/ADOPTION-REPORT.md": "OUT/victim.txt"})
+        victim = os.path.join(out, "victim.txt")
+        with open(victim, "w") as fh:
+            fh.write("precious")
+        scan = [sys.executable, os.path.join(ROOT, "scripts", "adopt_scan.py"), "--target", d]
+        r = subprocess.run(scan, capture_output=True, text=True)
+        self.assertIn("symlink refused", r.stderr)
+        self.assertEqual(open(victim).read(), "precious")
+        for bad in ("../x", "/tmp/x"):
+            r = subprocess.run(scan + ["--out", bad], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 2, bad)
+        r = subprocess.run(scan + ["--print"], capture_output=True, text=True)
+        lines = r.stdout.splitlines()
+        self.assertEqual(lines[0], "# Adoption report: x INJECT")
+        self.assertNotIn("INJECT", lines[1:2])
+
+    def test_apply_refuses_symlinks(self):
+        d, out = self._sym_repo({}, {".githooks": "OUT/keys", ".claude/settings.json": "OUT/outside.json",
+                                     "docs/GOAL.md": "OUT/dangling", "scripts": "OUT/scr"})
+        keys, outside = os.path.join(out, "keys"), os.path.join(out, "outside.json")
+        os.makedirs(os.path.join(out, "scr"))
+        with open(keys, "w") as fh:
+            fh.write("secret")
+        os.chmod(keys, 0o600)
+        with open(outside, "w") as fh:
+            fh.write("{}")
+        r = subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "adopt.py"), "--target", d, "--apply"],
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("symlink refused", r.stdout)
+        self.assertEqual(open(keys).read(), "secret")
+        self.assertEqual(os.stat(keys).st_mode & 0o777, 0o600)
+        self.assertEqual(open(outside).read(), "{}")
+        self.assertFalse(os.path.exists(os.path.join(out, "dangling")))
+        self.assertEqual(os.listdir(os.path.join(out, "scr")), [])
+
+
 class ShortContexts(unittest.TestCase):
     def transcript(self, ctx_tokens):
         path = os.path.join(tempfile.mkdtemp(), "t.jsonl")
@@ -389,7 +531,11 @@ class ShortContexts(unittest.TestCase):
         self.assertEqual(hook("context_watch.py", big).stdout, "")  # same band: no nagging
         small = {"transcript_path": self.transcript(30000), "session_id": sid + "x"}
         self.assertEqual(hook("context_watch.py", small).stdout, "")
-        os.remove(os.path.join(tempfile.gettempdir(), "danfactory-ctx-%s" % sid))
+        sdir = os.path.join(tempfile.gettempdir(), "danfactory-%d" % (os.getuid() if hasattr(os, "getuid") else 0))
+        for s in (sid, sid + "x"):
+            p = os.path.join(sdir, "ctx-%s" % s)
+            if os.path.exists(p):
+                os.remove(p)
 
     def test_pre_compact_snapshot_and_session_reload(self):
         d = os.path.join(tempfile.mkdtemp(), "proj")
@@ -453,6 +599,11 @@ class CloudflareScaffold(unittest.TestCase):
 
 
 class Config(unittest.TestCase):
+    def test_prd_gate_is_wired(self):
+        self.assertTrue(os.path.isfile(os.path.join(ROOT, "docs/specs/_TEMPLATE.md")))
+        for path in ("CLAUDE.md", ".claude/agents/developer.md", "docs/operating-model/AGENT-ROUTING.md"):
+            self.assertIn("prd-approval.md", open(os.path.join(ROOT, path), encoding="utf-8").read(), path)
+
     def test_settings_reference_existing_hooks(self):
         s = json.load(open(os.path.join(ROOT, ".claude", "settings.json")))
         for groups in s["hooks"].values():

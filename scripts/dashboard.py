@@ -5,11 +5,16 @@
   python3 scripts/dashboard.py --open     # ...and open it in a browser
   python3 scripts/dashboard.py --print    # print SUMMARY.md (cheap status for agents)
 
+In template mode (origin = factory.json template.source_repo, see README) it shows "Template maintenance"
+(open tech debt, then Unplanned backlog items) instead of phase and progress.
+
 Sources (all in the repo, so every build can regenerate it):
   factory.json, docs/BACKLOG.md, docs/TECH-DEBT.md, metrics/*.jsonl, git tags/log,
   plus automated debt signals (TODO/FIXME markers, oversized files, codegraph import cycles).
-Output is a self-contained HTML file (no JS, no network) with two tabs: Overview and Roadmap
-(two swimlanes, value vs technical foundation, in proposed sequence). dashboard/ is git-ignored;
+Output is a self-contained HTML file (no JS, no network) with tabs: Overview, Roadmap
+(two swimlanes, value vs technical foundation, in proposed sequence), Deploy (live links, deploy history), Security
+(latest audit from docs/security/latest.json; summaries only, never payloads or secrets), and the observability tabs
+from scripts/obs/ (Architecture, Traceability, Decisions, Gates, Docs health, Flow, Cost, Hotspots). dashboard/ is git-ignored;
 CI uploads it as a build artifact and writes SUMMARY.md to the job summary.
 """
 import argparse
@@ -27,13 +32,26 @@ import webbrowser
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import metrics  # noqa: E402
+sys.path.insert(0, os.path.join(ROOT, ".claude", "hooks"))
+from _common import template_mode  # noqa: E402
+from obs import (tab_architecture, tab_cost, tab_decisions, tab_delivery, tab_docs, tab_flow, tab_gates, tab_hotspots,  # noqa: E402
+                 tab_traceability)
 
 OUT = os.path.join(ROOT, "dashboard")
+# (key, label, module|None): None = built into this file. Tab inputs, labels and CSS selectors are generated from it.
+TABS = (("overview", "Overview", None), ("roadmap", "Roadmap", None), ("deploy", "Deploy", None), ("security", "Security", None),
+        ("architecture", "Architecture", tab_architecture), ("traceability", "Traceability", tab_traceability),
+        ("decisions", "Decisions", tab_decisions), ("gates", "Gates", tab_gates), ("docs", "Docs health", tab_docs),
+        ("flow", "Flow", tab_flow), ("delivery", "Delivery", tab_delivery),
+        ("cost", "Cost", tab_cost), ("hotspots", "Hotspots", tab_hotspots))
 PHASES = ["brainstorm", "operating-model", "build"]
 STATES = {" ": "todo", "~": "doing", "x": "done", "X": "done", "!": "blocked", "-": "dropped"}
 ITEM_RE = re.compile(r"^\s*[-*]\s+\[(.)\]\s+(.*)$")
 MILESTONE_RE = re.compile(r"^##\s+(?:Milestone:\s*)?(.+?)\s*(?:\(target:\s*([0-9-]*)\s*\))?\s*$")
 DEBT_RE = re.compile(r"^\s*[-*]\s+\[(.)\]\s+(TD-\d+)\s+(.*?)(?:\s+[—-]\s+(.*))?$")
+SEQUENCE_RE = re.compile(r"^>\s*Sequence:\s*(.+)$")
+SPEC_RE = re.compile(r"docs/specs/[\w.-]+\.md")
+NEXT_UP = 3
 MARKER_RE = r"\b(TODO|FIXME|HACK|XXX)\b"
 SKIP_DIRS = ("docs/", ".claude/", ".factory/", "dashboard/", "metrics/", "templates/",
              "scripts/dashboard.py", "README.md", "CLAUDE.md")
@@ -76,19 +94,24 @@ def parse_backlog(text):
             current = {"name": m.group(1).strip(), "target": m.group(2) or "", "items": [], "sequence": ""}
             milestones.append(current)
             continue
-        sm = re.match(r">\s*Sequence:\s*(.+)", line)
+        sm = SEQUENCE_RE.match(line)
         if sm and current is not None and not current["sequence"]:
             current["sequence"] = sm.group(1).strip()
             continue
         im = ITEM_RE.match(line)
         if im and current is not None:
             title = im.group(2).strip()
+            spec = SPEC_RE.search(title)
+            # "[text](docs/specs/x.md)" -> "text"; a bare "(docs/specs/x.md)" or path is dropped from the title
+            title = re.sub(r"\[([^\]]+)\]\(docs/specs/[\w.-]+\.md\)", r"\1", title)
+            title = re.sub(r"\s*\(?docs/specs/[\w.-]+\.md\)?", "", title)
             size = re.search(r"\((S|M|L)\)", title)
             current["items"].append({
                 "state": STATES.get(im.group(1), "todo"),
                 "title": re.sub(r"\s*\((S|M|L)\)|\s*#[\w-]+", "", title).strip(),
                 "size": size.group(1) if size else "",
                 "tags": re.findall(r"#([\w-]+)", title),
+                "spec": spec.group(0) if spec else "",
             })
     for ms in milestones:
         live = [i for i in ms["items"] if i["state"] != "dropped"]
@@ -266,38 +289,52 @@ def lane_of(tags):
     return "foundation" if tags & FOUNDATION_TAGS else "value"
 
 
+def spec_status(path):
+    """PRD badge for a backlog item: 'draft' / 'approved' from the spec's Status line, else ''."""
+    m = re.search(r"Status:\s*(draft|approved)", read(path)) if path else None
+    return m.group(1) if m else ""
+
+
 def roadmap(backlog, open_debt):
-    """Proposed sequence: milestones in BACKLOG.md order, items in file order. Open items get one global
-    number across both lanes (1 = next up). Fully done milestones are summarised, not rendered as columns.
-    Open debt not yet scheduled is a final column."""
+    """Proposed sequence: milestones in BACKLOG.md order, items in file order. Open items get ONE global number
+    across both lanes and all milestones (1 = next up). Fully done milestones collapse to a summary line.
+    Open debt not yet scheduled is a final column that continues the numbering."""
     columns, done_ms, upcoming, seq = [], [], [], 0
-    sequence = next((ms["sequence"] for ms in backlog if ms.get("sequence")), "")
     debt_cards = [{"title": "%s %s" % (x["id"], x["title"]), "state": "todo", "size": x["effort"],
                    "lane": "foundation", "impact": x["impact"], "debt": True}
                   for x in sorted(open_debt, key=lambda x: {"high": 0, "medium": 1, "low": 2}.get(x["impact"], 3))]
-    groups = [(ms["name"], ms["target"], ms["items"]) for ms in backlog]
+    groups = [(ms["name"], ms["target"], ms.get("sequence", ""), ms["items"]) for ms in backlog]
     if debt_cards:
-        groups.append(("Tech debt to schedule", "", debt_cards))
-    for name, target, items in groups:
+        groups.append(("Tech debt to schedule", "", "", debt_cards))
+    for name, target, why, items in groups:
         cards = {"value": [], "foundation": []}
         live = [it for it in items if it["state"] != "dropped"]
         for it in live:
             lane = it.get("lane") or lane_of(it.get("tags", []))
             card = {"title": it["title"], "state": it["state"], "size": it.get("size", ""),
-                    "impact": it.get("impact", ""), "debt": it.get("debt", False), "seq": None}
+                    "impact": it.get("impact", ""), "debt": it.get("debt", False), "seq": None,
+                    "prd": spec_status(it.get("spec", ""))}
             if it["state"] != "done":
                 seq += 1
                 card["seq"] = seq
-                upcoming.append(dict(card, lane=lane, short=it["title"].split(" AC:")[0].strip().rstrip(".;:, ")))
+                upcoming.append(dict(card, lane=lane, short=re.split(r"\s+AC:", it["title"])[0].strip().rstrip(".;:, ")))
             cards[lane].append(card)
-        for k in cards:  # open cards first (stable, so file order is kept); done ones trail
+        for k in cards:  # open cards first, done ones trail; sort is stable so file order is kept in each group
             cards[k].sort(key=lambda c: c["seq"] is None)
         if live and all(it["state"] == "done" for it in live):
             done_ms.append({"name": name, "done": len(live), "total": len(live)})
         elif live:
-            columns.append({"name": name, "target": target, "lanes": cards})
+            columns.append({"name": name, "target": target, "sequence": why, "lanes": cards})
     opened = {k: sum(1 for c in columns for x in c["lanes"][k] if x["seq"]) for k in ("value", "foundation")}
-    return {"columns": columns, "done": done_ms, "next": upcoming[:3], "sequence": sequence, "open": opened}
+    return {"columns": columns, "done": done_ms, "next": upcoming[:NEXT_UP], "open": opened}
+
+
+def security():
+    """Latest audit summary (docs/security/latest.json), or None when no audit has run."""
+    try:
+        return json.loads(read("docs/security/latest.json") or "null")
+    except ValueError:
+        return None
 
 
 def collect():
@@ -309,7 +346,11 @@ def collect():
     open_debt = [d for d in debt if d["open"]]
     planned = [m for m in backlog if m["total"]]
     total = sum(m["total"] for m in planned)
-    return {
+    tmpl = template_mode(root=ROOT, factory=f)
+    unplanned = [i["title"] for m in backlog if m["name"].lower() == "unplanned"
+                 for i in m["items"] if i["state"] in ("todo", "doing", "blocked")]
+    d = {
+        "template_mode": tmpl, "template_work": unplanned if tmpl else [],
         "generated": metrics.now(),
         "project": f.get("project", {}), "phase": f.get("phase", "brainstorm"), "paths": f.get("paths", {}),
         "template": f.get("template", {}), "deploy": f.get("integrations", {}).get("deploy", {}),
@@ -323,8 +364,13 @@ def collect():
                  "by_impact": {k: sum(d["impact"] == k for d in open_debt) for k in ("high", "medium", "low")},
                  "signals": debt_signals(f)},
         "roadmap": roadmap(backlog, open_debt),
+        "security": security(),
         "metrics": metric_view(f),
     }
+    for key, _label, mod in TABS:  # each module may read earlier tabs' data from d
+        if mod:
+            d[key] = mod.collect(ROOT, d)
+    return d
 
 
 # ---------------------------------------------------------------- render
@@ -440,6 +486,7 @@ def render_roadmap(rm):
 
     def card(c):
         badges = "".join([
+            '<span class="prd %s">PRD %s</span>' % (e(c["prd"]), e(c["prd"])) if c.get("prd") else "",
             '<span class="imp %s">%s</span>' % (e(c["impact"]), e(c["impact"])) if c["impact"] else "",
             '<span class="size">%s</span>' % e(c["size"]) if c["size"] else "",
             '<span class="state">%s</span>' % e(c["state"]) if c["state"] in ("doing", "blocked") else ""])
@@ -448,18 +495,15 @@ def render_roadmap(rm):
             e(c["state"]), num, e(c["title"]), '<span class="b">%s</span>' % badges if badges else "")
 
     lane_name = {k: label for k, label, _ in LANES}
-    done = "".join('<div class="rm-done">Done: %s (%d/%d)</div>' % (e(x["name"]), x["done"], x["total"])
+    done = "".join('<div class="rm-done">&#10003; Done: %s (%d/%d)</div>' % (e(x["name"]), x["done"], x["total"])
                    for x in rm["done"])
-    nxt = "".join('<li><span class="seq">%d</span><span class="t">%s</span><span class="b"><span class="size">%s</span>'
-                  '</span></li>' % (x["seq"], e(x["short"]),
-                                    e(" · ".join(p for p in (x["size"], lane_name[x["lane"]]) if p)))
+    nxt = "".join('<li><span class="seq">%d</span><span class="t">%s</span><span class="muted small">%s</span></li>'
+                  % (x["seq"], e(x["short"]), e(" · ".join(p for p in (x["size"], lane_name[x["lane"]]) if p)))
                   for x in rm["next"])
     nxt = '<div class="rm-next"><b>Next up</b><ol>%s</ol></div>' % nxt if nxt else ""
-    sub = rm["sequence"] or ("Columns follow milestone order in docs/BACKLOG.md; numbers are the suggested order "
-                             "across both lanes. Lanes come from tags; open items in docs/TECH-DEBT.md land in the "
-                             "foundation lane.")
-    head = "".join('<div class="rm-col-h"><b>%s</b>%s</div>' % (
-        e(c["name"]), '<span class="muted small">target %s</span>' % e(c["target"]) if c["target"] else "")
+    head = "".join('<div class="rm-col-h"><b>%s</b>%s%s</div>' % (
+        e(c["name"]), '<span class="muted small">target %s</span>' % e(c["target"]) if c["target"] else "",
+        '<span class="why small">%s</span>' % e(c["sequence"]) if c["sequence"] else "")
         for c in cols)
     rows = ""
     for key, label, lsub in LANES:
@@ -468,9 +512,73 @@ def render_roadmap(rm):
         rows += "".join('<ul class="rm-cell %s">%s</ul>' % (
             key, "".join(card(x) for x in c["lanes"][key]) or '<li class="muted small">–</li>') for c in cols)
     grid = ('<div class="scroll"><div class="rm" style="--cols:%d"><div class="rm-corner"></div>%s%s</div></div>'
-            % (len(cols), head, rows)) if cols else ""
-    return ('<div class="card"><h2>Roadmap: proposed sequence</h2><p class="muted small">%s</p>%s%s%s</div>'
-            % (e(sub), done, nxt, grid))
+            % (len(cols), head, rows)) if cols else '<p class="muted">Everything planned is done. Add the next milestone to docs/BACKLOG.md.</p>'
+    return ('<div class="card"><h2>Roadmap: proposed sequence</h2>'
+            '<p class="muted small">Numbers are the proposed build order across both lanes (1 = next up), following '
+            'milestone and item order in docs/BACKLOG.md; the line under a milestone says why. Lanes come from tags; '
+            'open items in docs/TECH-DEBT.md continue the sequence in the foundation lane.</p>%s%s%s</div>'
+            % (nxt, done, grid))
+SEV_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "informational": 4}
+SEV_CLASS = {"critical": "high", "high": "high", "medium": "medium", "low": "low", "informational": "low"}
+
+
+def render_security(sec):
+    if not sec:
+        return ('<div class="card"><h2>Security</h2><p class="muted">No security audit has run yet. '
+                'Run the security-audit-run skill to fill this tab.</p></div>')
+    recs = sorted(sec.get("records", []), key=lambda r: (r.get("verdict") != "confirmed",
+                  SEV_ORDER.get(r.get("severity"), 9), r.get("id", "")))
+    still_open = [r for r in recs if r.get("state", "open") not in ("fixed", "accepted")]
+    n_conf = sum(r.get("verdict") == "confirmed" for r in still_open)  # fixed findings don't need a fix any more
+    n_nv = sum(r.get("verdict") == "needs_validation" for r in still_open)
+    n_open = sum(r.get("state", "open") not in ("fixed", "accepted") for r in recs)
+    tiles = "".join([
+        tile("Open confirmed findings", str(n_conf), "verified by an independent agent, not yet fixed", "bad" if n_conf else "ok",
+             words=("none", "", "fix needed")),
+        tile("Open, needs validation", str(n_nv), "blocked on a fact outside the repo", "warn" if n_nv else "ok",
+             words=("none", "owner check", "")),
+        tile("Open items", str(n_open), "of %d records" % len(recs), "bad" if n_open else "ok",
+             words=("all closed", "", "open")),
+        tile("Coverage", "%s/%s" % (sec.get("coverage", {}).get("closed", 0), sec.get("coverage", {}).get("units", 0)),
+             "units closed (%s profile)" % sec.get("profile", "?"), "na")])
+    rows = []
+    for r in recs:
+        sev = r.get("severity") if r.get("verdict") == "confirmed" else None
+        label = sev or ("needs validation" if r.get("verdict") == "needs_validation" else r.get("verdict", ""))
+        cls = SEV_CLASS.get(sev, "medium" if r.get("verdict") == "needs_validation" else "low")
+        rows.append('<tr><td><span class="imp %s">%s</span></td><td>%s<div class="muted mono">%s</div></td>'
+                    '<td>%s</td><td>%s</td><td>%s</td></tr>' % (
+                        cls, e(label), e(r.get("title")), e(r.get("location")), e(r.get("boundary")),
+                        e(r.get("fix")), e(r.get("state", "open"))))
+    table = ('<div class="scroll"><table><thead><tr><th>Severity</th><th>Finding</th><th>Boundary</th>'
+             '<th>Smallest fix</th><th>State</th></tr></thead><tbody>%s</tbody></table></div>' % "".join(rows)
+             if rows else '<p class="muted">No findings survived independent verification.</p>')
+    hard = "".join("<li><b>%s</b> %s</li>" % (e(h.get("area")), e(h.get("note"))) for h in sec.get("hardening", []))
+    good = "".join("<li>%s</li>" % e(g) for g in sec.get("positive", []))
+    limits = "".join("<li>%s</li>" % e(x) for x in sec.get("limits", []))
+    meta = "%s · %s profile · <span class=\"mono\">%s</span> · run %s" % (
+        e(sec.get("date")), e(sec.get("profile")), e(sec.get("source_ref", "")[:12]), e(sec.get("status")))
+    return ('<section class="tiles" aria-label="Security summary">%s</section>'
+            '<section class="grid">'
+            '<div class="card" style="grid-column:1/-1"><h2>Findings</h2><p class="muted">%s</p>%s</div>'
+            '<div class="card"><h2>Hardening notes</h2><ul class="plain">%s</ul></div>'
+            '<div class="card"><h2>What is already solid</h2><ul class="plain">%s</ul>'
+            '<h3>Limits of this run</h3><ul class="plain">%s</ul></div>'
+            '</section>' % (tiles, meta, table, hard or '<li class="muted">None.</li>',
+                            good or '<li class="muted">None recorded.</li>', limits or '<li class="muted">None.</li>'))
+
+
+def tab_parts(d):
+    """Generated tab markup and CSS from TABS (the Overview and Roadmap panels stay in TEMPLATE)."""
+    inputs = "\n".join('<input type="radio" name="tab" id="tab-%s" class="tab-input"%s>' % (k, " checked" if i == 0 else "")
+                       for i, (k, _l, _m) in enumerate(TABS))
+    nav = "".join('<label for="tab-%s">%s</label>' % (k, e(lab)) for k, lab, _m in TABS)
+    panels = "\n".join('<div class="panel panel-%s">%s</div>' % (k, m.render(d[k])) for k, _l, m in TABS if m)
+    each = lambda fmt: ", ".join(fmt % (k, k) for k, _l, _m in TABS)  # noqa: E731
+    css = ("%s {{ display:block; }}\n%s {{ color:var(--text); border-bottom-color:var(--accent); }}\n%s {{ outline:2px solid var(--accent); outline-offset:2px; }}"
+           % (each("#tab-%s:checked ~ .panel-%s"), each('#tab-%s:checked ~ .tabs label[for="tab-%s"]'),
+              each('#tab-%s:focus-visible ~ .tabs label[for="tab-%s"]'))).replace("{{", "{").replace("}}", "}")
+    return {"tab_inputs": inputs, "tab_nav": nav, "tab_panels": panels, "tab_css": css}
 
 
 def render(d):
@@ -479,12 +587,15 @@ def render(d):
     phase_i = PHASES.index(d["phase"]) if d["phase"] in PHASES else len(PHASES) - 1
     steps = "".join('<li class="%s">%s</li>' % ("done" if i < phase_i else "now" if i == phase_i else "", e(p))
                     for i, p in enumerate(PHASES))
+    if d.get("template_mode"):
+        steps = '<li class="now">Template maintenance</li><li>mode: template (origin matches template.source_repo)</li>'
     chips = "".join('<span class="chip">%s</span>' % e(p) for p in
                     [d["paths"].get("primary")] + list(d["paths"].get("secondary") or []) if p)
 
+    progress_tile = tile("Progress", "%d%%" % d["progress"]["pct"], "%d done · %d open" % (
+        bl["counts"]["done"], bl["counts"]["todo"] + bl["counts"]["doing"] + bl["counts"]["blocked"]))
     tiles = "".join([
-        tile("Progress", "%d%%" % d["progress"]["pct"], "%d done · %d open" % (
-            bl["counts"]["done"], bl["counts"]["todo"] + bl["counts"]["doing"] + bl["counts"]["blocked"])),
+        "" if d.get("template_mode") else progress_tile,
         tile("Full test run", fmt_num(m["test_seconds"], "s", 1), "budget %ss" % e(m["test_budget"]),
              status(m["test_seconds"], m["test_budget"]), spark(m["series"]["test_seconds"], "Test time")),
         tile("Coverage", fmt_num(m["coverage"], "%", 1), "min %s%%" % e(m["coverage_min"]),
@@ -548,9 +659,18 @@ def render(d):
     alerts = "".join('<li class="alert">%s</li>' % e(a) for a in m["alerts"]) or '<li class="muted">No alerts.</li>'
     ideas = "".join("<li>%s</li>" % e(i) for i in m["suggestions"][:6]) or '<li class="muted">No suggestions.</li>'
     prod = d["deploy"].get("production_url")
-    live = ' · <a href="%s">%s</a>' % (e(prod), e(prod)) if prod else ""
+    if prod and re.match(r"https?://", str(prod)):
+        live = ' · <a href="%s">%s</a>' % (e(prod), e(prod))
+    else:
+        live = " · %s" % e(prod) if prod else ""
 
+    first, third = ("Progress by milestone", '<ul class="ms">%s</ul>' % ms_rows), ("Tech debt", debt_html)
+    if d.get("template_mode"):  # open tech debt first, then template work (Unplanned backlog items)
+        work = lst(d["template_work"], "no open template work in docs/BACKLOG.md (Unplanned)")
+        first, third = ("Template maintenance: open tech debt", debt_html), (
+            "Template work", '<ul class="plain">%s</ul>' % work)
     return TEMPLATE.format(
+        h_first=first[0], c_first=first[1], h_third=third[0], c_third=third[1],
         title=e(name + " status"), name=e(name), one_liner=e(d["project"].get("one_liner") or ""),
         steps=steps, chips=chips or '<span class="chip muted">path not chosen</span>',
         version=e(v["current"]), sha=e(v["sha"] or "no commits"), branch=e(v["branch"]), live=live,
@@ -558,19 +678,29 @@ def render(d):
         tree=e(d["template"].get("decision_tree_version", "")), tiles=tiles, milestones=ms_rows,
         backlog=backlog, debt=debt_html, tags=tag_rows, deploys=dep_rows,
         commits=commits or '<li class="muted">No commits yet.</li>', alerts=alerts, ideas=ideas,
-        commit_count=v["commit_count"], roadmap=render_roadmap(d["roadmap"]), deploy_tab=render_deploy(m))
+        commit_count=v["commit_count"], roadmap=render_roadmap(d["roadmap"]), deploy_tab=render_deploy(m),
+        security=render_security(d.get("security")), **tab_parts(d))
+
+
+def md(x):
+    """Escape Markdown/table metacharacters in repo-derived text."""
+    s = re.sub(r"\s*[\r\n]+\s*", " ", "" if x is None else str(x))
+    return re.sub(r"([\\|`*_\[\]<>])", r"\\\1", s)
 
 
 def summary(d):
     m, bl, debt = d["metrics"], d["backlog"]["counts"], d["debt"]
+    tm = d.get("template_mode")
     lines = [
-        "## %s — dashboard" % (d["project"].get("name") or "project"),
+        "## %s — dashboard" % md(d["project"].get("name") or "project"),
         "",
         "| | |", "|---|---|",
-        "| Phase / path | %s / %s |" % (d["phase"], d["paths"].get("primary") or "–"),
-        "| Version | %s (%s) |" % (d["versions"]["current"], d["versions"]["sha"] or "–"),
+    ] + ([] if tm else [
+        "| Phase / path | %s / %s |" % (md(d["phase"]), md(d["paths"].get("primary") or "–"))]) + [
+        "| Version | %s (%s) |" % (md(d["versions"]["current"]), md(d["versions"]["sha"] or "–")),
+    ] + ([] if tm else [
         "| Progress | %d%% — %d done, %d doing, %d blocked, %d todo |" % (
-            d["progress"]["pct"], bl["done"], bl["doing"], bl["blocked"], bl["todo"]),
+            d["progress"]["pct"], bl["done"], bl["doing"], bl["blocked"], bl["todo"])]) + [
         "| Tests | %s (budget %ss), pass rate %s |" % (fmt_num(m["test_seconds"], "s", 1), m["test_budget"],
                                                      fmt_num(m["pass_rate"], "%")),
         "| Coverage | %s (min %s%%) |" % (fmt_num(m["coverage"], "%", 1), m["coverage_min"]),
@@ -579,8 +709,18 @@ def summary(d):
         "| Tech debt | %d open (%d high), %d code markers |" % (
             len(debt["open"]), debt["by_impact"]["high"], debt["signals"]["marker_total"]),
     ]
+    if tm:
+        lines.insert(4, "| Mode | Template maintenance (origin matches template.source_repo) |")
+        lines += ["", "**Open tech debt**", ""] + (
+            ["- %s %s (impact: %s)" % (md(x["id"]), md(x["title"]), md(x["impact"] or "–")) for x in debt["open"]]
+            or ["- none"])
+        lines += ["", "**Template work (Unplanned backlog)**", ""] + (
+            ["- " + md(t) for t in d["template_work"]] or ["- none"])
+    for key, label, mod in TABS:
+        if mod:
+            lines.append("| %s | %s |" % (label, mod.line(d[key])))
     if m["alerts"]:
-        lines += ["", "**Alerts**", ""] + ["- " + a for a in m["alerts"]]
+        lines += ["", "**Alerts**", ""] + ["- " + md(a) for a in m["alerts"]]
     return "\n".join(lines) + "\n"
 
 
@@ -595,18 +735,21 @@ TEMPLATE = """<!doctype html>
   --bg:#f6f7f9; --surface:#ffffff; --text:#1b1f24; --muted:#5b6470; --border:#dfe3e8;
   --accent:#2f6fdb; --ok:#1f8a4c; --ok-bg:#e6f4ec; --bad:#c23934; --bad-bg:#fbeaea;
   --warn:#9a6700; --warn-bg:#fff4d6; --track:#e9edf2;
+  --am-mot:#e6e0fa; --am-app:#d9eef8; --am-tech:#e0f2d9;
 }}
 @media (prefers-color-scheme: dark) {{
   :root:not([data-theme="light"]) {{
     --bg:#0f1216; --surface:#171b21; --text:#e6e9ed; --muted:#9aa4b1; --border:#2a313a;
     --accent:#6ea0ff; --ok:#4cc38a; --ok-bg:#12291d; --bad:#ff7b72; --bad-bg:#2d1517;
     --warn:#e3b341; --warn-bg:#2b230f; --track:#262d36;
+    --am-mot:#2d2750; --am-app:#173341; --am-tech:#1f3b27;
   }}
 }}
 :root[data-theme="dark"] {{
   --bg:#0f1216; --surface:#171b21; --text:#e6e9ed; --muted:#9aa4b1; --border:#2a313a;
   --accent:#6ea0ff; --ok:#4cc38a; --ok-bg:#12291d; --bad:#ff7b72; --bad-bg:#2d1517;
   --warn:#e3b341; --warn-bg:#2b230f; --track:#262d36;
+    --am-mot:#2d2750; --am-app:#173341; --am-tech:#1f3b27;
 }}
 * {{ box-sizing:border-box; }}
 body {{ margin:0; background:var(--bg); color:var(--text);
@@ -659,13 +802,23 @@ td {{ padding:6px 8px; border-bottom:1px solid var(--border); vertical-align:top
 .imp.low {{ background:var(--ok-bg); color:var(--ok); }}
 li.alert {{ color:var(--bad); }}
 footer {{ margin-top:24px; font-size:12px; color:var(--muted); }}
-.tabs {{ display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px; }}
-.tabs label {{ padding:8px 14px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; font-weight:600; font-size:14px; }}
+.tabs {{ display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px; overflow-x:auto; white-space:nowrap; }}
+.tabs label {{ flex:none; padding:8px 14px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; font-weight:600; font-size:14px; }}
 .tab-input {{ position:absolute; opacity:0; pointer-events:none; }}
 .panel {{ display:none; }}
-#tab-overview:checked ~ .panel-overview, #tab-roadmap:checked ~ .panel-roadmap, #tab-deploy:checked ~ .panel-deploy {{ display:block; }}
-#tab-overview:checked ~ .tabs label[for="tab-overview"], #tab-roadmap:checked ~ .tabs label[for="tab-roadmap"], #tab-deploy:checked ~ .tabs label[for="tab-deploy"] {{ color:var(--text); border-bottom-color:var(--accent); }}
-#tab-overview:focus-visible ~ .tabs label[for="tab-overview"], #tab-roadmap:focus-visible ~ .tabs label[for="tab-roadmap"], #tab-deploy:focus-visible ~ .tabs label[for="tab-deploy"] {{ outline:2px solid var(--accent); outline-offset:2px; }}
+{tab_css}
+.stack {{ display:grid; gap:16px; }}
+tr.grp td {{ background:var(--track); }}
+.arch {{ display:block; }}
+.arch text {{ fill:var(--text); font-size:12px; text-anchor:middle; }}
+.arch .sub {{ font-size:10px; fill:var(--muted); }}
+.arch .band {{ fill:var(--track); }}
+.arch .band-l {{ text-anchor:start; font-weight:600; font-size:13px; fill:var(--muted); }}
+.arch .band-e {{ text-anchor:start; fill:var(--muted); }}
+.arch .box rect {{ stroke:var(--border); stroke-width:1; }}
+.arch .box.am-mot rect {{ fill:var(--am-mot); }} .arch .box.am-app rect {{ fill:var(--am-app); }} .arch .box.am-tech rect {{ fill:var(--am-tech); }}
+.arch .box.drift rect {{ stroke:var(--bad); stroke-width:2; stroke-dasharray:5 3; }}
+.arch .edges line {{ stroke:var(--muted); stroke-width:1; opacity:.45; }}
 .panel-deploy .card {{ margin-bottom:16px; }}
 .live-row {{ display:flex; flex-direction:column; margin-bottom:8px; }}
 a.live {{ font-size:20px; font-weight:650; overflow-wrap:anywhere; }}
@@ -673,7 +826,7 @@ a.live {{ font-size:20px; font-weight:650; overflow-wrap:anywhere; }}
 .kv {{ display:grid; grid-template-columns:max-content 1fr; gap:4px 16px; margin:12px 0 0; font-size:14px; }}
 .kv dt {{ color:var(--muted); }} .kv dd {{ margin:0; min-width:0; }}
 td.note {{ min-width:180px; overflow-wrap:anywhere; font-size:13px; color:var(--muted); }}
-.rm {{ --lane-w:minmax(150px,180px); --col-w:minmax(220px,1fr); display:grid; gap:8px; min-width:max-content;
+.rm {{ --lane-w:minmax(150px,180px); --col-w:minmax(220px,1fr); display:grid; gap:8px; min-width:min-content;
   grid-template-columns:var(--lane-w) repeat(var(--cols),var(--col-w)); }}
 .rm-col-h {{ display:flex; flex-direction:column; font-size:14px; padding:4px 2px; border-bottom:2px solid var(--border); }}
 .rm-lane-h {{ display:flex; flex-direction:column; justify-content:flex-start; font-size:14px; padding:10px; border-radius:8px; border-left:4px solid var(--accent); background:var(--track);
@@ -688,12 +841,15 @@ td.note {{ min-width:180px; overflow-wrap:anywhere; font-size:13px; color:var(--
 .rm-card .size, .rm-card .state {{ font-size:11px; padding:0 6px; border-radius:999px; background:var(--track); color:var(--muted); }}
 .rm-card.doing {{ box-shadow:inset 0 0 0 1px var(--accent); }} .rm-card.doing .state {{ color:var(--accent); }}
 .rm-card.blocked .state {{ background:var(--bad-bg); color:var(--bad); }}
-.rm-done {{ font-size:13px; color:var(--muted); margin:0 0 6px; }}
-.rm-next {{ margin:6px 0 8px; padding:6px 10px; border-radius:8px; background:var(--track); border-left:4px solid var(--accent); font-size:13px; }}
+.rm-col-h .why {{ color:var(--text); margin-top:2px; font-style:italic; max-width:40ch; }}
+.rm-next {{ margin:0 0 10px; padding:8px 12px; border-radius:8px; background:var(--track); border-left:4px solid var(--accent); font-size:13px; }}
 .rm-next ol {{ list-style:none; margin:6px 0 0; padding:0; display:flex; flex-direction:column; gap:4px; }}
-.rm-next li {{ display:flex; flex-wrap:nowrap; align-items:baseline; gap:6px; }}
+.rm-next li {{ display:flex; align-items:baseline; gap:8px; }}
 .rm-next .seq {{ font-variant-numeric:tabular-nums; font-weight:650; color:var(--muted); min-width:1.4em; }}
-.rm-next .t {{ flex:1 1 0; min-width:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }} .rm-next .b {{ white-space:nowrap; }} .rm-next .size {{ font-size:11px; padding:0 6px; border-radius:999px; background:var(--surface); color:var(--muted); }}
+.rm-next .t {{ flex:1 1 0; min-width:0; }}
+.rm-done {{ font-size:13px; color:var(--ok); margin:0 0 6px; }}
+.rm-card .prd {{ font-size:11px; padding:0 6px; border-radius:999px; background:var(--warn-bg); color:var(--warn); }}
+.rm-card .prd.approved {{ background:var(--ok-bg); color:var(--ok); }}
 .rm-card.done {{ opacity:.55; }} .rm-card.done .t {{ text-decoration:line-through; }} .rm-card.done .seq {{ color:var(--ok); }}
 @media (max-width:520px) {{ .rm {{ --lane-w:104px; --col-w:minmax(200px,1fr); }} .rm-lane-h {{ padding:8px; }} .meta {{ text-align:left; }} .grid {{ grid-template-columns:1fr; }} }}
 </style>
@@ -714,22 +870,22 @@ td.note {{ min-width:180px; overflow-wrap:anywhere; font-size:13px; color:var(--
   </div>
 </header>
 
-<input type="radio" name="tab" id="tab-overview" class="tab-input" checked>
-<input type="radio" name="tab" id="tab-roadmap" class="tab-input">
-<input type="radio" name="tab" id="tab-deploy" class="tab-input">
-<nav class="tabs" aria-label="Dashboard views"><label for="tab-overview">Overview</label><label for="tab-roadmap">Roadmap</label><label for="tab-deploy">Deploy</label></nav>
+{tab_inputs}
+<nav class="tabs" aria-label="Dashboard views">{tab_nav}</nav>
 
 <div class="panel panel-roadmap">{roadmap}</div>
 
 <div class="panel panel-deploy">{deploy_tab}</div>
 
+<div class="panel panel-security">{security}</div>
+
 <div class="panel panel-overview">
 <section class="tiles" aria-label="Key metrics">{tiles}</section>
 
 <section class="grid">
-  <div class="card"><h2>Progress by milestone</h2><ul class="ms">{milestones}</ul></div>
+  <div class="card"><h2>{h_first}</h2>{c_first}</div>
   <div class="card"><h2>Backlog</h2>{backlog}</div>
-  <div class="card"><h2>Tech debt</h2>{debt}</div>
+  <div class="card"><h2>{h_third}</h2>{c_third}</div>
   <div class="card"><h2>Alerts and suggestions</h2>
     <ul class="plain">{alerts}</ul><h3>Suggested improvements</h3><ul class="plain">{ideas}</ul></div>
   <div class="card"><h2>Versions</h2><div class="scroll"><table><thead><tr><th>Tag</th><th>Date</th></tr></thead><tbody>{tags}</tbody></table></div>
@@ -737,7 +893,8 @@ td.note {{ min-width:180px; overflow-wrap:anywhere; font-size:13px; color:var(--
   <div class="card"><h2>Recent commits</h2><ul class="plain">{commits}</ul></div>
 </section>
 </div>
-<footer>Built by scripts/dashboard.py from factory.json, docs/BACKLOG.md, docs/TECH-DEBT.md, metrics/ and git.</footer>
+{tab_panels}
+<footer>Built by scripts/dashboard.py from factory.json, docs/BACKLOG.md, docs/TECH-DEBT.md, docs/security/, docs/*.json, metrics/ and git.</footer>
 </main>
 </body>
 </html>

@@ -81,7 +81,7 @@ Then open http://localhost:8000.
 - [ ] BACKLOG.md items are ticked and the dashboard is regenerated (`python3 scripts/dashboard.py --open`).
 
 ## Submit as proof
-Issue or Discussion titled `[challenge-2] Sprout - <your game name>` with:
+Issue titled `[challenge-2] Sprout - <your game name>` with:
 1. Repo link (or a screen recording or screenshot of the game if it stays local).
 2. Dashboard screenshot.
 3. Output of `python3 scripts/dashboard.py --print` in a code block.

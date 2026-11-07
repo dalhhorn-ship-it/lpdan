@@ -34,7 +34,7 @@ Roster: product-manager, software-architect, developer, test-runner, reviewer, t
 - Challenge files in public/challenges/ are the source of truth and ship unchanged.
 
 ## Policies
-All of docs/policies/* apply. Security: no secrets in the repo; `CLOUDFLARE_API_TOKEN` lives only in GitHub Actions secrets. No security audit required at L2 (only on request or before an L3 release). Async delivery: never wait on deploys.
+All of docs/policies/* apply (policies/security.md, policies/async-delivery.md, policies/testing-and-metrics.md, policies/token-economy.md, policies/documentation.md, policies/prd-approval.md). Security: no secrets in the repo; `CLOUDFLARE_API_TOKEN` lives only in the GitHub `production` environment (main only), never as a repo-level secret. No security audit required at L2 (only on request or before an L3 release). Async delivery: never wait on deploys.
 
 ## Commands (set in factory.json on approval)
 | Key | Value | Note |
@@ -55,6 +55,7 @@ All of docs/policies/* apply. Security: no secrets in the repo; `CLOUDFLARE_API_
 - [ ] `metrics.py test` green locally and in CI; `bash scripts/check.sh` green
 - [ ] Snippets verbatim vs the pinned README; no third-party URLs; design rules hold (all automated)
 - [ ] Preview URL looked at on a phone-width viewport before merge (UI slices)
+- [ ] Refresh the site dashboard snapshot (`python3 scripts/site_dashboard.py`) so its date and numbers are current
 - [ ] Truth pass by reviewer and jenny, then Dan, before launch (removing noindex)
 - [ ] Lighthouse mobile ≥ 90 for Performance, Accessibility and Best Practices at launch
 

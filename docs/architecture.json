@@ -1,0 +1,124 @@
+{
+ "curated": {
+  "elements": [],
+  "exclude": [],
+  "relations": [],
+  "roots": []
+ },
+ "generated": {
+  "elements": [
+   {
+    "attrs": {
+     "status": "accepted"
+    },
+    "id": "adr:0001",
+    "layer": "motivation",
+    "name": "Start from the danfactory template",
+    "type": "principle"
+   },
+   {
+    "attrs": {
+     "status": "accepted"
+    },
+    "id": "adr:0002",
+    "layer": "motivation",
+    "name": "Static single page on Worker static assets, no build step, self-hosted fonts, GPM Keynote design system",
+    "type": "principle"
+   },
+   {
+    "attrs": {
+     "status": "accepted"
+    },
+    "id": "adr:0003",
+    "layer": "motivation",
+    "name": "Cloudflare deploy token lives in GitHub environments, not repo-level secrets",
+    "type": "principle"
+   },
+   {
+    "attrs": {
+     "status": "accepted"
+    },
+    "id": "adr:0004",
+    "layer": "motivation",
+    "name": "PRD approval gate before any build",
+    "type": "principle"
+   },
+   {
+    "id": "app:worker/index.ts",
+    "layer": "application",
+    "name": "index.ts",
+    "path": "worker/index.ts",
+    "type": "application-component"
+   },
+   {
+    "id": "goal:outcome",
+    "layer": "motivation",
+    "name": "A single, free, static landing page that teaches vibe coders",
+    "type": "goal"
+   },
+   {
+    "id": "if:http",
+    "layer": "application",
+    "name": "HTTP (fetch)",
+    "path": "worker/index.ts",
+    "type": "application-interface"
+   },
+   {
+    "id": "node:danfactory",
+    "layer": "technology",
+    "name": "danfactory",
+    "type": "node"
+   },
+   {
+    "attrs": {
+     "ac": 9,
+     "approved": "2026-11-07",
+     "status": "approved"
+    },
+    "id": "req:landing-latest-features",
+    "layer": "motivation",
+    "name": "Landing page: latest features and clickable dashboard",
+    "type": "requirement"
+   },
+   {
+    "attrs": {
+     "kind": "assets",
+     "used": true
+    },
+    "id": "svc:ASSETS",
+    "layer": "technology",
+    "name": "ASSETS (assets)",
+    "type": "technology-service"
+   }
+  ],
+  "relations": [
+   {
+    "source": "node:danfactory",
+    "target": "app:worker/index.ts",
+    "type": "assignment"
+   },
+   {
+    "source": "adr:0002",
+    "target": "app:worker/index.ts",
+    "type": "influence"
+   },
+   {
+    "source": "req:landing-latest-features",
+    "target": "goal:outcome",
+    "type": "realization"
+   },
+   {
+    "source": "app:worker/index.ts",
+    "target": "if:http",
+    "type": "serving"
+   },
+   {
+    "source": "svc:ASSETS",
+    "target": "app:worker/index.ts",
+    "type": "serving"
+   }
+  ],
+  "source": "scan"
+ },
+ "schema": 1
+}

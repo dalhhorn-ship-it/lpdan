@@ -194,8 +194,10 @@ def dashboard_checks(check):
           "failed" in out and "Auth error &lt;10000&gt;" in out and "ok: 200 /" in out and "None" not in out)
     empty = dashboard.render_deploy({"deploy_tab": dashboard.deploy_view({}, [], "2026-11-07T00:00:00+00:00")})
     check("dashboard deploy: empty data", "not enough data yet" in empty and "not recorded" in empty and "None" not in empty)
+    keys = [k for k, _label, _mod in dashboard.TABS]
     tpl = dashboard.TEMPLATE
-    check("dashboard deploy: tab wired in page", 'id="tab-deploy"' in tpl and 'for="tab-deploy"' in tpl)
+    check("dashboard deploy: tab wired in page", "deploy" in keys and "security" in keys
+          and "panel-deploy" in tpl and "panel-security" in tpl and "{tab_inputs}" in tpl)
 
 
 def main():
@@ -252,7 +254,7 @@ def main():
     check("copy.js loaded with defer", any(t == "script" and a.get("src") == "copy.js" and "defer" in a
                                            for t, a in p.attrs_all))
 
-    # 3 campaign (markup arrives in slice S5; files must exist now)
+    # 3 campaign
     missing = [f for f in CHALLENGES if not (PUB / "challenges" / f).is_file()]
     check("7 challenge files exist", not missing, missing)
     bad_ch = []
@@ -261,11 +263,10 @@ def main():
         if fp.is_file() and f"[challenge-{i}]" not in fp.read_text(encoding="utf-8"):
             bad_ch.append(f)
     check("challenge files contain their [challenge-N] tag", not bad_ch, bad_ch)
-    if "campaign" in ids:  # gated until the campaign section is built
-        links = [h for h in p.hrefs if h.startswith("challenges/")]
-        order = [h.split("/")[-1] for h in links]
-        check("each challenge linked twice, in order", order == [f for f in CHALLENGES for _ in (0, 1)], order)
-        check("exactly 8 details.faq", p.faq == 8, p.faq)
+    links = [h for h in p.hrefs if h.startswith("challenges/")]
+    order = [h.split("/")[-1] for h in links]
+    check("each challenge linked twice, in order", order == [f for f in CHALLENGES for _ in (0, 1)], order)
+    check("exactly 8 details.faq", p.faq == 8, p.faq)
 
     # 4 design rules in CSS
     check("no box-shadow/text-shadow/drop-shadow", not re.search(r"(box|text)-shadow\s*:\s*(?!none)|drop-shadow", css_nc))
@@ -348,6 +349,23 @@ def main():
     check("font licence shipped", (PUB / "fonts" / "OFL.txt").is_file())
     low = text.lower()
     check("no banned proof phrases", not [b for b in BANNED if b in low], [b for b in BANNED if b in low])
+
+    # 8 served dashboard snapshot (docs/specs/landing-latest-features.md)
+    dpath = PUB / "dashboard" / "index.html"
+    dash = dpath.read_text(encoding="utf-8") if dpath.is_file() else ""
+    check("dashboard page served at /dashboard/", bool(dash))
+    check("dashboard page: no scripts, no third-party loads", "<script" not in dash.lower()
+          and not re.search(r'(?:src|srcset)\s*=\s*"(?:https?:)?//', dash) and "@import" not in dash)
+    check("dashboard page: back link, dated, honest label", 'href="/"' in dash and "Real snapshot" in dash
+          and re.search(r"generated \d{4}-\d{2}-\d{2}", dash) and "not yet merged into the template" in dash)
+    check("dashboard page: four tabs", all('id="tab-%s"' % t in dash for t in ("overview", "roadmap", "deploy", "security")))
+    check("index links to the dashboard page", 'href="dashboard/"' in html)
+    sec = json.loads((ROOT / "docs" / "security" / "latest.json").read_text(encoding="utf-8") or "null") or {}
+    opened = [r for r in sec.get("records", []) if r.get("state", "open") not in ("fixed", "accepted")]
+    check("dashboard page: no open security findings published",
+          not [r["id"] for r in opened if r.get("id", "\0") in dash or r.get("title", "\0") in dash]
+          and not [x for x in ("Hardening notes", "Limits of this run", "partial-coverage") if x in dash],
+          [r.get("id") for r in opened])
 
     dashboard_checks(check)
 
