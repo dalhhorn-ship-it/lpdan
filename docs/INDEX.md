@@ -57,7 +57,7 @@
 | docs/policies/token-economy.md | 28 | Spend tokens on decisions, not on moving bytes. Adapted from Spotify's `shunt` plugin… |
 | docs/reviews/2026-11-07-truth-pass.md | 22 | Delegated by Dan in chat ("launch content review agent … to signoff that work, I wont… |
 | docs/specs/_TEMPLATE.md | 33 | Status: draft \| approved · YYYY-MM-DD · by user in chat \| dropped · Owner:… |
-| docs/specs/agents-index-first.md | 47 | Status: draft · 2026-11-07 · Owner: product-manager · Backlog: M1 / "Agents navigate… |
+| docs/specs/agents-index-first.md | 49 | Status: draft · 2026-11-07 · Owner: product-manager · Backlog: M1 / "Agents navigate… |
 | docs/specs/dashboard-observability-design.md | 175 | Status: accepted · 2026-11-07 · Owner: software-architect · PRD:… — sections: Module layout:7, Model file:…:34, How each layer is derived:50, SVG diagram (`obs/svg.py`):79, Traceability keys (ADR 0005):88, data.json additions…:105, --print rows (one per tab):110, Empty states (AC2):114, Test strategy:118, Risks and spikes:134, Slice 1 build order (one…:142, Slice 2 as built:165, Slice 3 as built:171 |
 | docs/specs/dashboard-observability-tabs.md | 78 | Status: approved · 2026-11-07 · by user in chat (all three slices; open questions… |
 | docs/specs/landing-latest-features.md | 64 | Status: approved · 2026-11-07 · by user in chat (options: 1A drop both screenshots, 2… |

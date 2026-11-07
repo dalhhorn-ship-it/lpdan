@@ -42,6 +42,8 @@ Output is plain text, at most about 20 lines; truncated with a count when longer
 S-M (about half a day). Foundation lane, no dependencies. Slice 1: agent lines plus test. Slice 2: `--related` plus test. Build here first (dogfood for a few sessions, gather measurement), then upstream to danfactory as one branch and PR, since template files are shared and a measured result makes a better PR.
 
 ## Open questions
-1. Agree to skip test-runner and deploy-watcher?
-2. Build here first then upstream, or upstream first?
-3. Is a 5-session before/after comparison enough evidence, or drop measurement?
+Answered by Dan in chat, 2026-11-07:
+1. Skip test-runner and deploy-watcher: yes.
+2. Build here first, then upstream to danfactory as one branch: yes.
+3. A 5-session before/after comparison is enough: yes.
+4. Milestone: M2 (tooling, does not block the launch).
