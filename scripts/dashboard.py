@@ -733,7 +733,7 @@ a.live {{ font-size:20px; font-weight:650; overflow-wrap:anywhere; }}
 .kv {{ display:grid; grid-template-columns:max-content 1fr; gap:4px 16px; margin:12px 0 0; font-size:14px; }}
 .kv dt {{ color:var(--muted); }} .kv dd {{ margin:0; min-width:0; }}
 td.note {{ min-width:180px; overflow-wrap:anywhere; font-size:13px; color:var(--muted); }}
-.rm {{ --lane-w:minmax(150px,180px); --col-w:minmax(220px,1fr); display:grid; gap:8px; min-width:max-content;
+.rm {{ --lane-w:minmax(150px,180px); --col-w:minmax(220px,1fr); display:grid; gap:8px; min-width:min-content;
   grid-template-columns:var(--lane-w) repeat(var(--cols),var(--col-w)); }}
 .rm-col-h {{ display:flex; flex-direction:column; font-size:14px; padding:4px 2px; border-bottom:2px solid var(--border); }}
 .rm-lane-h {{ display:flex; flex-direction:column; justify-content:flex-start; font-size:14px; padding:10px; border-radius:8px; border-left:4px solid var(--accent); background:var(--track);

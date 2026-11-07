@@ -15,7 +15,7 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 > Sequence: proposed by product-manager 2026-11-06 — riskiest-first (dashboard visual, then truth of the copy), with deploy pulled forward so Dan can unblock the Cloudflare token and review on a live URL, then campaign/FAQ with TD-001 right behind them, and polish, dogfooding and the final truth pass last.
 - [x] Hero: headline, subline and GitHub CTA above the fold on mobile (S); one-click copy lives with the #start commands. AC: Given a phone viewport, when the page loads, then headline, subline and GitHub CTA are visible without scrolling.
 - [x] Challenge files 01-07 drafted in public/challenges/ (L). AC: each has goal, skills, danfactory features, time box, steps, done-when, proof.
-- [ ] Dashboard section with a real screenshot or faithful static mock generated from `python3 scripts/dashboard.py` output (M). AC: shows versions, progress, backlog, tech debt, metrics and the Roadmap tab; labeled as an example if mocked.
+- [x] Dashboard section with a real screenshot or faithful static mock generated from `python3 scripts/dashboard.py` output (M). AC: shows versions, progress, backlog, tech debt, metrics and the Roadmap tab; labeled as an example if mocked.
 - [x] Deploy to Cloudflare via git (S) #infra. AC: live URL; page served from the main branch push.
 - [ ] Problem, audience, 3-phase flow sections with final copy (M). AC: matches spec; every claim traceable to README/docs.
 - [ ] Agents, paths, token economy sections (M). AC: 18 agents, 8 paths plus adopt-existing, numbers match the repo.
