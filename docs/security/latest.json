@@ -1,0 +1,48 @@
+{
+ "date": "2026-11-07",
+ "profile": "quick",
+ "source_ref": "ef1f8afd938c80dd8422582ba9b29e9e7bdb459b",
+ "status": "complete (partial-coverage quick pass)",
+ "report": "~/security-audit-skill/lpdan/run-1/REPORT.md (outside the repo, not committed)",
+ "coverage": {"units": 10, "closed": 9, "covered": 6, "candidate": 3, "deferred": 1},
+ "records": [
+  {"id": "SEC-001", "verdict": "confirmed", "severity": "medium",
+   "title": "Adopt tooling follows symlinks planted in the adopted repo",
+   "location": "scripts/adopt_scan.py:261 · scripts/adopt.py:79,90,232",
+   "boundary": "Author of an adopted repo -> adopter's files outside that repo",
+   "fix": "Refuse symlinked destinations and require realpath inside the target; O_EXCL|O_NOFOLLOW for new files; no-follow walk for chmod; strip newlines from package.json name",
+   "state": "open"},
+  {"id": "SEC-002", "verdict": "needs_validation",
+   "title": "PR preview job may share the production Cloudflare token",
+   "location": ".github/workflows/deploy-cloudflare.yml:55-80,97",
+   "boundary": "Same-repo PR branch author -> production Worker (bypasses the production environment gate)",
+   "fix": "Owner check: is CLOUDFLARE_API_TOKEN a repo secret? If so, scope it to the 'production' environment (main only) and give previews a separate token",
+   "state": "open"},
+  {"id": "SEC-003", "verdict": "needs_validation",
+   "title": "Agent deploy guard misses wrapped and alternative deploy commands",
+   "location": ".claude/hooks/guard_bash_policy.py:16,22-28 · .claude/settings.json:24-27",
+   "boundary": "Agent (possibly prompt-injected) -> direct production deploy outside git",
+   "fix": "Match the raw command too; widen the regex to wrangler(@ver) (pages|versions) deploy; add deny rules. Effect depends on local wrangler auth and the permission mode",
+   "state": "open"}
+ ],
+ "hardening": [
+  {"area": "CI", "note": "Add a top-level 'permissions: contents: read' to ci.yml; pin the playwright version; pin actions to commit SHAs and wranglerVersion to the lockfile version; set persist-credentials: false on checkout."},
+  {"area": "Headers", "note": "No HSTS in public/_headers (add it once a custom domain is used); the Worker's /version and /health responses miss nosniff; set workers_dev and preview_urls explicitly in wrangler.jsonc."},
+  {"area": "Agent", "note": "Narrow the Bash(python3 scripts/*) and Bash(bash scripts/*) allow rules; git diff*/log* allow rules permit --output writes; .factory/HANDOFF.md is tracked and injected into agent context without provenance."},
+  {"area": "Supply chain", "note": "factory.json pins the external skills to the mutable 'main' (security-audit-run's 'pinned ref' claim is wrong); install-codegraph.sh installs unpinned npm and curl|sh."},
+  {"area": "Tooling", "note": "dashboard.py does not check the URL scheme of production_url; adopt.py trusts a shipped docs/adoption-scan.json for shell commands; adopt_scan runs git with the target's .git/config; /tmp paths in pre-push and context_watch are predictable (deferred unit)."}
+ ],
+ "positive": [
+  "Strict CSP (script-src 'self', frame-ancestors 'none', form-action 'none'); challenges are served as text/plain",
+  "No DOM sinks: copy.js uses static data-copy values and textContent; no inline scripts (enforced by check_page.py)",
+  "The Worker reflects no request data; there are no CORS headers, cookies or redirects",
+  "No pull_request_target; production deploys run only on push to main behind the production environment, using the lockfile",
+  "Dashboard output is HTML-escaped; no secrets are tracked; .env* and .dev.vars are ignored and denied"
+ ],
+ "limits": [
+  "Quick profile: one hunter wave and one critic; not exhaustive",
+  "SEC-002 and SEC-003 depend on GitHub and machine settings that the source cannot show",
+  "Deferred: predictable /tmp paths (pre-push, context_watch)",
+  "No dependency CVE scan (offline)"
+ ]
+}

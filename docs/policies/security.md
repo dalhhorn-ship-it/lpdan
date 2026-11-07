@@ -17,4 +17,5 @@
 
 ## On request / L3
 - `security-audit-run` installs and runs Cloudflare's security-audit skill (guidance or full audit). Full-audit artifacts are written outside the repo.
+- The latest audit summary (findings, hardening notes, limits; never payloads or secrets) lives in `docs/security/latest.json` and is shown in the dashboard Security tab. Each finding is also tracked as a TECH-DEBT item.
 - Confirmed High/Critical findings block an L3 release.

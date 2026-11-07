@@ -29,7 +29,7 @@
 | docs/BACKLOG.md | 45 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
 | docs/GOAL.md | 59 | Status: confirmed by Dan on 2026-11-06. |
 | docs/OPERATING-MODEL.md | 77 | Approved by Dan on 2026-11-06, with rigor raised to L2. How this project is built:… |
-| docs/TECH-DEBT.md | 14 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
+| docs/TECH-DEBT.md | 17 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
 | docs/decisions/0000-template.md | 15 | Status: proposed \| accepted \| superseded by NNNN · Date: YYYY-MM-DD |
 | docs/decisions/0001-use-danfactory-template.md | 12 | Status: accepted · Date: 2026-11-06 |
 | docs/decisions/0002-static-page-worker-assets-no-build.md | 27 | Status: accepted (Dan, 2026-11-06) · Date: 2026-11-06 |
@@ -48,7 +48,7 @@
 | docs/operating-model/paths/software-product.md | 40 | Apps, APIs, services with users. Default rigor L2 (L3 if money/PII/public). Goes live… |
 | docs/policies/async-delivery.md | 23 | The agent's time is the most expensive part of a deploy. Push, hand off, keep working;… |
 | docs/policies/documentation.md | 11 | Docs are part of done. Small, true, linked — and indexed so agents never read more than… |
-| docs/policies/security.md | 20 | Secure defaults always; full audits on request or before L3 releases. |
+| docs/policies/security.md | 21 | Secure defaults always; full audits on request or before L3 releases. |
 | docs/policies/testing-and-metrics.md | 17 | Fast feedback is a feature. Measure test time, coverage, deploys and tokens; act on the… |
 | docs/policies/token-economy.md | 28 | Spend tokens on decisions, not on moving bytes. Adapted from Spotify's `shunt` plugin… |
 | docs/specs/landing-page.md | 232 | Status: confirmed by Dan on 2026-11-06 (see Decisions). Traces to docs/GOAL.md outcome… — sections: Problem statement:5, User story:8, Build constraints:11, Acceptance criteria:14, Non-goals:28, Sections in order (copy below):31, Truth rules for the developer:215, Scope cuts (recommended):219, Decisions (Dan, 2026-11-06):226 |
