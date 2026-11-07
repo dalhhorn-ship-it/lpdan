@@ -252,7 +252,7 @@ def main():
     check("copy.js loaded with defer", any(t == "script" and a.get("src") == "copy.js" and "defer" in a
                                            for t, a in p.attrs_all))
 
-    # 3 campaign (markup arrives in slice S5; files must exist now)
+    # 3 campaign
     missing = [f for f in CHALLENGES if not (PUB / "challenges" / f).is_file()]
     check("7 challenge files exist", not missing, missing)
     bad_ch = []
@@ -261,11 +261,10 @@ def main():
         if fp.is_file() and f"[challenge-{i}]" not in fp.read_text(encoding="utf-8"):
             bad_ch.append(f)
     check("challenge files contain their [challenge-N] tag", not bad_ch, bad_ch)
-    if "campaign" in ids:  # gated until the campaign section is built
-        links = [h for h in p.hrefs if h.startswith("challenges/")]
-        order = [h.split("/")[-1] for h in links]
-        check("each challenge linked twice, in order", order == [f for f in CHALLENGES for _ in (0, 1)], order)
-        check("exactly 8 details.faq", p.faq == 8, p.faq)
+    links = [h for h in p.hrefs if h.startswith("challenges/")]
+    order = [h.split("/")[-1] for h in links]
+    check("each challenge linked twice, in order", order == [f for f in CHALLENGES for _ in (0, 1)], order)
+    check("exactly 8 details.faq", p.faq == 8, p.faq)
 
     # 4 design rules in CSS
     check("no box-shadow/text-shadow/drop-shadow", not re.search(r"(box|text)-shadow\s*:\s*(?!none)|drop-shadow", css_nc))

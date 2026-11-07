@@ -23,10 +23,10 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 - [x] Adopt existing Lovable/Bolt/v0 build + start in 3 commands sections (S). AC: snippets verbatim from README.
 - [ ] Dan reviews challenge files and the farm game brief (02) for tone and truth (S) #quality
 - [ ] Enable GitHub Issues/Discussions on danfactory with a "challenge" label and `[challenge-N]` title convention (S) #process
-- [ ] Campaign section on the page: 7 challenge cards, submit steps, help line (M). AC: matches spec section 9b; links to /challenges/*.md work.
-- [ ] FAQ accordion with details/summary (S). AC: works without JS; answers match challenge 1 file.
-- [ ] S5: remove the campaign-check gate in tests/check_page.py (TD-001) (S) #quality
-- [ ] Credits + footer (S). AC: all README-credited projects linked.
+- [x] Campaign section on the page: 7 challenge cards, submit steps, help line (M). AC: matches spec section 9b; links to /challenges/*.md work.
+- [x] FAQ accordion with details/summary (S). AC: works without JS; answers match challenge 1 file.
+- [x] S5: remove the campaign-check gate in tests/check_page.py (TD-001) (S) #quality
+- [x] Credits + footer (S). AC: all README-credited projects linked.
 - [ ] Single index.html: responsive, accessible (semantic HTML, contrast, keyboard), no third-party requests, no JS required (M) #quality. AC: Lighthouse mobile 90+ in all three.
 - [ ] Open Graph/social preview tags and favicon (S). AC: link preview renders; image is local.
 - [ ] Dogfood: run challenges 1 and 2 end to end on a clean machine and fix snags in the files and FAQ (M) #quality
