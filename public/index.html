@@ -231,8 +231,10 @@ section.alt .tbl tbody tr:nth-child(even){background:var(--ground)}
 figure{margin:0}
 figure img{width:100%;height:auto;display:block;border:2px solid var(--rule)}
 figcaption{color:var(--ink-muted);font-size:var(--fs-small);margin-top:var(--space-4)}
-.real{margin-top:var(--space-12);display:grid;gap:var(--space-8)}
-@media (min-width:900px){.real{grid-template-columns:1fr 1fr}.real .note{grid-column:1/-1}}
+.real{margin-top:var(--space-12)}
+.demo{display:grid;gap:8px;position:relative;padding:28px;border:2px solid var(--rule);border-left:8px solid var(--magenta);color:var(--ink);text-decoration:none}
+.demo:hover{border-color:var(--cyan);border-left-color:var(--magenta)}
+.demo b{font-size:var(--fs-title);font-weight:800}.demo span{color:var(--ink-muted)}.demo .kicker{margin:0}
 @media (min-width:900px){.dsec{grid-template-columns:1fr 1.2fr;gap:64px}}
 
 .tok{display:grid;grid-template-columns:1fr;gap:var(--space-8);margin-top:var(--space-12)}
@@ -394,7 +396,7 @@ footer a{color:var(--ink-muted);text-decoration:none}
     <div class="grid g3 phases">
       <div class="card phase"><span class="n">01 · WHY</span><h3>Agree the goal</h3><p>The <code>brainstorm</code> skill talks it through with you until "done" is written down.</p><div class="out">Output: <b>docs/GOAL.md</b></div></div>
       <div class="card phase"><span class="n">02 · HOW</span><h3>Choose how to work</h3><p>The <code>choose-path</code> skill walks a decision tree and a rigor dial, then records why you decided (an ADR: a short decision note).</p><div class="out">Output: <b>docs/OPERATING-MODEL.md</b>, factory.json, ADR</div></div>
-      <div class="card phase"><span class="n">03 · BUILD</span><h3>Build</h3><p>Follow the path playbook with subagents. At milestones, <code>retro</code> and <code>metrics</code> record what you learned.</p><div class="out">Output: code / workbook / document, <b>LEARNINGS.md</b></div></div>
+      <div class="card phase"><span class="n">03 · BUILD</span><h3>Build</h3><p>Every feature starts as a short PRD from the <code>product-manager</code> agent that you approve in chat. No approval, no build. Then follow the path playbook with subagents; at milestones, <code>retro</code> and <code>metrics</code> record what you learned.</p><div class="out">Output: <b>docs/specs/</b> PRDs, code / workbook / document, <b>LEARNINGS.md</b></div></div>
     </div>
     <div class="rigor" role="group" aria-label="Rigor dial">
       <div><b>L0</b><span>Throwaway, just you</span></div>
@@ -402,7 +404,7 @@ footer a{color:var(--ink-muted);text-decoration:none}
       <div><b>L2</b><span>Others depend on it</span></div>
       <div><b>L3</b><span>Money, personal data, public internet</span></div>
     </div>
-    <p class="note">The rigor dial: the highest signal wins. Also on demand: <code>security-audit-run</code> (audit report) and <code>ship</code> (live deploy).</p>
+    <p class="note">The rigor dial: the highest signal wins. Also on demand: <code>security-audit-run</code> (audit report) and <code>ship</code> (live deploy). The deploy token lives in a GitHub <code>production</code> environment limited to <code>main</code>, so pull-request code can't read it.</p>
   </div>
 </section>
 
@@ -464,7 +466,8 @@ footer a{color:var(--ink-muted);text-decoration:none}
           <li><b>Backlog</b><span>Read straight from <code>docs/BACKLOG.md</code>: todo, doing, blocked, done.</span></li>
           <li><b>Tech debt</b><span>Shortcuts you chose on purpose, from <code>docs/TECH-DEBT.md</code>, plus automatic signals like TODO markers and oversized files.</span></li>
           <li><b>Key metrics</b><span>Tests, coverage, deploys and tokens, with alerts when a budget is breached.</span></li>
-          <li><b>Roadmap tab</b><span>Your proposed sequence as two swimlanes, user value vs technical foundation, so you see if you're only shipping features and neglecting the base.</span></li>
+          <li><b>Roadmap tab</b><span>One numbered build order across two swimlanes, user value vs technical foundation, so you see if you're only shipping features and neglecting the base. A <i>Next up</i> strip shows the first three, each milestone says why it's in that order, finished milestones fold away, and items linked to a PRD show a draft or approved badge.</span></li>
+          <li><b>Re-planned after every slice</b><span>The <code>product-manager</code> agent re-proposes the order after each finished piece of work, then the dashboard is rebuilt.</span></li>
         </ul>
         <div class="trace" role="group" aria-label="Traceability chain"><span>goal</span><i aria-hidden="true"></i><span>backlog</span><i aria-hidden="true"></i><span>tests</span><i aria-hidden="true"></i><span>deploy</span><i aria-hidden="true"></i><span>metrics</span></div>
         <p class="note">All in plain files in git. CI rebuilds it on every push and uploads it as an artifact.</p>
@@ -476,15 +479,12 @@ footer a{color:var(--ink-muted);text-decoration:none}
       </div>
     </div>
     <div class="real">
-      <figure>
-        <img src="img/dashboard-overview.webp" width="1800" height="1200" loading="lazy" alt="Screenshot of the real danfactory dashboard for this landing page, Overview tab: build phase, version unreleased, 21% progress (6 done, 23 open), test run 3.6s within a 30s budget, 85% test pass rate, 3 deploys with a 67% failure rate, weighted tokens per session over budget, 5 open tech-debt items, progress bars for milestones M0 to M2 and the backlog and tech-debt panels.">
-        <figcaption>Overview tab: versions, phase, progress, metrics with budget alerts, backlog and tech debt.</figcaption>
-      </figure>
-      <figure>
-        <img src="img/dashboard-roadmap.webp" width="1800" height="1200" loading="lazy" alt="Screenshot of the Roadmap tab of the same dashboard: the product manager's proposed sequence, a Next up list of three items, and swimlanes with milestones M1, M2 and tech debt to schedule as columns and value-driven features as the first lane.">
-        <figcaption>Roadmap tab: the proposed sequence in swimlanes, user value vs technical foundation.</figcaption>
-      </figure>
-      <p class="note">Real screenshots of this landing page's own dashboard, generated by <code>scripts/dashboard.py</code> on 2026-11-07. The numbers are honest, including the red ones.</p>
+      <a class="demo" href="dashboard/">
+        <span class="kicker">Try it</span>
+        <b>Open this site's own dashboard &gt;</b>
+        <span>Click through Overview, Roadmap, Deploy and Security. A real, unedited snapshot, red numbers included. No JavaScript.</span>
+      </a>
+      <p class="note">Generated by <code>scripts/dashboard.py</code> from this landing page's own repo. The Deploy and Security tabs are in this site's dashboard, not yet in the template.</p>
     </div>
   </div>
 </section>
@@ -511,7 +511,7 @@ footer a{color:var(--ink-muted);text-decoration:none}
     <h2>7 habits that make vibe coding last</h2>
     <p class="lede">Good habits first. The template makes them the default, so you don't have to remember them.</p>
     <ol class="habits">
-      <li><b>Agree a goal first.</b><span>Write what "done" means before any code.</span><small>brainstorm, GOAL.md · no code until it's confirmed</small></li>
+      <li><b>Agree a goal first.</b><span>Write what "done" means before any code.</span><small>brainstorm, GOAL.md · no code until it's confirmed · then a PRD you approve per feature</small></li>
       <li><b>Pick an operating model.</b><span>A prototype and a payment app need different care.</span><small>choose-path · rigor dial L0–L3</small></li>
       <li><b>Keep contexts short, hand off often.</b><span>One task per session. Save a note, /clear, continue.</span><small>handoff · context-watch hook</small></li>
       <li><b>Delegate big reads.</b><span>Don't make the smart model read logs.</span><small>bulk-reader · test-runner · file-size guard</small></li>

@@ -28,14 +28,14 @@
 | CLAUDE.md | 39 | Always-loaded instructions. Keep short and stable (it is paid every turn). Details live… |
 | docs/BACKLOG.md | 46 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
 | docs/GOAL.md | 59 | Status: confirmed by Dan on 2026-11-06. |
-| docs/OPERATING-MODEL.md | 77 | Approved by Dan on 2026-11-06, with rigor raised to L2. How this project is built:… |
+| docs/OPERATING-MODEL.md | 78 | Approved by Dan on 2026-11-06, with rigor raised to L2. How this project is built:… |
 | docs/TECH-DEBT.md | 17 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
 | docs/decisions/0000-template.md | 15 | Status: proposed \| accepted \| superseded by NNNN · Date: YYYY-MM-DD |
 | docs/decisions/0001-use-danfactory-template.md | 12 | Status: accepted · Date: 2026-11-06 |
 | docs/decisions/0002-static-page-worker-assets-no-build.md | 27 | Status: accepted (Dan, 2026-11-06) · Date: 2026-11-06 |
 | docs/decisions/0003-deploy-token-in-github-environments.md | 19 | Status: accepted (Dan asked for the SEC findings to be fixed, 2026-11-07) · Date:… |
 | docs/decisions/0004-prd-approval-gate.md | 16 | Status: accepted · Date: 2026-11-06 |
-| docs/design/ARCHITECTURE.md | 188 | Proposed (awaiting Dan's approval), 2026-11-06. Technical shape of the static landing… — sections: Context:5, File layout:8, CSS architecture:27, Design-token mapping…:39, Responsive type scale and…:58, Section → component mapping:76, Changes needed in the…:97, Accessibility plan (contrast…:111, Performance budget…:125, Content truth:135, Test strategy:141, Deploy:157, Build plan (vertical slices…:166, Risks and open questions:181 |
+| docs/design/ARCHITECTURE.md | 189 | Proposed (awaiting Dan's approval), 2026-11-06. Technical shape of the static landing… — sections: Context:5, File layout:8, CSS architecture:28, Design-token mapping…:40, Responsive type scale and…:59, Section → component mapping:77, Changes needed in the…:98, Accessibility plan (contrast…:112, Performance budget…:126, Content truth:136, Test strategy:142, Deploy:158, Build plan (vertical slices…:167, Risks and open questions:182 |
 | docs/operating-model/AGENT-ROUTING.md | 81 | Which agent gets involved when. The main agent coordinates and decides; subagents are… |
 | docs/operating-model/DECISION-TREE.md | 68 | Picks the operating model for a goal. Version 1.1.0. Keep this file short: details live… |
 | docs/operating-model/LEARNINGS.md | 23 | Append-only log written by `retro`. Each entry tags path(s) and a type; `[upstream]`… |
@@ -55,5 +55,5 @@
 | docs/policies/testing-and-metrics.md | 17 | Fast feedback is a feature. Measure test time, coverage, deploys and tokens; act on the… |
 | docs/policies/token-economy.md | 28 | Spend tokens on decisions, not on moving bytes. Adapted from Spotify's `shunt` plugin… |
 | docs/specs/_TEMPLATE.md | 33 | Status: draft \| approved · YYYY-MM-DD · by user in chat \| dropped · Owner:… |
-| docs/specs/landing-latest-features.md | 58 | Status: draft · 2026-11-07 · Owner: product-manager · Backlog: M1 / "Landing: latest… |
-| docs/specs/landing-page.md | 232 | Status: confirmed by Dan on 2026-11-06 (see Decisions). Traces to docs/GOAL.md outcome… — sections: Problem statement:5, User story:8, Build constraints:11, Acceptance criteria:14, Non-goals:28, Sections in order (copy below):31, Truth rules for the developer:215, Scope cuts (recommended):219, Decisions (Dan, 2026-11-06):226 |
+| docs/specs/landing-latest-features.md | 58 | Status: approved · 2026-11-07 · by user in chat (options: 1A drop both screenshots, 2… |
+| docs/specs/landing-page.md | 233 | Status: confirmed by Dan on 2026-11-06 (see Decisions). Traces to docs/GOAL.md outcome… — sections: Problem statement:5, User story:8, Build constraints:11, Acceptance criteria:14, Non-goals:28, Sections in order (copy below):31, Truth rules for the developer:216, Scope cuts (recommended):220, Decisions (Dan, 2026-11-06):227 |

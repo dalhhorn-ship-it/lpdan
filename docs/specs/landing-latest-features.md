@@ -1,6 +1,6 @@
 # PRD: Landing page: latest features and clickable dashboard
 
-> Status: draft · 2026-11-07 · Owner: product-manager · Backlog: M1 / "Landing: latest features + clickable dashboard"
+> Status: approved · 2026-11-07 · by user in chat (options: 1A drop both screenshots, 2 publish real numbers, 3 separate page /dashboard/) · Owner: product-manager · Backlog: M1 / "Landing: latest features + clickable dashboard"
 
 ## Problem
 Dan's ask: "update the landing page with latest features we have build and make the dashboad on the site clickable". The page (public/index.html, spec docs/specs/landing-page.md) predates the Roadmap sequencing, the PRD gate and security hardening. The #dashboard section shows two static screenshots, so a visitor cannot try the thing being sold.

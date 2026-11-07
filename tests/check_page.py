@@ -349,6 +349,17 @@ def main():
     low = text.lower()
     check("no banned proof phrases", not [b for b in BANNED if b in low], [b for b in BANNED if b in low])
 
+    # 8 served dashboard snapshot (docs/specs/landing-latest-features.md)
+    dpath = PUB / "dashboard" / "index.html"
+    dash = dpath.read_text(encoding="utf-8") if dpath.is_file() else ""
+    check("dashboard page served at /dashboard/", bool(dash))
+    check("dashboard page: no scripts, no third-party loads", "<script" not in dash.lower()
+          and not re.search(r'(?:src|srcset)\s*=\s*"(?:https?:)?//', dash) and "@import" not in dash)
+    check("dashboard page: back link, dated, honest label", 'href="/"' in dash and "Real, unedited snapshot" in dash
+          and re.search(r"generated \d{4}-\d{2}-\d{2}", dash) and "not yet in the template" in dash)
+    check("dashboard page: four tabs", all('id="tab-%s"' % t in dash for t in ("overview", "roadmap", "deploy", "security")))
+    check("index links to the dashboard page", 'href="dashboard/"' in html)
+
     dashboard_checks(check)
 
     failed = [r for r in results if not r[1]]

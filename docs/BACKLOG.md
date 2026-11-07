@@ -30,7 +30,7 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 - [ ] Single index.html: responsive, accessible (semantic HTML, contrast, keyboard), no third-party requests, no JS required (M) #quality. AC: Lighthouse mobile 90+ in all three.
 - [ ] Open Graph/social preview tags and favicon (S). AC: link preview renders; image is local.
 - [ ] Dogfood: run challenges 1 and 2 end to end on a clean machine and fix snags in the files and FAQ (M) #quality
-- [ ] Landing: latest features copy + clickable dashboard (M, [PRD draft](specs/landing-latest-features.md)). AC: see PRD; budgets green, works without JS. Needs Dan's budget decision.
+- [x] Landing: latest features copy + clickable dashboard (M, [PRD approved](specs/landing-latest-features.md)). AC: see PRD; budgets green, works without JS.
 - [ ] Truth pass: Dan reviews all copy; run check script (S) #quality.
 
 ## Milestone: M2 — Ideas, not committed (target: )

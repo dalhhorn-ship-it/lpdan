@@ -12,7 +12,8 @@ public/                      # the only thing deployed (Worker static assets)
   copy.js                    # ~1 KB progressive enhancement: copy buttons only (moved out of inline for CSP)
   _headers                   # security headers, text/plain for challenge .md, noindex until launch
   fonts/archivo-latin.woff2, archivo-black-latin.woff2, OFL.txt   # self-hosted, latin subset, licence added
-  img/dashboard-overview.webp, img/dashboard-roadmap.webp  (+ img/og.png in the OG slice)
+  dashboard/index.html       # dated snapshot of this repo's own dashboard + back link; written by scripts/site_dashboard.py
+  img/                       # (img/og.png in the OG slice; the S4 screenshots were replaced by dashboard/)
   challenges/01-setup.md … 07-retro-upstream.md   # source of truth, shipped byte-for-byte
 worker/index.ts              # cf_scaffold.py template, unchanged: /version (git sha), /health, else ASSETS
 wrangler.jsonc               # cf_scaffold.py: assets ./public, run_worker_first [/version,/health]
