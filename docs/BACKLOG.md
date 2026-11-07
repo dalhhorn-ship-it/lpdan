@@ -34,6 +34,8 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 - [x] Truth pass: Dan reviews all copy; run check script (S) #quality. Delegated by Dan to jenny + reviewer, signed off 2026-11-07: [record](reviews/2026-11-07-truth-pass.md).
 - [ ] Launch: remove `X-Robots-Tag: noindex` from public/_headers once GitHub Issues + `challenge` label are confirmed on danfactory (S) #process
 
+- [ ] Agents navigate docs index-first: INDEX line in 7 agents + `docs_index.py --related` (S-M, [PRD draft](specs/agents-index-first.md)) #process
+
 ## Milestone: M2 — Ideas, not committed (target: )
 - [ ] Short screen recording or animated terminal of the 3 phases (M)
 - [ ] "Worked example": a small project run through the flow, honest about results (L)
