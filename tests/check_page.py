@@ -364,7 +364,8 @@ def main():
     opened = [r for r in sec.get("records", []) if r.get("state", "open") not in ("fixed", "accepted")]
     check("dashboard page: no open security findings published",
           not [r["id"] for r in opened if r.get("id", "\0") in dash or r.get("title", "\0") in dash]
-          and "Hardening notes</h2><ul class=\"plain\"><li><b>" not in dash, [r.get("id") for r in opened])
+          and not [x for x in ("Hardening notes", "Limits of this run", "partial-coverage") if x in dash],
+          [r.get("id") for r in opened])
 
     dashboard_checks(check)
 

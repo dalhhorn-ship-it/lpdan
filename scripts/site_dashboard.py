@@ -26,7 +26,7 @@ BAR_CSS = (".site-bar{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:basel
 def build(html, generated):
     bar = ('<nav class="site-bar" aria-label="Site"><a href="/">&larr; Back to danfactory</a>'
            '<span>Real snapshot of this landing page\'s own dashboard, generated %s. '
-           'Deploy and Security are this site\'s own tabs; the observability tabs come from a danfactory branch not yet merged into the template. Open security issues are not published here.</span></nav>'
+           'Deploy and Security are this site\'s own tabs; the observability tabs come from a danfactory branch not yet merged into the template.</span></nav>'
            % generated)
     html = html.replace("</style>", BAR_CSS + "\n</style>", 1)
     head = ('<meta name="description" content="Real snapshot of the danfactory landing page\'s own project dashboard: '
@@ -51,6 +51,26 @@ def public_security(sec):
     sec["hardening"] = []
     sec["limits"] = ["Public copy: new or open findings, hardening notes and audit limits are not shown here."]
     return sec
+
+
+SEV_LABEL = {"critical": "critical", "high": "high", "medium": "medium", "low": "low", "informational": "info"}
+
+
+def security_panel(sec, e):
+    """Public Security tab: closed findings as severity, title and state only (no exploit paths or file locations)."""
+    recs = [r for r in (sec or {}).get("records", []) if r.get("state", "open") in CLOSED]
+    if not recs:
+        return '<div class="card"><h2>Security</h2><p class="muted">No published findings.</p></div>'
+    rows = "".join('<tr><td><span class="imp low">%s</span></td><td>%s</td><td>%s</td></tr>' % (
+        e(SEV_LABEL.get(r.get("severity"), r.get("verdict", "").replace("_", " ")) or "finding"),
+        e(r.get("title")), e(r.get("state"))) for r in recs)
+    good = "".join("<li>%s</li>" % e(g) for g in (sec or {}).get("positive", []))
+    return ('<section class="grid"><div class="card" style="grid-column:1/-1"><h2>Fixed findings</h2>'
+            '<p class="muted">Last audit %s. This public copy lists fixed findings only.</p>'
+            '<div class="scroll"><table><thead><tr><th>Severity</th><th>Finding</th><th>State</th></tr></thead>'
+            '<tbody>%s</tbody></table></div></div>%s</section>' % (
+                e(sec.get("date")), rows,
+                '<div class="card"><h2>What is already solid</h2><ul class="plain">%s</ul></div>' % good if good else ""))
 
 
 def public(d):
@@ -82,6 +102,11 @@ def main():
     d = public(dashboard.collect())
     full_sec = dashboard.security()
     html = dashboard.render(d)
+    panel = re.search(r'<div class="panel panel-security">.*?</div>\n\n<div class="panel panel-overview">', html, re.S)
+    if not panel:
+        raise SystemExit("site_dashboard: security panel not found")
+    html = html[:panel.start()] + '<div class="panel panel-security">%s</div>\n\n<div class="panel panel-overview">' % (
+        security_panel(full_sec, dashboard.e)) + html[panel.end():]
     bad = leaks(html, full_sec)
     if bad:
         raise SystemExit("site_dashboard: open security findings would be published: %s" % ", ".join(bad))
