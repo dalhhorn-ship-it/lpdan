@@ -495,7 +495,7 @@ def render_security(sec):
                   SEV_ORDER.get(r.get("severity"), 9), r.get("id", "")))
     n_conf = sum(r.get("verdict") == "confirmed" for r in recs)
     n_nv = sum(r.get("verdict") == "needs_validation" for r in recs)
-    n_open = sum(r.get("state", "open") == "open" for r in recs)
+    n_open = sum(r.get("state", "open") not in ("fixed", "accepted") for r in recs)
     tiles = "".join([
         tile("Confirmed findings", str(n_conf), "verified by an independent agent", "bad" if n_conf else "ok",
              words=("none", "", "fix needed")),

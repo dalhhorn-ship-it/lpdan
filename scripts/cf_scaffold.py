@@ -7,7 +7,7 @@ Writes (only if absent): wrangler.jsonc, worker/index.ts (with /version and /hea
 .github/workflows/deploy-cloudflare.yml, and for projects without one a minimal package.json +
 public/index.html. Fills factory.json -> integrations.deploy. Detects Vite/Lovable SPAs
 (assets from ./dist, SPA fallback). Never deploys anything itself: GitHub Actions creates the
-Worker on the first merge to main (needs repo secrets CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID).
+Worker on the first merge to main (needs CLOUDFLARE_API_TOKEN as a "production" environment secret).
 """
 import argparse
 import datetime
@@ -135,9 +135,11 @@ def main():
     print("\n".join(done))
     print("""
 Worker '{name}' is scaffolded ({kind}). Next:
-  1. GitHub repo -> Settings -> Secrets and variables -> Actions: add CLOUDFLARE_API_TOKEN
-     ("Edit Cloudflare Workers" API token, not R2 keys). CLOUDFLARE_ACCOUNT_ID is optional; if set, use the
-     Account ID, never a Zone ID.
+  1. GitHub repo -> Settings -> Environments -> New environment "production"; Deployment branches:
+     "Selected branches" = main. Add environment secret CLOUDFLARE_API_TOKEN ("Edit Cloudflare Workers"
+     API token, not R2 keys). Not a repo-level secret: PR jobs could read that one.
+     Optional: environment "preview" with its own token for PR previews (without it previews are skipped).
+     CLOUDFLARE_ACCOUNT_ID is optional; if set, use the Account ID, never a Zone ID.
   2. Branch protection on main: require the "test" check
   3. Commit, open a PR (preview: https://pr-<n>-{name}.<subdomain>.workers.dev), merge -> Worker created
   4. Put the URL from the deploy log into factory.json integrations.deploy (workers_subdomain, production_url)

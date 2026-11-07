@@ -4,9 +4,12 @@
 #  - docs-only PRs skip the work but still report a green "test" check, so a required check
 #    never blocks the merge (paths-ignore on pull_request would leave it "Expected" forever)
 #  - superseded runs are cancelled; npm cache when a lockfile exists
-# Secrets (repo Settings → Secrets and variables → Actions): CLOUDFLARE_API_TOKEN (required);
-# CLOUDFLARE_ACCOUNT_ID optional (inferred for single-account tokens; if set: Account ID, NOT a Zone ID).
-# PRs from forks get no secrets, so they can't deploy. Branch protection on main: require "test".
+# Secrets live in GitHub *environments*, not repo-level secrets (docs/policies/security.md):
+#  - environment "production" (deployment branches: main only): CLOUDFLARE_API_TOKEN (required)
+#  - environment "preview" (optional): a separate CLOUDFLARE_API_TOKEN for PR previews; without it previews are skipped
+#  A pull_request run uses the PR branch's copy of this file, so only the environment's branch rule
+#  keeps the production token away from unmerged code. CLOUDFLARE_ACCOUNT_ID is optional (inferred for
+#  single-account tokens; if set: Account ID, NOT a Zone ID). Forks get no secrets. Branch protection on main: require "test".
 name: deploy-cloudflare
 on:
   pull_request:
@@ -58,6 +61,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     continue-on-error: true  # not a merge gate; fails until the first merge has created the Worker
+    env: { HAS_PREVIEW_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN != '' }}" }
+    environment: preview  # never the production token: that one is scoped to environment "production" (main only)
     permissions: { contents: read, deployments: write }
     steps:
       - if: needs.changes.outputs.code == 'true'
@@ -71,7 +76,7 @@ jobs:
         run: npm run build --if-present
       # Stable preview URL: https://pr-<number>-<worker>.<subdomain>.workers.dev
       # (preview versions need the Worker to exist: merge once to main first)
-      - if: needs.changes.outputs.code == 'true'
+      - if: needs.changes.outputs.code == 'true' && env.HAS_PREVIEW_TOKEN == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

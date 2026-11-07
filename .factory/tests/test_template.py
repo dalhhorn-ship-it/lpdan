@@ -82,6 +82,15 @@ class BashPolicy(unittest.TestCase):
                     "git push origin main --no-verify", "git commit -n -m x"):
             self.assertEqual(self.check(cmd), 2, cmd)
 
+    def test_blocks_wrapped_and_alternative_deploys(self):  # SEC-003
+        w = "wrangler " + "deploy"
+        for cmd in ('bash -c "npx %s"' % w, "sh -c 'npx %s'" % w, 'eval "npx %s"' % w,
+                    'echo "npx %s" | sh' % w, "bash <<EOF\nnpx %s\nEOF" % w, "cat <<EOF | bash\nnpx %s\nEOF" % w,
+                    "npx wrangler versions " + "deploy", "npx wrangler@4 " + "deploy", 'bash -lc "git push --no-verify"'):
+            self.assertEqual(self.check(cmd), 2, cmd)
+        for cmd in ("npx wrangler versions upload", 'bash -c "npx %s --dry-run"' % w):
+            self.assertEqual(self.check(cmd), 0, cmd)
+
     def test_ignores_text_being_written(self):
         w = "wrangler " + "deploy"
         self.assertEqual(self.check("cat > notes.md <<'EOF'\nnever run npx %s\nEOF" % w), 0)
@@ -370,6 +379,60 @@ class Adopt(unittest.TestCase):
         subprocess.run([sys.executable, "scripts/docs_index.py", "--quiet"], cwd=d, check=True)
         chk = subprocess.run(["bash", "scripts/check.sh"], cwd=d, capture_output=True, text=True)
         self.assertEqual(chk.returncode, 0, chk.stdout[-800:] + chk.stderr[-800:])
+
+
+
+class AdoptSymlinks(unittest.TestCase):
+    def _sym_repo(self, files, links):
+        d = tempfile.mkdtemp()
+        out = tempfile.mkdtemp()
+        for rel, body in files.items():
+            os.makedirs(os.path.dirname(os.path.join(d, rel)) or d, exist_ok=True)
+            with open(os.path.join(d, rel), "w") as fh:
+                fh.write(body)
+        for rel, dest in links.items():
+            os.makedirs(os.path.dirname(os.path.join(d, rel)) or d, exist_ok=True)
+            os.symlink(dest.replace("OUT", out), os.path.join(d, rel))
+        subprocess.run(["git", "init", "-q"], cwd=d, check=True)
+        return d, out
+
+    def test_scan_refuses_symlinked_report_and_sanitises_name(self):
+        d, out = self._sym_repo({"package.json": json.dumps({"name": "x\nINJECT"})},
+                                {"docs/ADOPTION-REPORT.md": "OUT/victim.txt"})
+        victim = os.path.join(out, "victim.txt")
+        with open(victim, "w") as fh:
+            fh.write("precious")
+        scan = [sys.executable, os.path.join(ROOT, "scripts", "adopt_scan.py"), "--target", d]
+        r = subprocess.run(scan, capture_output=True, text=True)
+        self.assertIn("symlink refused", r.stderr)
+        self.assertEqual(open(victim).read(), "precious")
+        for bad in ("../x", "/tmp/x"):
+            r = subprocess.run(scan + ["--out", bad], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 2, bad)
+        r = subprocess.run(scan + ["--print"], capture_output=True, text=True)
+        lines = r.stdout.splitlines()
+        self.assertEqual(lines[0], "# Adoption report: x INJECT")
+        self.assertNotIn("INJECT", lines[1:2])
+
+    def test_apply_refuses_symlinks(self):
+        d, out = self._sym_repo({}, {".githooks": "OUT/keys", ".claude/settings.json": "OUT/outside.json",
+                                     "docs/GOAL.md": "OUT/dangling", "scripts": "OUT/scr"})
+        keys, outside = os.path.join(out, "keys"), os.path.join(out, "outside.json")
+        os.makedirs(os.path.join(out, "scr"))
+        with open(keys, "w") as fh:
+            fh.write("secret")
+        os.chmod(keys, 0o600)
+        with open(outside, "w") as fh:
+            fh.write("{}")
+        r = subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "adopt.py"), "--target", d, "--apply"],
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("symlink refused", r.stdout)
+        self.assertEqual(open(keys).read(), "secret")
+        self.assertEqual(os.stat(keys).st_mode & 0o777, 0o600)
+        self.assertEqual(open(outside).read(), "{}")
+        self.assertFalse(os.path.exists(os.path.join(out, "dangling")))
+        self.assertEqual(os.listdir(os.path.join(out, "scr")), [])
 
 
 class ShortContexts(unittest.TestCase):
