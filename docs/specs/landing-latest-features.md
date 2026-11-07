@@ -56,3 +56,9 @@ M, value lane. Slices: (1) copy updates, S; (2) clickable dashboard, M, after th
 1. Budget: (A) drop both screenshots (about -184 KB), serve the dashboard copy; (B) keep one screenshot (about 90 KB) plus the dashboard copy, which needs the cap raised to about 340 KB; (C) raise the cap and keep both. Recommendation: A. A clickable page replaces the screenshots, keeps the 300 KB discipline, and shows real state. If Dan wants a visual before clicking, B with a raised cap.
 2. Okay to publish the live dashboard with real red metrics and security history (recommended yes: honest, all findings fixed), or sanitize?
 3. Deliver as a separate page (public/dashboard/index.html, linked) or embedded in the section? Recommendation: separate page, so the landing page stays under 64 KB and the dashboard is full-width.
+
+## Revision 2026-11-07 (Dan, in chat)
+"ensure dashboard includes all sections that the danfactory git already has! and hide new/open security issues on the landing page!"
+- The public /dashboard/ copy carries every dashboard tab, including the observability tabs from danfactory.
+- Open question 2 is narrowed: real numbers stay, but new or open security findings, hardening notes and audit limits are not published. Open tech-debt items and roadmap cards naming a finding (SEC-n) or security are left out too. scripts/site_dashboard.py filters them and refuses to write the page if an open finding would still appear; tests/check_page.py checks the same. The private dashboard keeps everything.
+

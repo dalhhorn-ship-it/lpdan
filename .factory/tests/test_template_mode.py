@@ -13,7 +13,8 @@ from _common import origin_slug, template_mode  # noqa: E402
 
 SRC = "dalhhorn-ship-it/danfactory"
 COPY = [".claude/hooks/_common.py", ".claude/hooks/session_start.py", ".claude/hooks/record_tokens.py",
-        "scripts/dashboard.py", "scripts/metrics.py"]
+        "scripts/dashboard.py", "scripts/metrics.py", "scripts/archmodel.py"] + sorted(
+    "scripts/obs/" + n for n in os.listdir(os.path.join(ROOT, "scripts", "obs")) if n.endswith(".py"))
 BACKLOG = "# Backlog\n\n## Milestone: M0 (target: )\n- [ ] One #process\n\n## Unplanned\n- [ ] Maintain thing #foundation\n"
 DEBT = "# Debt\n\n## Open\n- [ ] TD-001 Fix the thing \u2014 impact: low \u00b7 effort: S\n"
 BRAINSTORM = "[danfactory] next: No agreed goal yet. Run the `brainstorm` skill"
