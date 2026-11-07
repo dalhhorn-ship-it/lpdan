@@ -17,10 +17,10 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 - [x] Challenge files 01-07 drafted in public/challenges/ (L). AC: each has goal, skills, danfactory features, time box, steps, done-when, proof.
 - [x] Dashboard section with a real screenshot or faithful static mock generated from `python3 scripts/dashboard.py` output (M). AC: shows versions, progress, backlog, tech debt, metrics and the Roadmap tab; labeled as an example if mocked.
 - [x] Deploy to Cloudflare via git (S) #infra. AC: live URL; page served from the main branch push.
-- [ ] Problem, audience, 3-phase flow sections with final copy (M). AC: matches spec; every claim traceable to README/docs.
-- [ ] Agents, paths, token economy sections (M). AC: 18 agents, 8 paths plus adopt-existing, numbers match the repo.
-- [ ] 7 habits teaching section (S). AC: each habit names the template feature that enforces it.
-- [ ] Adopt existing Lovable/Bolt/v0 build + start in 3 commands sections (S). AC: snippets verbatim from README.
+- [x] Problem, audience, 3-phase flow sections with final copy (M). AC: matches spec; every claim traceable to README/docs.
+- [x] Agents, paths, token economy sections (M). AC: 18 agents, 8 paths plus adopt-existing, numbers match the repo.
+- [x] 7 habits teaching section (S). AC: each habit names the template feature that enforces it.
+- [x] Adopt existing Lovable/Bolt/v0 build + start in 3 commands sections (S). AC: snippets verbatim from README.
 - [ ] Dan reviews challenge files and the farm game brief (02) for tone and truth (S) #quality
 - [ ] Enable GitHub Issues/Discussions on danfactory with a "challenge" label and `[challenge-N]` title convention (S) #process
 - [ ] Campaign section on the page: 7 challenge cards, submit steps, help line (M). AC: matches spec section 9b; links to /challenges/*.md work.

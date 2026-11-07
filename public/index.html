@@ -497,7 +497,7 @@ footer a{color:var(--ink-muted);text-decoration:none}
     <p class="lede">Short contexts, cheap helpers, and a guard that stops Claude loading giant files. <em>Context</em> = what Claude can see right now. <em>Compacting</em> = summarising it to make room.</p>
     <div class="tok">
       <div class="stat"><b>350</b><p>A hook blocks whole reads of files over 350 lines unless a slice is requested. Read the docs index first, then only the lines you need.</p></div>
-      <div class="stat"><b>120k</b><p>Past 120k tokens of context, a nudge appears. The <code>handoff</code> skill writes a short note, you <code>/clear</code>, and the note reloads automatically.</p></div>
+      <div class="stat"><b>120k</b><p>Past 120k tokens of context, a nudge appears. The <code>handoff</code> skill writes a note of 40 lines or fewer, you <code>/clear</code>, and the note reloads automatically. A snapshot is saved before any compaction.</p></div>
       <div class="stat"><b>Haiku</b><p>Big reads, test logs and deploy watching go to cheap helpers. Tokens per session are recorded with a weighted budget, so you see real cost.</p></div>
     </div>
     <p class="aside"><b>Why short contexts?</b> NVIDIA's "You don't need long context" kept agents within about 2 points of full history by compacting often; in one setting, 70.2% vs 70.0% on SWE-bench Verified with Claude Opus 4.5. That's one reported setting, not a promise for your project.</p>
