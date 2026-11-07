@@ -27,8 +27,8 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 - [x] FAQ accordion with details/summary (S). AC: works without JS; answers match challenge 1 file.
 - [x] S5: remove the campaign-check gate in tests/check_page.py (TD-001) (S) #quality
 - [x] Credits + footer (S). AC: all README-credited projects linked.
-- [ ] Single index.html: responsive, accessible (semantic HTML, contrast, keyboard), no third-party requests, no JS required (M) #quality. AC: Lighthouse mobile 90+ in all three.
-- [ ] Open Graph/social preview tags and favicon (S). AC: link preview renders; image is local.
+- [x] Single index.html: responsive, accessible (semantic HTML, contrast, keyboard), no third-party requests, no JS required (M) #quality. AC: Lighthouse mobile 90+ in all three.
+- [x] Open Graph/social preview tags and favicon (S). AC: link preview renders; image is local.
 - [ ] Dogfood: run challenges 1 and 2 end to end on a clean machine and fix snags in the files and FAQ (M) #quality
 - [x] Landing: latest features copy + clickable dashboard (M, [PRD approved](specs/landing-latest-features.md)). AC: see PRD; budgets green, works without JS.
 - [ ] Truth pass: Dan reviews all copy; run check script (S) #quality.

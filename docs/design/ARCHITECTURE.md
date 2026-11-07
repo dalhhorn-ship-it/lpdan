@@ -13,7 +13,8 @@ public/                      # the only thing deployed (Worker static assets)
   _headers                   # security headers, text/plain for challenge .md, noindex until launch
   fonts/archivo-latin.woff2, archivo-black-latin.woff2, OFL.txt   # self-hosted, latin subset, licence added
   dashboard/index.html       # dated snapshot of this repo's own dashboard + back link; written by scripts/site_dashboard.py
-  img/                       # (img/og.png in the OG slice; the S4 screenshots were replaced by dashboard/)
+  favicon.svg                # tiny SVG favicon (replaces the inline data: URI)
+  img/og.png                 # 1200x630 social preview (~15 KB), generated once with Playwright; absolute og:image URL
   challenges/01-setup.md … 07-retro-upstream.md   # source of truth, shipped byte-for-byte
 worker/index.ts              # cf_scaffold.py template, unchanged: /version (git sha), /health, else ASSETS
 wrangler.jsonc               # cf_scaffold.py: assets ./public, run_worker_first [/version,/health]

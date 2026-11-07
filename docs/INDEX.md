@@ -29,13 +29,13 @@
 | docs/BACKLOG.md | 46 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
 | docs/GOAL.md | 59 | Status: confirmed by Dan on 2026-11-06. |
 | docs/OPERATING-MODEL.md | 78 | Approved by Dan on 2026-11-06, with rigor raised to L2. How this project is built:… |
-| docs/TECH-DEBT.md | 17 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
+| docs/TECH-DEBT.md | 18 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
 | docs/decisions/0000-template.md | 15 | Status: proposed \| accepted \| superseded by NNNN · Date: YYYY-MM-DD |
 | docs/decisions/0001-use-danfactory-template.md | 12 | Status: accepted · Date: 2026-11-06 |
 | docs/decisions/0002-static-page-worker-assets-no-build.md | 27 | Status: accepted (Dan, 2026-11-06) · Date: 2026-11-06 |
 | docs/decisions/0003-deploy-token-in-github-environments.md | 19 | Status: accepted (Dan asked for the SEC findings to be fixed, 2026-11-07) · Date:… |
 | docs/decisions/0004-prd-approval-gate.md | 16 | Status: accepted · Date: 2026-11-06 |
-| docs/design/ARCHITECTURE.md | 189 | Proposed (awaiting Dan's approval), 2026-11-06. Technical shape of the static landing… — sections: Context:5, File layout:8, CSS architecture:28, Design-token mapping…:40, Responsive type scale and…:59, Section → component mapping:77, Changes needed in the…:98, Accessibility plan (contrast…:112, Performance budget…:126, Content truth:136, Test strategy:142, Deploy:158, Build plan (vertical slices…:167, Risks and open questions:182 |
+| docs/design/ARCHITECTURE.md | 190 | Proposed (awaiting Dan's approval), 2026-11-06. Technical shape of the static landing… — sections: Context:5, File layout:8, CSS architecture:29, Design-token mapping…:41, Responsive type scale and…:60, Section → component mapping:78, Changes needed in the…:99, Accessibility plan (contrast…:113, Performance budget…:127, Content truth:137, Test strategy:143, Deploy:159, Build plan (vertical slices…:168, Risks and open questions:183 |
 | docs/operating-model/AGENT-ROUTING.md | 81 | Which agent gets involved when. The main agent coordinates and decides; subagents are… |
 | docs/operating-model/DECISION-TREE.md | 68 | Picks the operating model for a goal. Version 1.1.0. Keep this file short: details live… |
 | docs/operating-model/LEARNINGS.md | 23 | Append-only log written by `retro`. Each entry tags path(s) and a type; `[upstream]`… |

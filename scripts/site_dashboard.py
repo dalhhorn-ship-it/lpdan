@@ -18,7 +18,7 @@ DST = os.path.join(ROOT, "public", "dashboard", "index.html")
 
 BAR_CSS = (".site-bar{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;justify-content:space-between;"
            "max-width:1200px;margin:0 auto;padding:10px 16px;font-size:14px;border-bottom:1px solid var(--border)}"
-           ".site-bar a{font-weight:600;color:var(--accent)}.site-bar a:focus-visible{outline:2px solid currentColor;outline-offset:2px}")
+           ".site-bar a{font-weight:600;color:var(--text);text-decoration:underline}.site-bar a:focus-visible{outline:2px solid currentColor;outline-offset:2px}")
 
 
 def build(html, generated):
@@ -27,6 +27,9 @@ def build(html, generated):
            'The Deploy and Security tabs are in this site\'s dashboard, not yet in the template.</span></nav>'
            % generated)
     html = html.replace("</style>", BAR_CSS + "\n</style>", 1)
+    head = ('<meta name="description" content="Real snapshot of the danfactory landing page\'s own project dashboard: '
+            'progress, roadmap, deploys and security.">\n<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n')
+    html = html.replace("</head>", head + "</head>", 1)
     html, n = re.subn(r"<body>", "<body>\n" + bar, html, count=1)
     if n != 1:
         raise SystemExit("site_dashboard: <body> not found in dashboard/index.html")
