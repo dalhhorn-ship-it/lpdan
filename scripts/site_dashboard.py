@@ -7,7 +7,7 @@ The copy is the real dashboard (no JS, CSS radio tabs) plus a bar with a link ba
 the snapshot date. Numbers are never hand-edited (docs/specs/landing-latest-features.md). One deliberate
 filter (Dan, 2026-11-07): new or open security issues are not published. The Security tab keeps only findings
 that are fixed or accepted, without hardening notes or audit limits, and open tech-debt items and roadmap cards
-that name a finding (SEC-n) or security are left out. The private dashboard (dashboard/index.html) keeps all.
+that name a finding (SEC-n) or security are left out of the data before any view renders (public(d), scrub()). The private dashboard (dashboard/index.html) keeps all.
 Re-run before a release so the snapshot is not stale.
 """
 import os
@@ -19,18 +19,18 @@ SRC = os.path.join(ROOT, "dashboard", "index.html")
 DST = os.path.join(ROOT, "public", "dashboard", "index.html")
 
 BAR_CSS = (".site-bar{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;justify-content:space-between;"
-           "max-width:1200px;margin:0 auto;padding:10px 16px;font-size:14px;border-bottom:1px solid var(--border)}"
-           ".site-bar a{font-weight:600;color:var(--text);text-decoration:underline}.site-bar a:focus-visible{outline:2px solid currentColor;outline-offset:2px}")
+           "max-width:1200px;margin:0 auto;padding:10px 16px;font-size:14px;border-bottom:1px solid var(--border-subtle-01)}"
+           ".site-bar a{font-weight:600;color:var(--text-primary);text-decoration:underline}.site-bar a:focus-visible{outline:2px solid currentColor;outline-offset:2px}")
 
 
 def build(html, generated):
     bar = ('<nav class="site-bar" aria-label="Site"><a href="/">&larr; Back to danfactory</a>'
            '<span>Real snapshot of this landing page\'s own dashboard, generated %s. '
-           'Deploy and Security are this site\'s own tabs; the observability tabs come from a danfactory branch not yet merged into the template.</span></nav>'
+           'Deploy is this site\'s own tab. The Evals tab shows danfactory template evals, not runs of this site.</span></nav>'
            % generated)
     html = html.replace("</style>", BAR_CSS + "\n</style>", 1)
     head = ('<meta name="description" content="Real snapshot of the danfactory landing page\'s own project dashboard: '
-            'progress, roadmap, deploys and security.">\n<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n')
+            'progress, roadmap, deploys and template evals.">\n<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n')
     html = html.replace("</head>", head + "</head>", 1)
     html, n = re.subn(r"<body>", "<body>\n" + bar, html, count=1)
     if n != 1:
@@ -73,19 +73,38 @@ def security_panel(sec, e):
                 '<div class="card"><h2>What is already solid</h2><ul class="plain">%s</ul></div>' % good if good else ""))
 
 
+def _hit(text):
+    return bool(SECURITY_WORDS.search(text))
+
+
+def scrub(o):
+    """Remove security items from the data itself, whatever view renders them later (Overview, Roadmap, 6-month,
+    Gantt, Releases, Evals ...). A dict is dropped from its list when one of its own string values names a finding
+    (SEC-n) or security, unless it is done; a matching string is dropped from a list of strings. Nested containers
+    are scrubbed on their own, so a card never takes its whole column with it."""
+    if isinstance(o, dict):
+        return {k: (v if k == "security" else scrub(v)) for k, v in o.items()}
+    if isinstance(o, list):
+        out = []
+        for x in o:
+            if isinstance(x, str):
+                if not _hit(x):
+                    out.append(x)
+            elif isinstance(x, dict) and x.get("state") != "done" and any(isinstance(v, str) and _hit(v) for v in x.values()):
+                continue
+            else:
+                out.append(scrub(x))
+        return out
+    return o
+
+
 def public(d):
+    """Copy of the dashboard data that is safe to publish: items filtered first, then rendered."""
+    d = scrub(d)
     d["security"] = public_security(d.get("security"))
     debt = d.get("debt") or {}
-    if isinstance(debt.get("open"), list):
-        debt["open"] = [x for x in debt["open"] if not SECURITY_WORDS.search(" ".join(
-            str(x.get(k, "")) for k in ("id", "title", "area")))]
-        if isinstance(debt.get("by_impact"), dict):
-            debt["by_impact"] = {k: sum(1 for x in debt["open"] if x.get("impact") == k) for k in debt["by_impact"]}
-    for col in (d.get("roadmap") or {}).get("columns", []):
-        for lane, cards in col.get("lanes", {}).items():
-            col["lanes"][lane] = [c for c in cards if c.get("state") == "done" or not SECURITY_WORDS.search(c.get("title", ""))]
-    rm = d.get("roadmap") or {}
-    rm["next"] = [x for x in rm.get("next", []) if not SECURITY_WORDS.search(x.get("title", ""))]
+    if isinstance(debt.get("by_impact"), dict) and isinstance(debt.get("open"), list):
+        debt["by_impact"] = {k: sum(1 for x in debt["open"] if x.get("impact") == k) for k in debt["by_impact"]}
     return d
 
 
@@ -99,14 +118,12 @@ def main():
     sys.path.insert(0, os.path.join(ROOT, "scripts"))
     import dashboard
     dashboard.build()  # the private, complete dashboard/ stays current too
-    d = public(dashboard.collect())
-    full_sec = dashboard.security()
+    full = dashboard.collect()
+    full_sec = full.get("security")
+    d = public(full)
+    # the public Security tab shows fixed findings as severity, title and state only
+    dashboard.tab_security.render = lambda sec: security_panel(sec, dashboard.e)
     html = dashboard.render(d)
-    panel = re.search(r'<div class="panel panel-security">.*?</div>\n\n<div class="panel panel-overview">', html, re.S)
-    if not panel:
-        raise SystemExit("site_dashboard: security panel not found")
-    html = html[:panel.start()] + '<div class="panel panel-security">%s</div>\n\n<div class="panel panel-overview">' % (
-        security_panel(full_sec, dashboard.e)) + html[panel.end():]
     bad = leaks(html, full_sec)
     if bad:
         raise SystemExit("site_dashboard: open security findings would be published: %s" % ", ".join(bad))

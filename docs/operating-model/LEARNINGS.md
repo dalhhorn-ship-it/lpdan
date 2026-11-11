@@ -21,5 +21,27 @@ Design choice from the template build (not yet measured): agents would idle whil
 
 ### 2026-11-06 — Delegate big reads by default  [all] [tooling] [upstreamed]
 Seeded from the template, not yet measured here: Spotify reports 82–94% token savings from delegating large reads (shunt README benchmarks). Guard hook + bulk-reader subagent added. Verify with weighted tokens/session in metrics/REPORT.md after a few sessions.
-### 2026-11-07 — Doc graph missed plain-text links  [all] [docs] [upstreamed]
-docs_index.py only counted Markdown links and backticked docs/ paths, so 22 of 36 docs showed as orphans on the Docs health tab although they were referenced in plain text. Bare `.md` paths that resolve to a file now count, and tab_docs.py ignores edges from the generated INDEX.md (it lists everything). 13 -> 104 edges, 0 orphans. Fix: scripts/docs_index.py LINK_RE + scripts/obs/tab_docs.py; tests in .factory/tests/test_docs_links.py.
+
+### 2026-11-07 — Guards must match their promises  [all] [security] [upstream]
+Audit run-1 (quick, source-only): the template's docs promised more than its code enforced (deploy "denied", secrets "read-denied", production environment as the gate). Regex command guards are advisory; real protection is credential scoping (no deploy key where the agent or PR code runs). Write security claims as "guarded" unless a credential boundary backs them, and treat adopted repos as untrusted filesystem input (symlinks, .git/config, hooks).
+
+### 2026-11-07 — Background developer per slice  [all] [practice] [upstream]
+M1 shipped in 3 approved slices, each built by a background `developer` while the main session stayed coordinator (Slice 3: ~3 min, ~57k subagent tokens, check.sh green first run). The user named this as what worked best. No routing change: AGENT-ROUTING already sends parallel/well-specified slices to `developer`. Keep doing it; brief each slice with PRD ACs, design doc and the prior slice's commits as the pattern.
+
+### 2026-11-07 — Dashboard as a Claude artifact at a stable URL  [all] [tooling] [upstream]
+Viewing the dashboard as a private artifact with a link that stays the same (republished v1→v3) was the other thing the user valued. Snag: in a new session the first republish is refused until the live version has been read; since the page is generated, nothing needs merging, so publish again unchanged. Added that note to .claude/skills/dashboard/SKILL.md.
+
+### 2026-11-07 — Per-run records committed to git dirty the tree  [all] [anti-pattern] [upstream]
+`check.sh` appended a row to committed metrics/records.jsonl on every run, so each check left the tree dirty and set off the stop hook (TD-008). Fixed in accce0c: frequent run records go to gitignored `*.local.jsonl` with dedupe; only rare, durable gate records (security audit) are committed. metrics/REPORT.md is now gitignored for the same reason. Rule: generated, per-run output never lives in tracked files.
+
+### 2026-11-07 — Factory work before a project goal  [all] [tree-gap] [upstream]
+M1 (dashboard observability) was improving the factory itself while phase was still `brainstorm` with no GOAL.md. The tree had no branch for this, and metrics stay empty until bootstrap: the token hook skips while project.name is empty and commands.test is unset, so the Flow, Cost and Tests views show n/a. DECISION-TREE.md 1.2.0 adds Q0b, pointing at template mode (built in parallel on main): template work skips brainstorm/choose-path but keeps the PRD gate; expect no product metrics.
+
+### 2026-11-07 — Handoff, compact, continue without /clear  [all] [tooling] [upstream]
+Design choice, not yet measured: the handoff loop stalled until a human typed `/clear`, and nothing can run it for them. Now the note is committed and work continues; auto-compaction resets, PreCompact steers the summary, SessionStart (`compact`) reloads the note (ADR 0005). Operator step (approved 2026-11-07): `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=50` on the cloud environment. Check compactions and weighted tokens per session after a few long runs.
+
+### 2026-11-07 — Port a downstream branch by feature, not by merge  [all] [anti-pattern] [upstream]
+minespel's dashboard branch forked 41 commits before main, which had since rebuilt scripts/dashboard.py. Merging would have collided and duplicated Flow's deploy bars, so the PRD judged each feature against current main (keep, adapt or drop) and the kept ones were re-implemented in a new scripts/obs/delivery.py. Rule: when a downstream project backports work, write a keep/adapt/drop table first; the one network call (scripts/ci_runs.py) stays outside the offline page builder, with a validated repo name and job-level `actions: read`.
+
+### 2026-11-07 — Doc graph missed plain-text links  [all] [docs] [upstream] (from lpdan)
+docs_index.py only counted Markdown links and backticked docs/ paths, so 22 of 36 docs showed as orphans on the Docs health tab although they were referenced in plain text. Bare `.md` paths that resolve to a file now count; the generated INDEX.md is not a link source, so it cannot hide orphans. Template: 13 -> 111 edges, 2 real orphans left. Fix (from lpdan): scripts/docs_index.py LINK_RE, test .factory/tests/test_docs_links.py.

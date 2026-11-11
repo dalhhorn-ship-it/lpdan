@@ -21,19 +21,25 @@
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/.dev.vars)",
+      "Read(**/.dev.vars.*)",
+      "Read(./.dev.vars.*)",
       "Bash(wrangler deploy*)",
       "Bash(npx wrangler deploy*)",
       "Bash(wrangler pages deploy*)",
       "Bash(npx wrangler pages deploy*)",
+      "Read(./.dev.vars)",
       "Bash(wrangler versions deploy*)",
       "Bash(npx wrangler versions deploy*)",
-      "Bash(npx wrangler@*)",
-      "Read(./.dev.vars)"
+      "Bash(npx wrangler@*)"
     ]
   },
   "hooks": {
     "SessionStart": [
       {
+        "matcher": "startup|resume|clear|compact",
         "hooks": [
           {
             "type": "command",
@@ -95,6 +101,7 @@
     ],
     "PreCompact": [
       {
+        "matcher": "manual|auto",
         "hooks": [
           {
             "type": "command",

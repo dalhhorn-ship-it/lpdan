@@ -1,6 +1,6 @@
 # PRD: Template update 1.1.0 to 1.2.0, "Proven by evals" on the landing page, Evals tab on the public dashboard
 
-> Status: draft · 2026-11-11 · awaiting Dan's approval in chat · Owner: product-manager · Backlog: M1 / "Template update 2026-11"
+> Status: approved by Dan in chat 2026-11-11 (recommendations taken on all open questions) · Owner: product-manager · Backlog: M1 / "Template update 2026-11"
 
 ## Problem
 lpdan is on decision tree 1.1.0 (last sync 2edcba8). danfactory origin/main (9cb70c5) is 1.2.0: an eval harness, an Evals tab, roadmap views (6-month, Gantt, Releases), a Carbon-styled dashboard, delivery backflow, auto-compact handoff loop and security hardening. Our landing page and public dashboard therefore describe an older template, and the page has no evidence section. The brief's eval numbers and the Carbon/roadmap-view claims must be true to the README (GOAL.md constraint), and the public copy must not leak SEC-n or security items.
@@ -65,3 +65,10 @@ L overall, value lane for slices 2-3, technical-foundation (#foundation) for sli
 3. "Copy as-is: metrics" vs "never overwrite: metrics": confirm scripts/metrics.py is replaced and the metrics/ data directory is kept.
 4. Does "no SEC- or 'secur' text outside fixed findings" mean fixed findings may still show, as in the 2026-11-07 revision (which hides new/open ones, not fixed ones)? Confirm.
 5. Is a short ADR for the 1.2.0 sync wanted (recommended, yes)?
+
+## Decisions (Dan, 2026-11-11: "Approve", recommendations taken)
+1. Numbers cited on the page as danfactory `metrics/evals.jsonl` (2026-11-11 baseline sets), verified by a fixture in tests/check_page.py; not presented as a README quote.
+2. Evals tab data: option (a), copy template metrics/evals.jsonl + evals-baseline.json, labelled "danfactory template evals".
+3. scripts/metrics.py is replaced; metrics/ data is kept (eval files added).
+4. Fixed security findings may show; open/new ones never.
+5. ADR for the 1.2.0 sync: yes.

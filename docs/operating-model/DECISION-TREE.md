@@ -1,6 +1,6 @@
 # Decision tree
 
-> Picks the operating model for a goal. Version 1.1.0. Keep this file short: details live in paths/*.md. Enriched by `retro` from LEARNINGS.md.
+> Picks the operating model for a goal. Version 1.2.0. Keep this file short: details live in paths/*.md. Enriched by `retro` from LEARNINGS.md.
 
 ## Q0: new or existing?
 
@@ -8,6 +8,10 @@
 Q0 Is there already a build (repo, Lovable/Bolt/v0 export, half-finished project)?
    └─ yes → adopt-existing first (scan → index → dashboard → advice), then continue below
             for the path the build will continue on.
+Q0b Is the work on the factory template itself (agents, skills, scripts, dashboard), not a product?
+   └─ yes → template mode (origin == factory.json template.source_repo, docs/specs/template-mode.md):
+            skip brainstorm/choose-path, never build a project here; the PRD gate still applies.
+            Track work under `## Unplanned` in BACKLOG.md. Expect empty product metrics.
 ```
 
 ## Q1–Q7: what is the main artifact? (first match wins)
@@ -64,5 +68,6 @@ Pick the roster and verification ladder in AGENT-ROUTING.md (docs/operating-mode
 | adopt-existing | bulk-reader, karen, product-manager | scan → index → dashboard → advise, then continue on another path | as target | paths/adopt-existing.md |
 
 ## Changelog
+- 1.2.0 — Q0b template/factory maintenance work (from M1 retro).
 - 1.1.0 — Q0 adopt-existing; flat first-match questions with a fallback (automation/infra no longer nested under apps).
 - 1.0.0 — initial tree (8 paths, rigor dial, Cloudflare git deploy).

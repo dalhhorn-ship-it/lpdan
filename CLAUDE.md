@@ -17,7 +17,8 @@ Don't skip ahead: no code before GOAL.md is confirmed and an operating model is 
 - Use codegraph for code navigation when `integrations.codegraph` is true.
 
 ## Short contexts (docs/policies/token-economy.md)
-- At logical boundaries (task done, milestone, topic switch), or when the context-watch hook says so, run the `handoff` skill and suggest `/clear`. The note in .factory/HANDOFF.md reloads at session start.
+- At logical boundaries (task done, milestone, topic switch), or when the context-watch hook says so, run the `handoff` skill, commit the note, then keep working. Don't ask the user to `/clear`.
+- Auto-compaction does the reset; .factory/HANDOFF.md reloads after it (and on startup, resume, `/clear`). Continue from the note; user gates still apply.
 - Don't hand off mid-debug or with half-applied changes.
 
 ## Compact instructions
@@ -33,7 +34,7 @@ When compacting, keep: the user's goal and open questions; decisions and their r
 `python3 scripts/dashboard.py --print` for a cheap status; `dashboard` skill to show the full page.
 
 ## Deploy and security
-- Production deploys only via git → Cloudflare (`ship` skill). Direct `wrangler deploy` is denied.
+- Production deploys only via git → Cloudflare (`ship` skill). Direct `wrangler deploy` is guarded by a hook (advisory; real protection is credential scoping, docs/policies/security.md).
 - Never wait on builds: push, launch `deploy-watcher` in the background, keep working (docs/policies/async-delivery.md).
 - Security audits only on request or before an L3 release (`security-audit-run`).
-- Never commit secrets; `.env*` and `.dev.vars` are off limits.
+- Never commit secrets; `.env*` and `.dev.vars*` are blocked for Read and Bash.

@@ -13,6 +13,9 @@ ROOT = Path(__file__).resolve().parent.parent
 PUB = ROOT / "public"
 PAGE = PUB / "index.html"
 FIXTURE = ROOT / "tests" / "fixtures" / "danfactory-README.md"
+EVALS = ROOT / "tests" / "fixtures" / "danfactory-evals.jsonl"
+EVALS_POLICY = ROOT / "tests" / "fixtures" / "danfactory-evals-policy.md"
+EVAL_DATE = "2026-11-11"
 TOKENS = ROOT / "design" / "gpm-keynote" / "tokens.json"
 
 EXTERNAL_ALLOW = {
@@ -200,6 +203,30 @@ def dashboard_checks(check):
           and "panel-deploy" in tpl and "panel-security" in tpl and "{tab_inputs}" in tpl)
 
 
+def eval_checks(check, html, text):
+    """'Proven by evals' numbers must equal danfactory's metrics/evals.jsonl baseline sets (fixture at 9cb70c5);
+    the weak-proof caveat must be in danfactory's docs/policies/evals.md (docs/specs/template-update-2026-11.md)."""
+    rows = [json.loads(ln) for ln in EVALS.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    sec = re.search(r'<section id="evals".*?</section>', html, flags=re.S)
+    body = re.sub(r"<[^>]+>", " ", sec.group(0)).replace("&times;", "x") if sec else ""
+    body = re.sub(r"\s+", " ", body)
+    bad = []
+    for model in ("haiku", "sonnet"):
+        rs = [r for r in rows if r.get("set") == "baseline-%s-%s" % (model, EVAL_DATE)]
+        tasks = len({r["run_id"].rsplit("-", 1)[0] for r in rs})
+        want = "%s passed %d of %d runs (%d tasks x %d) for %.2f USD" % (
+            model.capitalize(), sum(bool(r["pass"]) for r in rs), len(rs), tasks, len(rs) // max(tasks, 1),
+            sum(r["cost_usd"] for r in rs))
+        if not rs or want not in body:
+            bad.append(want)
+    check("evals numbers match danfactory metrics/evals.jsonl", sec and not bad, bad)
+    policy = EVALS_POLICY.read_text(encoding="utf-8")
+    check("evals caveats true to danfactory docs", sec and "A pass with weak proof says little about the guard." in policy
+          and "A pass with weak proof says little about the guard." in body and "direct-deploy shows hooks fired and no block (the agent declines first)" in policy
+          and "never in CI" in FIXTURE.read_text(encoding="utf-8") and EVAL_DATE in body)
+    check("index links to the Evals tab", 'href="dashboard/#tab-evals"' in html)
+
+
 def main():
     results = []
 
@@ -357,8 +384,9 @@ def main():
     check("dashboard page: no scripts, no third-party loads", "<script" not in dash.lower()
           and not re.search(r'(?:src|srcset)\s*=\s*"(?:https?:)?//', dash) and "@import" not in dash)
     check("dashboard page: back link, dated, honest label", 'href="/"' in dash and "Real snapshot" in dash
-          and re.search(r"generated \d{4}-\d{2}-\d{2}", dash) and "not yet merged into the template" in dash)
-    check("dashboard page: four tabs", all('id="tab-%s"' % t in dash for t in ("overview", "roadmap", "deploy", "security")))
+          and re.search(r"generated \d{4}-\d{2}-\d{2}", dash))
+    check("dashboard page: five tabs", all('id="tab-%s"' % t in dash for t in ("overview", "roadmap", "deploy", "security", "evals")))
+    check("dashboard page: evals labelled as template data", "danfactory template evals" in dash)
     check("index links to the dashboard page", 'href="dashboard/"' in html)
     sec = json.loads((ROOT / "docs" / "security" / "latest.json").read_text(encoding="utf-8") or "null") or {}
     opened = [r for r in sec.get("records", []) if r.get("state", "open") not in ("fixed", "accepted")]
@@ -367,6 +395,7 @@ def main():
           and not [x for x in ("Hardening notes", "Limits of this run", "partial-coverage") if x in dash],
           [r.get("id") for r in opened])
 
+    eval_checks(check, html, text)
     dashboard_checks(check)
 
     failed = [r for r in results if not r[1]]

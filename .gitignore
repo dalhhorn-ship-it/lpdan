@@ -14,13 +14,19 @@ node_modules/
 .env
 .env.*
 !.env.example
+!.env.sample
+!.env.template
 # security-audit output must never land in the repo unless explicitly ignored here
 security-audit-output/
 .dev.vars
+.dev.vars.*
 .wrangler/
 /dashboard/
 metrics/records.local.jsonl
 metrics/REPORT.md
-
-# fetched by scripts/ci_runs.py; a cache, refresh any time
+# agent worktrees (temporary, per session)
+.claude/worktrees/
 metrics/ci-runs.json
+
+# agent eval harness: raw transcripts stay local (pruned after 30 days)
+metrics/eval-transcripts/

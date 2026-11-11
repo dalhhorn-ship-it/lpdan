@@ -12,9 +12,9 @@ Sources (all in the repo, so every build can regenerate it):
   factory.json, docs/BACKLOG.md, docs/TECH-DEBT.md, metrics/*.jsonl, git tags/log,
   plus automated debt signals (TODO/FIXME markers, oversized files, codegraph import cycles).
 Output is a self-contained HTML file (no JS, no network) with tabs: Overview, Roadmap
-(two swimlanes, value vs technical foundation, in proposed sequence), Deploy (live links, deploy history), Security
-(latest audit from docs/security/latest.json; summaries only, never payloads or secrets), and the observability tabs
-from scripts/obs/ (Architecture, Traceability, Decisions, Gates, Docs health, Flow, Cost, Hotspots). dashboard/ is git-ignored;
+(two swimlanes, value vs technical foundation, in proposed sequence), Deploy and Security (lpdan-only, summaries only
+from docs/security/latest.json), and the observability tabs from scripts/obs/ (Architecture, Traceability,
+Decisions, Gates, Docs health). dashboard/ is git-ignored;
 CI uploads it as a build artifact and writes SUMMARY.md to the job summary.
 """
 import argparse
@@ -24,7 +24,6 @@ import json
 import os
 import re
 import shutil
-import statistics
 import subprocess
 import sys
 import webbrowser
@@ -34,22 +33,27 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import metrics  # noqa: E402
 sys.path.insert(0, os.path.join(ROOT, ".claude", "hooks"))
 from _common import template_mode  # noqa: E402
-from obs import (tab_architecture, tab_cost, tab_decisions, tab_delivery, tab_docs, tab_flow, tab_gates, tab_hotspots,  # noqa: E402
-                 tab_traceability)
+from obs import (theme, delivery, roadmap_data, roadmap_views, tab_architecture, tab_cost, tab_decisions, tab_deploy, tab_docs, tab_evals, tab_flow,  # noqa: E402
+                 tab_gates, tab_hotspots, tab_security, tab_traceability)
 
 OUT = os.path.join(ROOT, "dashboard")
 # (key, label, module|None): None = built into this file. Tab inputs, labels and CSS selectors are generated from it.
-TABS = (("overview", "Overview", None), ("roadmap", "Roadmap", None), ("deploy", "Deploy", None), ("security", "Security", None),
+TABS = (("overview", "Overview", None), ("roadmap", "Roadmap", None),
+        ("deploy", "Deploy", tab_deploy), ("security", "Security", tab_security),
         ("architecture", "Architecture", tab_architecture), ("traceability", "Traceability", tab_traceability),
         ("decisions", "Decisions", tab_decisions), ("gates", "Gates", tab_gates), ("docs", "Docs health", tab_docs),
-        ("flow", "Flow", tab_flow), ("delivery", "Delivery", tab_delivery),
-        ("cost", "Cost", tab_cost), ("hotspots", "Hotspots", tab_hotspots))
+        ("flow", "Flow", tab_flow), ("cost", "Cost", tab_cost), ("hotspots", "Hotspots", tab_hotspots),
+        ("evals", "Evals", tab_evals))
 PHASES = ["brainstorm", "operating-model", "build"]
 STATES = {" ": "todo", "~": "doing", "x": "done", "X": "done", "!": "blocked", "-": "dropped"}
 ITEM_RE = re.compile(r"^\s*[-*]\s+\[(.)\]\s+(.*)$")
 MILESTONE_RE = re.compile(r"^##\s+(?:Milestone:\s*)?(.+?)\s*(?:\(target:\s*([0-9-]*)\s*\))?\s*$")
 DEBT_RE = re.compile(r"^\s*[-*]\s+\[(.)\]\s+(TD-\d+)\s+(.*?)(?:\s+[—-]\s+(.*))?$")
+CLOSED_RE = re.compile(r"^(done|resolved|fixed|closed|dropped|wontfix|paid)\b", re.I)
+SEVERITY_TO_IMPACT = {"critical": "high", "major": "high", "high": "high", "medium": "medium", "minor": "low", "low": "low"}
 SEQUENCE_RE = re.compile(r"^>\s*Sequence:\s*(.+)$")
+RELEASE_RE = re.compile(r"\s*\(release:\s*([\w.-]+)\s*\)")
+AFTER_RE = re.compile(r"\s*\(after:\s*([A-Z][A-Z0-9]{1,5}-\d+)\s*\)")
 SPEC_RE = re.compile(r"docs/specs/[\w.-]+\.md")
 NEXT_UP = 3
 MARKER_RE = r"\b(TODO|FIXME|HACK|XXX)\b"
@@ -89,9 +93,13 @@ def strip_code(text):
 def parse_backlog(text):
     milestones, current = [], None
     for line in strip_code(text).splitlines():
+        rel = RELEASE_RE.search(line) if line.startswith("## ") else None
+        if rel:
+            line = RELEASE_RE.sub("", line).rstrip()
         m = MILESTONE_RE.match(line)
         if line.startswith("## ") and m:
-            current = {"name": m.group(1).strip(), "target": m.group(2) or "", "items": [], "sequence": ""}
+            current = {"name": m.group(1).strip(), "target": m.group(2) or "", "items": [], "sequence": "",
+                       "release": rel.group(1) if rel else ""}
             milestones.append(current)
             continue
         sm = SEQUENCE_RE.match(line)
@@ -106,12 +114,15 @@ def parse_backlog(text):
             title = re.sub(r"\[([^\]]+)\]\(docs/specs/[\w.-]+\.md\)", r"\1", title)
             title = re.sub(r"\s*\(?docs/specs/[\w.-]+\.md\)?", "", title)
             size = re.search(r"\((S|M|L)\)", title)
+            rel, aft = RELEASE_RE.search(title), AFTER_RE.search(title)
+            title = AFTER_RE.sub("", RELEASE_RE.sub("", title))  # optional DASH-4 markers never show in titles
             current["items"].append({
                 "state": STATES.get(im.group(1), "todo"),
                 "title": re.sub(r"\s*\((S|M|L)\)|\s*#[\w-]+", "", title).strip(),
                 "size": size.group(1) if size else "",
                 "tags": re.findall(r"#([\w-]+)", title),
                 "spec": spec.group(0) if spec else "",
+                "release": rel.group(1) if rel else "", "after": aft.group(1) if aft else "",
             })
     for ms in milestones:
         live = [i for i in ms["items"] if i["state"] != "dropped"]
@@ -121,21 +132,69 @@ def parse_backlog(text):
     return milestones
 
 
+def cells(line):
+    """Cells of a markdown table row, or None when the line is not a row.
+    Pipe safe: a `|` inside a code span or escaped as \\| does not split a cell."""
+    line = line.strip()
+    if not line.startswith("|"):
+        return None
+    out, cur, code, i = [], "", False, 1
+    while i < len(line):
+        ch = line[i]
+        if ch == "\\" and i + 1 < len(line) and line[i + 1] == "|":
+            cur += "|"
+            i += 2
+            continue
+        if ch == "`":
+            code = not code
+        if ch == "|" and not code:
+            out.append(cur.strip())
+            cur = ""
+        else:
+            cur += ch
+        i += 1
+    if cur.strip():
+        out.append(cur.strip())
+    return out
+
+
 def parse_debt(text):
-    items, section = [], ""
+    """Tech debt register: checklist lines (`- [ ] TD-001 Title — impact: high · effort: M · area: x`) and/or a
+    table `Id | Severity | Item | Where | Size | Source | Status` (columns found by header name; major = high)."""
+    items, section, header = [], "", None
     for line in strip_code(text).splitlines():
         if line.startswith("## "):
-            section = line[3:].strip().lower()
+            section, header = line[3:].strip().lower(), None
             continue
         m = DEBT_RE.match(line)
-        if not m:
+        if m:
+            attrs = dict(re.findall(r"(\w+):\s*([^·]+?)\s*(?:·|$)", m.group(4) or ""))
+            items.append({
+                "id": m.group(2), "title": m.group(3).strip(),
+                "open": m.group(1) not in "xX" and not section.startswith("resolved"),
+                "impact": attrs.get("impact", "").lower(), "effort": attrs.get("effort", ""),
+                "area": attrs.get("area", ""),
+            })
             continue
-        attrs = dict(re.findall(r"(\w+):\s*([^·]+?)\s*(?:·|$)", m.group(4) or ""))
+        c = cells(line)
+        if c is None:
+            continue
+        if header is None:
+            if c and c[0].lower() == "id":
+                header = [h.lower() for h in c]
+            continue
+        if all(re.fullmatch(r":?-+:?", x or "-") for x in c) or len(c) < len(header):
+            continue
+        row = dict(zip(header, c))
+
+        def col(*names):
+            return next((v for n in names for h, v in row.items() if n in h), "")
+        status = col("status")
         items.append({
-            "id": m.group(2), "title": m.group(3).strip(),
-            "open": m.group(1) not in "xX" and not section.startswith("resolved"),
-            "impact": attrs.get("impact", "").lower(), "effort": attrs.get("effort", ""),
-            "area": attrs.get("area", ""),
+            "id": c[0], "title": col("item", "title", "description"),
+            "open": not CLOSED_RE.match(status) and not section.startswith("resolved"),
+            "impact": SEVERITY_TO_IMPACT.get(col("severity", "impact").lower(), ""),
+            "effort": col("size", "effort"), "area": col("where", "area"),
         })
     return items
 
@@ -227,59 +286,7 @@ def metric_view(f):
         "series": {"test_seconds": [r["seconds"] for r in full[-30:]], "coverage": cov[-30:],
                    "tokens": [metrics.wt(r) for r in toks[-30:]]},
         "alerts": alerts, "suggestions": ideas,
-        "deploy_tab": deploy_view(f, deps, metrics.now()),
     }
-
-
-def github_repo():
-    """owner/repo from the origin remote (https or ssh form), or ''."""
-    m = re.search(r"github\.com[:/]+([^/\s]+)/([^/\s]+?)(?:\.git)?/?$", git("remote", "get-url", "origin"))
-    return "%s/%s" % m.groups() if m else ""
-
-
-def deploy_view(f, deps, now_iso):
-    """Data for the Deploy tab: links, stats and history, from integrations.deploy and deploy records."""
-    cfg = f.get("integrations", {}).get("deploy", {})
-    worker, prod = cfg.get("worker_name"), (cfg.get("production_url") or "").rstrip("/")
-    acct = cfg.get("account_id")
-    dash = ("https://dash.cloudflare.com/%s/workers/services/view/%s/production" % (acct, worker) if acct
-            else "https://dash.cloudflare.com/?to=/:account/workers/services/view/%s/production" % worker) if worker else ""
-    repo = github_repo()
-    okr = [r for r in deps if r["ok"]]
-    secs = sorted(r["seconds"] for r in okr if r.get("seconds") is not None)
-    last_ok = okr[-1] if okr else None
-    ago = None
-    if deps:
-        try:
-            t = lambda x: datetime.datetime.fromisoformat(x)
-            ago = max(0, int((t(now_iso) - t(deps[-1]["ts"])).total_seconds()))
-        except ValueError:
-            ago = None
-    smoke = next((r["smoke"] for r in reversed(deps) if r.get("smoke")), None)
-    return {
-        "links": {"live": prod, "cloudflare": dash, "version": prod + "/version" if prod else "",
-                  "actions": "https://github.com/%s/actions/workflows/deploy-cloudflare.yml" % repo if repo else ""},
-        "info": {"worker": worker, "route": cfg.get("route"), "branch": cfg.get("production_branch"),
-                 "subdomain": cfg.get("workers_subdomain")},
-        "total": len(deps), "ok": len(okr),
-        "success_rate": round(100.0 * len(okr) / len(deps)) if deps else None,
-        "last_seconds": next((r["seconds"] for r in reversed(deps) if r.get("seconds") is not None), None),
-        "budget": f.get("budgets", {}).get("deploy_seconds"),
-        "median": round(statistics.median(secs), 1) if secs else None, "best": min(secs) if secs else None,
-        "last_ok": last_ok, "ago_seconds": ago, "smoke": smoke,
-        "history": list(reversed(deps[-30:])),
-    }
-
-
-def fmt_ago(sec):
-    if sec is None:
-        return "–"
-    d, r = divmod(sec, 86400)
-    h, r = divmod(r, 3600)
-    m = r // 60
-    if d:
-        return "%dd %dh ago" % (d, h)
-    return ("%dh %dm ago" % (h, m)) if h else ("%dm ago" % m if m else "%ds ago" % r)
 
 
 def lane_of(tags):
@@ -329,14 +336,6 @@ def roadmap(backlog, open_debt):
     return {"columns": columns, "done": done_ms, "next": upcoming[:NEXT_UP], "open": opened}
 
 
-def security():
-    """Latest audit summary (docs/security/latest.json), or None when no audit has run."""
-    try:
-        return json.loads(read("docs/security/latest.json") or "null")
-    except ValueError:
-        return None
-
-
 def collect():
     f = metrics.factory()
     backlog = parse_backlog(read("docs/BACKLOG.md"))
@@ -364,8 +363,10 @@ def collect():
                  "by_impact": {k: sum(d["impact"] == k for d in open_debt) for k in ("high", "medium", "low")},
                  "signals": debt_signals(f)},
         "roadmap": roadmap(backlog, open_debt),
-        "security": security(),
+        "roadmap_views": roadmap_data.collect(ROOT, backlog, f.get("dashboard")),
         "metrics": metric_view(f),
+        "delivery": delivery.collect(ROOT, {"deploy": f.get("integrations", {}).get("deploy", {}),
+                                            "dashboard_conf": f.get("dashboard")}),
     }
     for key, _label, mod in TABS:  # each module may read earlier tabs' data from d
         if mod:
@@ -429,55 +430,6 @@ def f_codegraph():
     return bool(metrics.factory().get("integrations", {}).get("codegraph"))
 
 
-def render_deploy(m):
-    dv = m["deploy_tab"]
-    L, info = dv["links"], dv["info"]
-
-    def link(url, text):
-        return '<a href="%s" rel="noopener">%s</a>' % (e(url), e(text)) if url else '<span class="muted">not configured</span>'
-
-    live = ('<a class="live" href="%s" rel="noopener">%s</a>' % (e(L["live"]), e(L["live"]))
-            if L["live"] else '<span class="muted">no production_url in factory.json</span>')
-    route = {"B-github-actions": "B (GitHub Actions)"}.get(info["route"] or "", info["route"] or "–")
-    links = ('<div class="live-row"><span class="muted small">Live site</span>%s</div>'
-             '<ul class="plain links">'
-             '<li><span class="muted">Cloudflare Worker</span> %s</li>'
-             '<li><span class="muted">GitHub Actions deploy runs</span> %s</li>'
-             '<li><span class="muted">/version endpoint</span> %s</li></ul>'
-             '<dl class="kv"><dt>Worker</dt><dd class="mono">%s</dd><dt>Route</dt><dd>%s</dd>'
-             '<dt>Production branch</dt><dd class="mono">%s</dd><dt>workers.dev subdomain</dt><dd class="mono">%s</dd></dl>'
-             % (live, link(L["cloudflare"], "dashboard"), link(L["actions"], "deploy-cloudflare.yml"),
-                link(L["version"], "/version"), e(info["worker"] or "–"), e(route), e(info["branch"] or "–"),
-                e(info["subdomain"] or "–")))
-    ok = dv["last_ok"]
-    last_ok = ("%s · %s · %s" % (ok["ts"][:16].replace("T", " "), ok.get("sha") or "–", ok.get("env") or "–")) if ok else "–"
-    ls, bud = dv["last_seconds"], dv["budget"]
-    tiles = "".join([
-        tile("Deploys", "%d / %d" % (dv["ok"], dv["total"]) if dv["total"] else "–", "succeeded / attempts"),
-        tile("Success rate", fmt_num(dv["success_rate"], "%"), "all attempts" if dv["total"] else "not enough data yet",
-             "na" if dv["success_rate"] is None else ("ok" if dv["success_rate"] >= 80 else "warn"),
-             words=("healthy", "failures seen", "failing")),
-        tile("Last push-to-live", fmt_num(ls, "s"), "budget %ss" % e(bud) if ls is not None else "not enough data yet",
-             "na" if ls is None or bud is None else ("ok" if ls <= bud else "bad")),
-        tile("Median / best", "%s / %s" % (fmt_num(dv["median"], "s"), fmt_num(dv["best"], "s")),
-             "successful deploys" if dv["median"] is not None else "not enough data yet"),
-        tile("Last successful", ok["ts"][5:16].replace("T", " ") if ok else "–", last_ok if ok else "not enough data yet"),
-        tile("Since last deploy", fmt_ago(dv["ago_seconds"]), "any result" if dv["total"] else "not enough data yet"),
-    ])
-    rows = "".join(
-        '<tr><td class="nowrap">%s</td><td>%s</td><td class="mono">%s</td><td>%s</td><td>%s</td><td class="note">%s</td></tr>'
-        % (e(r["ts"][:16].replace("T", " ")), e(r.get("env") or "–"), e(r.get("sha") or "–"),
-           '<span class="imp %s">%s</span>' % ("low" if r["ok"] else "high", "ok" if r["ok"] else "failed"),
-           fmt_num(r.get("seconds"), "s"), e(r.get("error") or r.get("smoke") or "–")) for r in dv["history"]) \
-        or '<tr><td colspan="6" class="muted">No deploys recorded (python3 scripts/metrics.py deploy).</td></tr>'
-    return ('<section class="card"><h2>Links</h2>%s</section>'
-            '<section class="tiles dtiles" aria-label="Deploy stats">%s</section>'
-            '<section class="card"><h2>Deploy history</h2><div class="scroll"><table><thead><tr><th>When (UTC)</th><th>Env</th>'
-            '<th>Commit</th><th>Result</th><th>Time</th><th>Error / note</th></tr></thead><tbody>%s</tbody></table></div>'
-            '<p class="small"><b>Live checks:</b> %s</p></section>'
-            % (links, tiles, rows, e(dv["smoke"]) if dv["smoke"] else '<span class="muted">not recorded</span>'))
-
-
 def render_roadmap(rm):
     cols = rm["columns"]
     if not cols and not rm["done"]:
@@ -518,54 +470,17 @@ def render_roadmap(rm):
             'milestone and item order in docs/BACKLOG.md; the line under a milestone says why. Lanes come from tags; '
             'open items in docs/TECH-DEBT.md continue the sequence in the foundation lane.</p>%s%s%s</div>'
             % (nxt, done, grid))
-SEV_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "informational": 4}
-SEV_CLASS = {"critical": "high", "high": "high", "medium": "medium", "low": "low", "informational": "low"}
 
 
-def render_security(sec):
-    if not sec:
-        return ('<div class="card"><h2>Security</h2><p class="muted">No security audit has run yet. '
-                'Run the security-audit-run skill to fill this tab.</p></div>')
-    recs = sorted(sec.get("records", []), key=lambda r: (r.get("verdict") != "confirmed",
-                  SEV_ORDER.get(r.get("severity"), 9), r.get("id", "")))
-    still_open = [r for r in recs if r.get("state", "open") not in ("fixed", "accepted")]
-    n_conf = sum(r.get("verdict") == "confirmed" for r in still_open)  # fixed findings don't need a fix any more
-    n_nv = sum(r.get("verdict") == "needs_validation" for r in still_open)
-    n_open = sum(r.get("state", "open") not in ("fixed", "accepted") for r in recs)
-    tiles = "".join([
-        tile("Open confirmed findings", str(n_conf), "verified by an independent agent, not yet fixed", "bad" if n_conf else "ok",
-             words=("none", "", "fix needed")),
-        tile("Open, needs validation", str(n_nv), "blocked on a fact outside the repo", "warn" if n_nv else "ok",
-             words=("none", "owner check", "")),
-        tile("Open items", str(n_open), "of %d records" % len(recs), "bad" if n_open else "ok",
-             words=("all closed", "", "open")),
-        tile("Coverage", "%s/%s" % (sec.get("coverage", {}).get("closed", 0), sec.get("coverage", {}).get("units", 0)),
-             "units closed (%s profile)" % sec.get("profile", "?"), "na")])
-    rows = []
-    for r in recs:
-        sev = r.get("severity") if r.get("verdict") == "confirmed" else None
-        label = sev or ("needs validation" if r.get("verdict") == "needs_validation" else r.get("verdict", ""))
-        cls = SEV_CLASS.get(sev, "medium" if r.get("verdict") == "needs_validation" else "low")
-        rows.append('<tr><td><span class="imp %s">%s</span></td><td>%s<div class="muted mono">%s</div></td>'
-                    '<td>%s</td><td>%s</td><td>%s</td></tr>' % (
-                        cls, e(label), e(r.get("title")), e(r.get("location")), e(r.get("boundary")),
-                        e(r.get("fix")), e(r.get("state", "open"))))
-    table = ('<div class="scroll"><table><thead><tr><th>Severity</th><th>Finding</th><th>Boundary</th>'
-             '<th>Smallest fix</th><th>State</th></tr></thead><tbody>%s</tbody></table></div>' % "".join(rows)
-             if rows else '<p class="muted">No findings survived independent verification.</p>')
-    hard = "".join("<li><b>%s</b> %s</li>" % (e(h.get("area")), e(h.get("note"))) for h in sec.get("hardening", []))
-    good = "".join("<li>%s</li>" % e(g) for g in sec.get("positive", []))
-    limits = "".join("<li>%s</li>" % e(x) for x in sec.get("limits", []))
-    meta = "%s · %s profile · <span class=\"mono\">%s</span> · run %s" % (
-        e(sec.get("date")), e(sec.get("profile")), e(sec.get("source_ref", "")[:12]), e(sec.get("status")))
-    return ('<section class="tiles" aria-label="Security summary">%s</section>'
-            '<section class="grid">'
-            '<div class="card" style="grid-column:1/-1"><h2>Findings</h2><p class="muted">%s</p>%s</div>'
-            '<div class="card"><h2>Hardening notes</h2><ul class="plain">%s</ul></div>'
-            '<div class="card"><h2>What is already solid</h2><ul class="plain">%s</ul>'
-            '<h3>Limits of this run</h3><ul class="plain">%s</ul></div>'
-            '</section>' % (tiles, meta, table, hard or '<li class="muted">None.</li>',
-                            good or '<li class="muted">None recorded.</li>', limits or '<li class="muted">None.</li>'))
+# lpdan-only: the eval data in metrics/ is copied from the danfactory template (PRD template-update-2026-11, decision 2).
+TAB_NOTES = {"evals": '<div class="rv-assume"><b>danfactory template evals.</b> These runs were made on the danfactory template, '
+                      'not on this project. This project has no eval runs of its own.</div>'}
+
+deploy_view = tab_deploy.view  # kept reachable as dashboard.deploy_view (tests/check_page.py)
+
+
+def render_deploy(m):
+    return tab_deploy.render(m["deploy_tab"])
 
 
 def tab_parts(d):
@@ -573,11 +488,12 @@ def tab_parts(d):
     inputs = "\n".join('<input type="radio" name="tab" id="tab-%s" class="tab-input"%s>' % (k, " checked" if i == 0 else "")
                        for i, (k, _l, _m) in enumerate(TABS))
     nav = "".join('<label for="tab-%s">%s</label>' % (k, e(lab)) for k, lab, _m in TABS)
-    panels = "\n".join('<div class="panel panel-%s">%s</div>' % (k, m.render(d[k])) for k, _l, m in TABS if m)
+    panels = "\n".join('<div class="panel panel-%s">%s%s</div>' % (k, TAB_NOTES.get(k, ""), m.render(d[k])) for k, _l, m in TABS if m)
     each = lambda fmt: ", ".join(fmt % (k, k) for k, _l, _m in TABS)  # noqa: E731
-    css = ("%s {{ display:block; }}\n%s {{ color:var(--text); border-bottom-color:var(--accent); }}\n%s {{ outline:2px solid var(--accent); outline-offset:2px; }}"
+    css = ("%s {{ display:block; }}\n%s {{ color:var(--text-primary); font-weight:600; border-bottom-color:var(--border-interactive); }}\n%s {{ outline:2px solid var(--focus); outline-offset:-2px; }}"
            % (each("#tab-%s:checked ~ .panel-%s"), each('#tab-%s:checked ~ .tabs label[for="tab-%s"]'),
               each('#tab-%s:focus-visible ~ .tabs label[for="tab-%s"]'))).replace("{{", "{").replace("}}", "}")
+    css += "\n" + "".join(getattr(m, "CSS", "") for _k, _l, m in TABS if m).strip("\n")
     return {"tab_inputs": inputs, "tab_nav": nav, "tab_panels": panels, "tab_css": css}
 
 
@@ -678,8 +594,7 @@ def render(d):
         tree=e(d["template"].get("decision_tree_version", "")), tiles=tiles, milestones=ms_rows,
         backlog=backlog, debt=debt_html, tags=tag_rows, deploys=dep_rows,
         commits=commits or '<li class="muted">No commits yet.</li>', alerts=alerts, ideas=ideas,
-        commit_count=v["commit_count"], roadmap=render_roadmap(d["roadmap"]), deploy_tab=render_deploy(m),
-        security=render_security(d.get("security")), **tab_parts(d))
+        commit_count=v["commit_count"], theme_css=theme.css(), roadmap=roadmap_views.render(d["roadmap_views"], render_roadmap(d["roadmap"])), delivery=delivery.render(d["delivery"]), **tab_parts(d))
 
 
 def md(x):
@@ -709,6 +624,12 @@ def summary(d):
         "| Tech debt | %d open (%d high), %d code markers |" % (
             len(debt["open"]), debt["by_impact"]["high"], debt["signals"]["marker_total"]),
     ]
+    for key, label, mod in TABS:
+        if mod:
+            lines.append("| %s | %s |" % (label, mod.line(d[key])))
+    ci_line = delivery.line(d["delivery"])
+    if ci_line:
+        lines.append("| CI | %s |" % ci_line)
     if tm:
         lines.insert(4, "| Mode | Template maintenance (origin matches template.source_repo) |")
         lines += ["", "**Open tech debt**", ""] + (
@@ -716,9 +637,6 @@ def summary(d):
             or ["- none"])
         lines += ["", "**Template work (Unplanned backlog)**", ""] + (
             ["- " + md(t) for t in d["template_work"]] or ["- none"])
-    for key, label, mod in TABS:
-        if mod:
-            lines.append("| %s | %s |" % (label, mod.line(d[key])))
     if m["alerts"]:
         lines += ["", "**Alerts**", ""] + ["- " + md(a) for a in m["alerts"]]
     return "\n".join(lines) + "\n"
@@ -731,127 +649,8 @@ TEMPLATE = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
 <style>
-:root {{
-  --bg:#f6f7f9; --surface:#ffffff; --text:#1b1f24; --muted:#5b6470; --border:#dfe3e8;
-  --accent:#2f6fdb; --ok:#1f8a4c; --ok-bg:#e6f4ec; --bad:#c23934; --bad-bg:#fbeaea;
-  --warn:#9a6700; --warn-bg:#fff4d6; --track:#e9edf2;
-  --am-mot:#e6e0fa; --am-app:#d9eef8; --am-tech:#e0f2d9;
-}}
-@media (prefers-color-scheme: dark) {{
-  :root:not([data-theme="light"]) {{
-    --bg:#0f1216; --surface:#171b21; --text:#e6e9ed; --muted:#9aa4b1; --border:#2a313a;
-    --accent:#6ea0ff; --ok:#4cc38a; --ok-bg:#12291d; --bad:#ff7b72; --bad-bg:#2d1517;
-    --warn:#e3b341; --warn-bg:#2b230f; --track:#262d36;
-    --am-mot:#2d2750; --am-app:#173341; --am-tech:#1f3b27;
-  }}
-}}
-:root[data-theme="dark"] {{
-  --bg:#0f1216; --surface:#171b21; --text:#e6e9ed; --muted:#9aa4b1; --border:#2a313a;
-  --accent:#6ea0ff; --ok:#4cc38a; --ok-bg:#12291d; --bad:#ff7b72; --bad-bg:#2d1517;
-  --warn:#e3b341; --warn-bg:#2b230f; --track:#262d36;
-    --am-mot:#2d2750; --am-app:#173341; --am-tech:#1f3b27;
-}}
-* {{ box-sizing:border-box; }}
-body {{ margin:0; background:var(--bg); color:var(--text);
-  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }}
-main {{ max-width:1180px; margin:0 auto; padding:24px 16px 48px; }}
-header {{ display:flex; flex-wrap:wrap; gap:12px 24px; align-items:flex-end; justify-content:space-between; margin-bottom:20px; }}
-h1 {{ font-size:24px; margin:0; letter-spacing:-.01em; }}
-h2 {{ font-size:15px; margin:0 0 12px; }}
-h3 {{ font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:16px 0 6px; }}
-.muted {{ color:var(--muted); }} .small {{ font-size:12px; }}
-.mono {{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; }}
-a {{ color:var(--accent); }}
-.meta {{ color:var(--muted); font-size:13px; text-align:right; }}
-.steps {{ display:flex; gap:6px; list-style:none; padding:0; margin:10px 0 0; flex-wrap:wrap; }}
-.steps li {{ font-size:12px; padding:3px 10px; border-radius:999px; border:1px solid var(--border); color:var(--muted); }}
-.steps li.done {{ color:var(--ok); border-color:var(--ok); }}
-.steps li.now {{ background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }}
-.chip {{ display:inline-block; font-size:12px; padding:2px 8px; border-radius:6px; background:var(--track); margin:6px 6px 0 0; }}
-.tiles {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:16px; }}
-.tile {{ background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; border-top:3px solid var(--border); }}
-.tile.ok {{ border-top-color:var(--ok); }} .tile.bad {{ border-top-color:var(--bad); }} .tile.warn {{ border-top-color:var(--warn); }}
-.tile .label {{ font-size:12px; color:var(--muted); }}
-.tile .value {{ font-size:24px; font-weight:650; font-variant-numeric:tabular-nums; margin:2px 0; }}
-.tile .sub {{ font-size:12px; color:var(--muted); }}
-.tile.ok .badge {{ color:var(--ok); }} .tile.bad .badge {{ color:var(--bad); font-weight:600; }} .tile.warn .badge {{ color:var(--warn); }}
-.spark {{ width:100%; height:36px; margin-top:8px; display:block; }}
-.spark polyline {{ fill:none; stroke:var(--accent); stroke-width:1.75; vector-effect:non-scaling-stroke; }}
-.spark circle {{ fill:var(--accent); }}
-.grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:16px; }}
-.card {{ background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; min-width:0; }}
-ul.plain, ul.ms {{ list-style:none; padding:0; margin:0; }}
-ul.plain li {{ padding:4px 0; border-bottom:1px solid var(--border); font-size:14px; }}
-ul.plain li:last-child {{ border-bottom:0; }}
-ul.ms li {{ margin-bottom:12px; }}
-.row {{ display:flex; justify-content:space-between; gap:8px; font-size:14px; }}
-.bar {{ height:8px; background:var(--track); border-radius:999px; overflow:hidden; margin-top:4px; }}
-.bar span {{ display:block; height:100%; background:var(--ok); border-radius:999px; }}
-.counts {{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }}
-.count {{ background:var(--track); border-radius:8px; padding:8px; text-align:center; }}
-.count b {{ display:block; font-size:20px; font-variant-numeric:tabular-nums; }}
-.count span {{ font-size:12px; color:var(--muted); }}
-.count.blocked b {{ color:var(--bad); }} .count.doing b {{ color:var(--accent); }} .count.done b {{ color:var(--ok); }}
-.scroll {{ overflow-x:auto; }}
-table {{ width:100%; border-collapse:collapse; font-size:14px; }}
-th {{ text-align:left; font-size:12px; color:var(--muted); font-weight:600; padding:6px 8px; border-bottom:1px solid var(--border); }}
-td.mono, td.nowrap {{ white-space:nowrap; }}
-td {{ padding:6px 8px; border-bottom:1px solid var(--border); vertical-align:top; }}
-.imp {{ font-size:12px; padding:1px 7px; border-radius:999px; background:var(--track); }}
-.imp.high {{ background:var(--bad-bg); color:var(--bad); }} .imp.medium {{ background:var(--warn-bg); color:var(--warn); }}
-.imp.low {{ background:var(--ok-bg); color:var(--ok); }}
-li.alert {{ color:var(--bad); }}
-footer {{ margin-top:24px; font-size:12px; color:var(--muted); }}
-.tabs {{ display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px; overflow-x:auto; white-space:nowrap; }}
-.tabs label {{ flex:none; padding:8px 14px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; font-weight:600; font-size:14px; }}
-.tab-input {{ position:absolute; opacity:0; pointer-events:none; }}
-.panel {{ display:none; }}
+{theme_css}
 {tab_css}
-.stack {{ display:grid; gap:16px; }}
-tr.grp td {{ background:var(--track); }}
-.arch {{ display:block; }}
-.arch text {{ fill:var(--text); font-size:12px; text-anchor:middle; }}
-.arch .sub {{ font-size:10px; fill:var(--muted); }}
-.arch .band {{ fill:var(--track); }}
-.arch .band-l {{ text-anchor:start; font-weight:600; font-size:13px; fill:var(--muted); }}
-.arch .band-e {{ text-anchor:start; fill:var(--muted); }}
-.arch .box rect {{ stroke:var(--border); stroke-width:1; }}
-.arch .box.am-mot rect {{ fill:var(--am-mot); }} .arch .box.am-app rect {{ fill:var(--am-app); }} .arch .box.am-tech rect {{ fill:var(--am-tech); }}
-.arch .box.drift rect {{ stroke:var(--bad); stroke-width:2; stroke-dasharray:5 3; }}
-.arch .edges line {{ stroke:var(--muted); stroke-width:1; opacity:.45; }}
-.panel-deploy .card {{ margin-bottom:16px; }}
-.live-row {{ display:flex; flex-direction:column; margin-bottom:8px; }}
-a.live {{ font-size:20px; font-weight:650; overflow-wrap:anywhere; }}
-.links a, .panel-deploy .mono {{ overflow-wrap:anywhere; }}
-.kv {{ display:grid; grid-template-columns:max-content 1fr; gap:4px 16px; margin:12px 0 0; font-size:14px; }}
-.kv dt {{ color:var(--muted); }} .kv dd {{ margin:0; min-width:0; }}
-td.note {{ min-width:180px; overflow-wrap:anywhere; font-size:13px; color:var(--muted); }}
-.rm {{ --lane-w:minmax(150px,180px); --col-w:minmax(220px,1fr); display:grid; gap:8px; min-width:min-content;
-  grid-template-columns:var(--lane-w) repeat(var(--cols),var(--col-w)); }}
-.rm-col-h {{ display:flex; flex-direction:column; font-size:14px; padding:4px 2px; border-bottom:2px solid var(--border); }}
-.rm-lane-h {{ display:flex; flex-direction:column; justify-content:flex-start; font-size:14px; padding:10px; border-radius:8px; border-left:4px solid var(--accent); background:var(--track);
-  position:sticky; left:0; z-index:1; box-shadow:8px 0 0 var(--surface); }}
-.rm-lane-h.foundation {{ border-left-color:var(--warn); }}
-.rm-cell {{ list-style:none; margin:0; padding:8px; border-radius:8px; background:var(--bg); border:1px dashed var(--border); display:flex; flex-direction:column; gap:6px; }}
-.rm-card {{ display:flex; flex-wrap:wrap; align-items:baseline; gap:6px; background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:6px; padding:6px 8px; font-size:13px; }}
-.rm-cell.foundation .rm-card {{ border-left-color:var(--warn); }}
-.rm-card .t {{ flex:1 1 120px; }}
-.rm-card .b {{ display:flex; gap:4px; }}
-.rm-card .seq {{ font-variant-numeric:tabular-nums; font-weight:650; color:var(--muted); min-width:1.4em; }}
-.rm-card .size, .rm-card .state {{ font-size:11px; padding:0 6px; border-radius:999px; background:var(--track); color:var(--muted); }}
-.rm-card.doing {{ box-shadow:inset 0 0 0 1px var(--accent); }} .rm-card.doing .state {{ color:var(--accent); }}
-.rm-card.blocked .state {{ background:var(--bad-bg); color:var(--bad); }}
-.rm-col-h .why {{ color:var(--text); margin-top:2px; font-style:italic; max-width:40ch; }}
-.rm-next {{ margin:0 0 10px; padding:8px 12px; border-radius:8px; background:var(--track); border-left:4px solid var(--accent); font-size:13px; }}
-.rm-next ol {{ list-style:none; margin:6px 0 0; padding:0; display:flex; flex-direction:column; gap:4px; }}
-.rm-next li {{ display:flex; align-items:baseline; gap:8px; }}
-.rm-next .seq {{ font-variant-numeric:tabular-nums; font-weight:650; color:var(--muted); min-width:1.4em; }}
-.rm-next .t {{ flex:1 1 0; min-width:0; }}
-.rm-done {{ font-size:13px; color:var(--ok); margin:0 0 6px; }}
-.rm-card .prd {{ font-size:11px; padding:0 6px; border-radius:999px; background:var(--warn-bg); color:var(--warn); }}
-.rm-card .prd.approved {{ background:var(--ok-bg); color:var(--ok); }}
-.rm-card.done {{ opacity:.55; }} .rm-card.done .t {{ text-decoration:line-through; }} .rm-card.done .seq {{ color:var(--ok); }}
-@media (max-width:520px) {{ .rm {{ --lane-w:104px; --col-w:minmax(200px,1fr); }} .rm-lane-h {{ padding:8px; }} .meta {{ text-align:left; }} .grid {{ grid-template-columns:1fr; }} }}
 </style>
 </head>
 <body>
@@ -875,10 +674,6 @@ td.note {{ min-width:180px; overflow-wrap:anywhere; font-size:13px; color:var(--
 
 <div class="panel panel-roadmap">{roadmap}</div>
 
-<div class="panel panel-deploy">{deploy_tab}</div>
-
-<div class="panel panel-security">{security}</div>
-
 <div class="panel panel-overview">
 <section class="tiles" aria-label="Key metrics">{tiles}</section>
 
@@ -890,11 +685,12 @@ td.note {{ min-width:180px; overflow-wrap:anywhere; font-size:13px; color:var(--
     <ul class="plain">{alerts}</ul><h3>Suggested improvements</h3><ul class="plain">{ideas}</ul></div>
   <div class="card"><h2>Versions</h2><div class="scroll"><table><thead><tr><th>Tag</th><th>Date</th></tr></thead><tbody>{tags}</tbody></table></div>
     <h3>Recent deploys</h3><div class="scroll"><table><thead><tr><th>When (UTC)</th><th>Env</th><th>Commit</th><th>Result</th><th>Time</th></tr></thead><tbody>{deploys}</tbody></table></div></div>
+  {delivery}
   <div class="card"><h2>Recent commits</h2><ul class="plain">{commits}</ul></div>
 </section>
 </div>
 {tab_panels}
-<footer>Built by scripts/dashboard.py from factory.json, docs/BACKLOG.md, docs/TECH-DEBT.md, docs/security/, docs/*.json, metrics/ and git.</footer>
+<footer>Built by scripts/dashboard.py from factory.json, docs/BACKLOG.md, docs/TECH-DEBT.md, metrics/ and git.</footer>
 </main>
 </body>
 </html>
@@ -907,7 +703,7 @@ def build():
     with open(os.path.join(OUT, "index.html"), "w", encoding="utf-8") as fh:
         fh.write(render(d))
     with open(os.path.join(OUT, "data.json"), "w", encoding="utf-8") as fh:
-        json.dump(d, fh, indent=1)
+        json.dump(d, fh, indent=1, default=str)
     with open(os.path.join(OUT, "SUMMARY.md"), "w", encoding="utf-8") as fh:
         fh.write(summary(d))
     return d
