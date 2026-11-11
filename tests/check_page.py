@@ -200,7 +200,7 @@ def dashboard_checks(check):
     keys = [k for k, _label, _mod in dashboard.TABS]
     tpl = dashboard.TEMPLATE
     check("dashboard deploy: tab wired in page", "deploy" in keys and "security" in keys
-          and "panel-deploy" in tpl and "panel-security" in tpl and "{tab_inputs}" in tpl)
+          and "{tab_panels}" in tpl and "{tab_inputs}" in tpl)  # panels are generated from TABS since template 1.2.0
 
 
 def eval_checks(check, html, text):
@@ -224,7 +224,7 @@ def eval_checks(check, html, text):
     check("evals caveats true to danfactory docs", sec and "A pass with weak proof says little about the guard." in policy
           and "A pass with weak proof says little about the guard." in body and "direct-deploy shows hooks fired and no block (the agent declines first)" in policy
           and "never in CI" in FIXTURE.read_text(encoding="utf-8") and EVAL_DATE in body)
-    check("index links to the Evals tab", 'href="dashboard/#tab-evals"' in html)
+    check("evals section links to the dashboard's Evals tab", sec and 'href="dashboard/"' in sec.group(0) and "Evals tab" in body)
 
 
 def main():

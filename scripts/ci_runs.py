@@ -5,9 +5,10 @@
   python3 scripts/ci_runs.py --repo owner/name --pages 3
 
 Public repos need no credentials (60 API calls an hour). If GITHUB_TOKEN or GH_TOKEN is set it is
-sent for a higher limit and for private repos (CI passes the job token). This is the only dashboard
-script that uses the network; scripts/dashboard.py just reads the file, so the page stays offline.
-metrics/ci-runs.json is a cache (git-ignored): run this again any time to refresh it.
+sent (to api.github.com only) for a higher limit and for private repos; CI passes the job token via env.
+This is the only dashboard script that uses the network; scripts/dashboard.py just reads the file, so the
+page stays offline. metrics/ci-runs.json is a cache (git-ignored): run this again any time to refresh it.
+Exit codes: 0 written, 1 no repo, bad repo name or nothing fetched on page 1 (the file is left alone).
 """
 import datetime
 import json
@@ -21,6 +22,12 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 OUT = os.path.join(ROOT, "metrics", "ci-runs.json")
 KEYS = ("id", "name", "event", "head_branch", "status", "conclusion",
         "created_at", "run_started_at", "updated_at", "html_url")
+REPO_RE = re.compile(r"[A-Za-z0-9._-]+/[A-Za-z0-9._-]+")
+
+
+def valid_repo(repo):
+    """True for `owner/name` (letters, digits, dot, underscore, dash), and not a path-traversal name."""
+    return bool(REPO_RE.fullmatch(repo or "")) and not any(p in (".", "..") for p in repo.split("/"))
 
 
 def parse_repo(url):
@@ -33,13 +40,14 @@ def parse_repo(url):
 
 def repo_name(argv):
     if "--repo" in argv:
-        return argv[argv.index("--repo") + 1]
+        i = argv.index("--repo")
+        return argv[i + 1] if i + 1 < len(argv) else ""
     try:
         with open(os.path.join(ROOT, "factory.json"), encoding="utf-8") as fh:
             configured = (json.load(fh).get("dashboard") or {}).get("github_repo")
         if configured:
             return configured
-    except (OSError, ValueError):
+    except (OSError, ValueError, AttributeError):
         pass
     try:
         url = subprocess.run(["git", "remote", "get-url", "origin"], cwd=ROOT, capture_output=True,
@@ -61,7 +69,7 @@ def fetch(repo, page):
 
 
 def write(runs, source, path=OUT):
-    """Write a compact list, one run per line, newest first. Returns the run count."""
+    """Write a compact list, one run per line, newest first, only whitelisted keys. Returns the run count."""
     runs = sorted(({k: r.get(k) for k in KEYS} for r in runs),
                   key=lambda r: r["created_at"] or "", reverse=True)
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -78,23 +86,30 @@ def main(argv):
     if not repo:
         print("No GitHub repo: set factory.json dashboard.github_repo or pass --repo owner/name.", file=sys.stderr)
         return 1
-    pages = int(argv[argv.index("--pages") + 1]) if "--pages" in argv else 3
+    if not valid_repo(repo):
+        print("Not a GitHub repo name (expected owner/name): %r" % repo, file=sys.stderr)
+        return 1
+    try:
+        pages = int(argv[argv.index("--pages") + 1]) if "--pages" in argv else 3
+    except (ValueError, IndexError):
+        print("--pages needs a number.", file=sys.stderr)
+        return 1
     runs, seen = [], set()
     for page in range(1, pages + 1):
         try:
             batch = fetch(repo, page)
         except Exception as err:  # noqa: BLE001 - network, rate limit or proxy
             print("Could not fetch page %d for %s: %s" % (page, repo, err), file=sys.stderr)
-            if not runs:
-                return 1
-            break
+            if page == 1:
+                return 1  # nothing fetched: keep the existing cache
+            break  # keep what the earlier pages gave us
         for r in batch:
             if r.get("id") not in seen:
                 seen.add(r.get("id"))
                 runs.append(r)
         if len(batch) < 100:
             break
-    n = write(runs, "GitHub Actions runs API, " + repo)
+    n = write(runs, "GitHub Actions runs API, " + repo, OUT)
     print("Wrote %d runs to metrics/ci-runs.json" % n)
     return 0
 

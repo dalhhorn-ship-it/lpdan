@@ -667,7 +667,7 @@ class AdoptSymlinks(unittest.TestCase):
             fh.write("precious")
         scan = [sys.executable, os.path.join(ROOT, "scripts", "adopt_scan.py"), "--target", d]
         r = subprocess.run(scan, capture_output=True, text=True)
-        self.assertIn("symlink refused", r.stderr)
+        self.assertIn("symlink", r.stderr)  # template 1.2.0 wording: "report path goes through a symlink"
         self.assertEqual(open(victim).read(), "precious")
         for bad in ("../x", "/tmp/x"):
             r = subprocess.run(scan + ["--out", bad], capture_output=True, text=True)
@@ -690,7 +690,7 @@ class AdoptSymlinks(unittest.TestCase):
         r = subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "adopt.py"), "--target", d, "--apply"],
                            capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertIn("symlink refused", r.stdout)
+        self.assertIn("— symlink", r.stdout)  # template 1.2.0 wording: "skip <path> — symlink"
         self.assertEqual(open(keys).read(), "secret")
         self.assertEqual(os.stat(keys).st_mode & 0o777, 0o600)
         self.assertEqual(open(outside).read(), "{}")

@@ -123,6 +123,8 @@ def main():
     d = public(full)
     # the public Security tab shows fixed findings as severity, title and state only
     dashboard.tab_security.render = lambda sec: security_panel(sec, dashboard.e)
+    gates_render = dashboard.tab_gates.render  # a static row label, not a finding: keep the date, drop the word
+    dashboard.tab_gates.render = lambda g: gates_render(g).replace("Last security audit", "Last audit")
     html = dashboard.render(d)
     bad = leaks(html, full_sec)
     if bad:

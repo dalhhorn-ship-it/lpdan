@@ -25,6 +25,13 @@ BACKLOG = """# Backlog
 GANTT_PANEL = 'class="rv rv-gantt"'
 
 
+def gantt_of(html):
+    """The Gantt sub-view only (up to the next sub-view)."""
+    rest = html[html.index(GANTT_PANEL):]
+    nxt = rest.find('class="rv rv-releases"', 1)
+    return rest if nxt < 0 else rest[:nxt]
+
+
 def data_with_open_sec():
     d = dashboard.collect()
     ms = dashboard.parse_backlog(BACKLOG)
@@ -43,15 +50,13 @@ class PublicFilter(unittest.TestCase):
 
     def test_control_unfiltered_gantt_shows_the_item(self):
         # proves the test below would catch a leak: without the filter the Gantt carries SEC-1
-        gantt = self.raw[self.raw.index(GANTT_PANEL):]
-        self.assertIn("SEC-1", gantt.split("</svg>")[0] + gantt)
+        self.assertIn("SEC-1", gantt_of(self.raw))
 
     def test_open_sec_item_absent_from_every_view(self):
         self.assertNotIn("SEC-1", self.pub)
         self.assertNotIn("Rotate the leaked deploy token", self.pub)
         self.assertNotIn("security headers", self.pub)
-        gantt = self.pub[self.pub.index(GANTT_PANEL):]
-        self.assertNotIn("SEC-1", gantt)
+        self.assertNotIn("SEC-1", gantt_of(self.pub))
 
     def test_ordinary_items_stay(self):
         self.assertIn("Ordinary open work", self.pub)

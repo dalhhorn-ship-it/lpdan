@@ -476,7 +476,8 @@ def render_roadmap(rm):
 TAB_NOTES = {"evals": '<div class="rv-assume"><b>danfactory template evals.</b> These runs were made on the danfactory template, '
                       'not on this project. This project has no eval runs of its own.</div>'}
 
-deploy_view = tab_deploy.view  # kept reachable as dashboard.deploy_view (tests/check_page.py)
+def deploy_view(f, deps, now_iso):  # kept reachable as dashboard.deploy_view (tests/check_page.py)
+    return tab_deploy.view(f, deps, now_iso, tab_deploy.github_repo(ROOT))
 
 
 def render_deploy(m):

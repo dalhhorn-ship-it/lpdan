@@ -18,7 +18,7 @@ jobs:
         with: { python-version: "3.12" }
       - name: Template checks (docs index fresh, hooks, metrics)
         run: bash scripts/check.sh
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: "22" }
       - name: Browser for the smoke test (not a project dependency; local sessions use a preinstalled one)
         run: npm install --no-save --no-audit --no-fund playwright && npx playwright install --with-deps chromium
