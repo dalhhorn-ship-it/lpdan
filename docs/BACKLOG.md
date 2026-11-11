@@ -32,6 +32,7 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 - [ ] Dogfood: run challenges 1 and 2 end to end on a clean machine and fix snags in the files and FAQ (M) #quality
 - [x] Landing: latest features copy + clickable dashboard (M, [PRD approved](specs/landing-latest-features.md)). AC: see PRD; budgets green, works without JS.
 - [x] Truth pass: Dan reviews all copy; run check script (S) #quality. Delegated by Dan to jenny + reviewer, signed off 2026-11-07: [record](reviews/2026-11-07-truth-pass.md).
+- [ ] Template update 2026-11: sync to 1.2.0, "Proven by evals" on the page, Evals tab on the public dashboard (L, [PRD draft](specs/template-update-2026-11.md)). AC: see PRD; security filter covers all views, metrics.py test green twice, screenshots clean.
 - [ ] Launch: remove `X-Robots-Tag: noindex` from public/_headers once GitHub Issues + `challenge` label are confirmed on danfactory (S) #process
 
 
