@@ -188,7 +188,6 @@
   {"from": "docs/specs/landing-latest-features.md", "to": "docs/specs/landing-page.md"},
   {"from": "docs/specs/landing-page.md", "to": "CLAUDE.md"},
   {"from": "docs/specs/landing-page.md", "to": "README.md"},
-  {"from": "docs/specs/landing-page.md", "to": "dashboard/SUMMARY.md"},
   {"from": "docs/specs/landing-page.md", "to": "docs/BACKLOG.md"},
   {"from": "docs/specs/landing-page.md", "to": "docs/GOAL.md"},
   {"from": "docs/specs/landing-page.md", "to": "docs/OPERATING-MODEL.md"},
