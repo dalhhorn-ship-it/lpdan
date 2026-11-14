@@ -65,3 +65,4 @@
 | docs/specs/landing-latest-features.md | 64 | Status: approved · 2026-11-07 · by user in chat (options: 1A drop both screenshots, 2… |
 | docs/specs/landing-page.md | 233 | Status: confirmed by Dan on 2026-11-06 (see Decisions). Traces to docs/GOAL.md outcome… — sections: Problem statement:5, User story:8, Build constraints:11, Acceptance criteria:14, Non-goals:28, Sections in order (copy below):31, Truth rules for the developer:216, Scope cuts (recommended):220, Decisions (Dan, 2026-11-06):227 |
 | docs/specs/template-update-2026-11.md | 74 | Status: approved by Dan in chat 2026-11-11 (recommendations taken on all open questions)… |
+| docs/specs/template-update-v0-2-0.md | 24 | Status: approved · 2026-11-14 · by user in chat ("approved", with the change to v0.2.0)… |

@@ -39,7 +39,8 @@
   {"id": "docs/specs/dashboard-observability-tabs.md", "title": "PRD: Dashboard observability tabs", "lines": 78, "summary": "Status: approved \u00b7 2026-11-07 \u00b7 by user in chat (all three slices; open questions\u2026"},
   {"id": "docs/specs/landing-latest-features.md", "title": "PRD: Landing page: latest features and clickable dashboard", "lines": 64, "summary": "Status: approved \u00b7 2026-11-07 \u00b7 by user in chat (options: 1A drop both screenshots, 2\u2026"},
   {"id": "docs/specs/landing-page.md", "title": "Spec: danfactory landing page", "lines": 233, "summary": "Status: confirmed by Dan on 2026-11-06 (see Decisions). Traces to docs/GOAL.md outcome\u2026"},
-  {"id": "docs/specs/template-update-2026-11.md", "title": "PRD: Template update 1.1.0 to 1.2.0, \"Proven by evals\" on the landing page, Evals tab on the public dashboard", "lines": 74, "summary": "Status: approved by Dan in chat 2026-11-11 (recommendations taken on all open questions)\u2026"}
+  {"id": "docs/specs/template-update-2026-11.md", "title": "PRD: Template update 1.1.0 to 1.2.0, \"Proven by evals\" on the landing page, Evals tab on the public dashboard", "lines": 74, "summary": "Status: approved by Dan in chat 2026-11-11 (recommendations taken on all open questions)\u2026"},
+  {"id": "docs/specs/template-update-v0-2-0.md", "title": "PRD: Template update to danfactory v0.2.0 (gated autonomy + worked example)", "lines": 24, "summary": "Status: approved \u00b7 2026-11-14 \u00b7 by user in chat (\"approved\", with the change to v0.2.0)\u2026"}
  ],
  "edges": [
   {"from": "CLAUDE.md", "to": "docs/BACKLOG.md"},
@@ -59,6 +60,7 @@
   {"from": "docs/BACKLOG.md", "to": "docs/specs/agents-index-first.md"},
   {"from": "docs/BACKLOG.md", "to": "docs/specs/landing-latest-features.md"},
   {"from": "docs/BACKLOG.md", "to": "docs/specs/template-update-2026-11.md"},
+  {"from": "docs/BACKLOG.md", "to": "docs/specs/template-update-v0-2-0.md"},
   {"from": "docs/GOAL.md", "to": "docs/specs/landing-page.md"},
   {"from": "docs/OPERATING-MODEL.md", "to": "docs/BACKLOG.md"},
   {"from": "docs/OPERATING-MODEL.md", "to": "docs/decisions/0002-static-page-worker-assets-no-build.md"},
@@ -155,7 +157,6 @@
   {"from": "docs/specs/landing-latest-features.md", "to": "docs/specs/landing-page.md"},
   {"from": "docs/specs/landing-page.md", "to": "CLAUDE.md"},
   {"from": "docs/specs/landing-page.md", "to": "README.md"},
-  {"from": "docs/specs/landing-page.md", "to": "dashboard/SUMMARY.md"},
   {"from": "docs/specs/landing-page.md", "to": "docs/BACKLOG.md"},
   {"from": "docs/specs/landing-page.md", "to": "docs/GOAL.md"},
   {"from": "docs/specs/landing-page.md", "to": "docs/OPERATING-MODEL.md"},
