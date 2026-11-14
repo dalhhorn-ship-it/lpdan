@@ -16,7 +16,7 @@ Roster: product-manager, software-architect, developer, test-runner, reviewer, t
 |---|---|
 | Backlog re-slice after this plan is approved | product-manager |
 | After every slice, before the dashboard refresh (Dan, 2026-11-06) | product-manager re-proposes the build sequence: reorders open items in docs/BACKLOG.md and updates the `> Sequence:` line; the Roadmap tab shows that order |
-| Specified slice (S1, S3–S7 in ARCHITECTURE.md) | developer (Sonnet), one slice per PR |
+| Specified slice (S1, S3–S7 in docs/design/ARCHITECTURE-plan.md) | developer (Sonnet), one slice per PR |
 | Small fixes (< ~50 lines), spike S0, scaffold S2, OG S8 | main agent |
 | Failing or noisy tests | test-runner |
 | Every slice (L2 ladder) | test-runner green; `reviewer` before merge; `task-completion-validator` for M/L items; `code-quality-pragmatist` for a new abstraction or a diff over ~300 lines |
@@ -60,7 +60,7 @@ All of docs/policies/* apply (policies/security.md, policies/async-delivery.md, 
 - [ ] Lighthouse mobile ≥ 90 for Performance, Accessibility and Best Practices at launch
 
 ## Deploy
-Cloudflare Workers + static assets from ./public. Route B (GitHub Actions, templates/deploy-cloudflare.yml), production branch `main`, PR previews `pr-<n>-<worker>.<subdomain>.workers.dev`. URL: `*.workers.dev` until a domain is chosen. Rollback: `git revert` + push. Workflow fix needed so that `public/**/*.md` changes still deploy (see ARCHITECTURE.md, Deploy).
+Cloudflare Workers + static assets from ./public. Route B (GitHub Actions, templates/deploy-cloudflare.yml), production branch `main`, PR previews `pr-<n>-<worker>.<subdomain>.workers.dev`. URL: `*.workers.dev` until a domain is chosen. Rollback: `git revert` + push. Workflow fix needed so that `public/**/*.md` changes still deploy (see docs/design/ARCHITECTURE.md, Deploy).
 
 ## Budgets
 | Budget | Value | Why |
