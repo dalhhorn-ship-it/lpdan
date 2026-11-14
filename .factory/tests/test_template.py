@@ -1,10 +1,13 @@
 """Self-tests for danfactory hooks and scripts (stdlib unittest)."""
+import glob
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 HOOKS = os.path.join(ROOT, ".claude", "hooks")
@@ -90,6 +93,12 @@ class BashPolicy(unittest.TestCase):
             self.assertEqual(self.check(cmd), 2, cmd)
         for cmd in ("npx wrangler versions upload", 'bash -c "npx %s --dry-run"' % w):
             self.assertEqual(self.check(cmd), 0, cmd)
+    def test_blocks_text_piped_to_a_shell(self):  # upstreamed from lpdan (its SEC-003)
+        w = "wrangler " + "deploy"
+        for cmd in ('echo "npx %s" | sh' % w, "printf 'npx %s' | bash" % w, "cat <<EOF | bash\nnpx %s\nEOF" % w):
+            self.assertEqual(self.check(cmd), 2, cmd)
+        self.assertEqual(self.check('echo "npx %s" > notes.txt' % w), 0)
+        self.assertEqual(self.check("echo 'a | sh' && ls"), 0)
 
     def test_ignores_text_being_written(self):
         w = "wrangler " + "deploy"
@@ -105,6 +114,7 @@ class BashPolicy(unittest.TestCase):
 
 
 class OneShotEscape(unittest.TestCase):
+    @unittest.skipIf(os.environ.get("DANFACTORY_TREE_SANDBOX") == "1", "inside the runner's sandbox the repo is read-only by design (runs in CI and check.sh)")
     def test_marker_allows_one_read_then_is_consumed(self):
         big = os.path.join(tempfile.mkdtemp(), "big.txt")
         with open(big, "w") as fh:
@@ -134,7 +144,13 @@ class RecordTokens(unittest.TestCase):
             return
         # the un-bootstrapped template (empty project.name) must not record anything
         before = os.path.exists(os.path.join(ROOT, "metrics", "tokens.jsonl"))
-        hook("record_tokens.py", {"transcript_path": main_t, "session_id": "x"})
+        # template detection reads git remote origin; inject it for this one subprocess so the test does not depend
+        # on the checkout's remotes (a sandbox without origin would otherwise write into the real metrics/)
+        with open(os.path.join(ROOT, "factory.json"), encoding="utf-8") as fh:
+            src = json.load(fh)["template"]["source_repo"]
+        hook("record_tokens.py", {"transcript_path": main_t, "session_id": "x"},
+             env={"GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": "remote.origin.url",
+                  "GIT_CONFIG_VALUE_0": "https://github.com/%s.git" % src})
         self.assertEqual(os.path.exists(os.path.join(ROOT, "metrics", "tokens.jsonl")), before)
 
     def test_session_shas_window_and_git_failure(self):
@@ -567,19 +583,72 @@ class AsyncDelivery(unittest.TestCase):
         self.assertIn("exceeded", slow.stderr)
 
 
+
+def copy_repo(d):
+    """cp -r of this checkout into d. In a git worktree .git is a FILE pointing at the main repo's gitdir (shared config):
+    a copy that kept it would make `git remote remove`, `git config`, commits in the copy hit the REAL repo (TD-021).
+    There the pointer is replaced by a fresh repo (same origin url, snapshot commit)."""
+    subprocess.run(["cp", "-r", ROOT, d], check=True)
+    if os.path.isfile(os.path.join(d, ".git")):
+        os.remove(os.path.join(d, ".git"))
+        url = subprocess.run(["git", "-C", ROOT, "config", "--get", "remote.origin.url"], capture_output=True, text=True).stdout.strip()
+        git = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
+        subprocess.run(["git", "init", "-q"], cwd=d, check=True)
+        if url:
+            subprocess.run(["git", "remote", "add", "origin", url], cwd=d, check=True)
+        subprocess.run(["git", "add", "-A"], cwd=d, check=True, capture_output=True)
+        subprocess.run(git + ["commit", "-q", "--allow-empty", "--no-verify", "-m", "snapshot"], cwd=d, check=True, capture_output=True)
+    return d
+
+
+class CopyRepoInWorktree(unittest.TestCase):
+    def test_copy_of_a_worktree_never_shares_the_main_repo_config(self):  # TD-021
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        g = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
+        main, wt = os.path.join(tmp, "main"), os.path.join(tmp, "wt")
+        subprocess.run(g + ["init", "-q", main], check=True)
+        subprocess.run(g + ["-C", main, "remote", "add", "origin", "https://example.invalid/x/y"], check=True)
+        subprocess.run(g + ["-C", main, "commit", "-q", "--allow-empty", "-m", "base"], check=True)
+        subprocess.run(g + ["-C", main, "worktree", "add", "-q", "-b", "w", wt], check=True)
+        before = open(os.path.join(main, ".git", "config"), "rb").read()
+        with mock.patch.object(sys.modules[__name__], "ROOT", wt):
+            d = copy_repo(os.path.join(tmp, "copy"))
+        subprocess.run(["git", "-C", d, "remote", "remove", "origin"], check=True)
+        subprocess.run(["git", "-C", d, "config", "core.hooksPath", ".githooks"], check=True)
+        self.assertEqual(open(os.path.join(main, ".git", "config"), "rb").read(), before)
+
+
 @template_only
 class Bootstrap(unittest.TestCase):
     def test_flag_anywhere_and_readme_swap(self):
-        d = os.path.join(tempfile.mkdtemp(), "proj")
-        subprocess.run(["cp", "-r", ROOT, d], check=True)
+        d = copy_repo(os.path.join(tempfile.mkdtemp(), "proj"))
         for extra in (".claude/skills/security-audit", ".claude/skills/cloudflare-deploy"):
             subprocess.run(["rm", "-rf", os.path.join(d, extra)])
         # --codegraph would install software; stub the installer so only parsing is tested
         with open(os.path.join(d, "scripts", "install-codegraph.sh"), "w") as fh:
             fh.write("echo stub-codegraph\n")
+        r = subprocess.run(["bash", "scripts/bootstrap.sh", "demo", "A demo app"], cwd=d, capture_output=True, text=True)
+        if subprocess.run(["git", "-C", d, "config", "--get", "remote.origin.url"], capture_output=True).returncode == 0:
+            self.assertEqual(r.returncode, 2, "refuses in the template repo itself")  # the copy still has the template origin
+            subprocess.run(["git", "-C", d, "remote", "remove", "origin"], check=True)
+        # offline (the template URL points nowhere): no network in tests, template.ref stays empty with a note (NEW-1)
+        env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_CONFIG_COUNT="1", GIT_CONFIG_KEY_0="url.%s.insteadOf" % os.path.join(d, "nowhere"),
+                   GIT_CONFIG_VALUE_0="https://github.com/" + json.load(open(os.path.join(d, "factory.json")))["template"]["source_repo"])
         r = subprocess.run(["bash", "scripts/bootstrap.sh", "demo", "--codegraph", "A demo app"], cwd=d,
-                           capture_output=True, text=True)
+                           capture_output=True, text=True, env=env)
         self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("could not reach", r.stderr)
+        self.assertEqual(json.load(open(os.path.join(d, "factory.json")))["template"]["ref"], "")
+        # TD-017: clean records for the new project
+        bl = open(os.path.join(d, "docs", "BACKLOG.md")).read()
+        self.assertIn("M0", bl)
+        self.assertNotIn("## Milestone: M1", bl)
+        self.assertEqual(os.listdir(os.path.join(d, "docs", "specs")), ["_TEMPLATE.md"])
+        self.assertEqual(sorted(os.listdir(os.path.join(d, "docs", "decisions"))), ["0000-template.md", "0001-use-danfactory-template.md"])
+        self.assertNotIn("TD-0", open(os.path.join(d, "docs", "TECH-DEBT.md")).read())
+        self.assertNotIn("\n### 20", open(os.path.join(d, "docs", "operating-model", "LEARNINGS.md")).read())
+        self.assertEqual(subprocess.run(["python3", "scripts/docs_index.py", "--check"], cwd=d, capture_output=True).returncode, 0)
         self.assertIn("stub-codegraph", r.stdout)
         f = json.load(open(os.path.join(d, "factory.json")))
         self.assertEqual((f["project"]["name"], f["project"]["one_liner"]), ("demo", "A demo app"))
@@ -639,6 +708,12 @@ class Adopt(unittest.TestCase):
                          ("lovable-demo", "lovable", "npm run build"))
         self.assertIn("Row Level Security", open(os.path.join(d, "docs", "TECH-DEBT.md")).read())
         self.assertIn("node_modules", open(os.path.join(d, ".gitignore")).read())
+        # The adopted copy's check.sh runs the project's test dir. Every template test already ran in this suite, so keep the ones that
+        # exercise the adopted layout (docs, PRD guard, size) instead of running the whole suite a third time.
+        keep = ("test_docs_first.py", "test_docs_links.py", "test_prd_guard.py", "test_size.py")
+        for name in os.listdir(os.path.join(d, ".factory", "tests")):
+            if name.startswith("test_") and name not in keep:
+                os.remove(os.path.join(d, ".factory", "tests", name))
         subprocess.run([sys.executable, "scripts/docs_index.py", "--quiet"], cwd=d, check=True)
         chk = subprocess.run(["bash", "scripts/check.sh"], cwd=d, capture_output=True, text=True)
         self.assertEqual(chk.returncode, 0, chk.stdout[-800:] + chk.stderr[-800:])
@@ -748,8 +823,7 @@ class ShortContexts(unittest.TestCase):
         os.remove(self.state_file(sid))
 
     def project_copy(self):
-        d = os.path.join(tempfile.mkdtemp(), "proj")
-        subprocess.run(["cp", "-r", ROOT, d], check=True)
+        d = copy_repo(os.path.join(tempfile.mkdtemp(), "proj"))
         env = dict(os.environ, CLAUDE_PROJECT_DIR=d)
         return d, os.path.join(d, ".claude", "hooks"), env, os.path.join(d, ".factory", "HANDOFF.md")
 
@@ -878,7 +952,7 @@ class ShortContexts(unittest.TestCase):
 
 
 class CloudflareScaffold(unittest.TestCase):
-    def scaffold(self, files):
+    def scaffold(self, files, *flags):
         d = os.path.join(tempfile.mkdtemp(), "proj")
         os.makedirs(os.path.join(d, "scripts"))
         os.makedirs(os.path.join(d, "templates"))
@@ -890,7 +964,7 @@ class CloudflareScaffold(unittest.TestCase):
         for rel, body in files.items():
             with open(os.path.join(d, rel), "w") as fh:
                 fh.write(body)
-        r = subprocess.run([sys.executable, "scripts/cf_scaffold.py", "--no-lock"], cwd=d, capture_output=True, text=True)
+        r = subprocess.run([sys.executable, "scripts/cf_scaffold.py", "--no-lock", *flags], cwd=d, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
         return d
 
@@ -906,8 +980,18 @@ class CloudflareScaffold(unittest.TestCase):
         self.assertEqual(c["assets"]["not_found_handling"], "single-page-application")
         self.assertIn("/version", c["assets"]["run_worker_first"])
         self.assertIn("/version", open(os.path.join(d, "worker", "index.ts")).read())
+        dep = json.load(open(os.path.join(d, "factory.json")))["integrations"]["deploy"]
+        self.assertEqual(dep["worker_name"], "my-cool-app")
+        self.assertEqual(dep["route"], "A-dashboard-git")
+
+    def test_default_is_route_a_without_workflow(self):
+        d = self.scaffold({})
+        self.assertFalse(os.path.exists(os.path.join(d, ".github", "workflows", "deploy-cloudflare.yml")))
+
+    def test_route_b_is_opt_in(self):
+        d = self.scaffold({}, "--route-b")
         self.assertTrue(os.path.isfile(os.path.join(d, ".github", "workflows", "deploy-cloudflare.yml")))
-        self.assertEqual(json.load(open(os.path.join(d, "factory.json")))["integrations"]["deploy"]["worker_name"], "my-cool-app")
+        self.assertEqual(json.load(open(os.path.join(d, "factory.json")))["integrations"]["deploy"]["route"], "B-github-actions")
 
     def test_bare_project_and_idempotent(self):
         d = self.scaffold({})
@@ -954,7 +1038,11 @@ class Config(unittest.TestCase):
             names.add(name)
         with open(os.path.join(ROOT, "docs", "operating-model", "AGENT-ROUTING.md"), encoding="utf-8") as fh:
             routing = fh.read()
-        for n in names:
+        present = set(names)
+        for pf in glob.glob(os.path.join(ROOT, "packs", "*.json")):  # an agent of a pack that is not installed may still be routed (ADR 0011)
+            with open(pf, encoding="utf-8") as fh:
+                names |= {os.path.basename(x)[:-3] for x in json.load(fh)["files"] if x.startswith(".claude/agents/") and x.endswith(".md")}
+        for n in present:
             self.assertIn(n, routing, "agent missing from AGENT-ROUTING.md: " + n)
         for n in set(re.findall(r"`([a-z][a-z-]+)`", routing)):
             skills = set(os.listdir(os.path.join(ROOT, ".claude", "skills")))

@@ -7,6 +7,7 @@
 2. **Cheapest adequate model**: Haiku for mechanical work, Sonnet for building and judging, Opus only for architecture and hard debugging.
 3. **Verification ladder, not ritual**: run only the verifiers the rigor level asks for (below). Recommendations inside an agent's reply ("consult @x") are hints; follow them only if the ladder or a concrete finding justifies it.
 4. **Never wait**: long-running watchers (deploy-watcher, big test runs) go in the background.
+5. **Index first**: every agent starts from docs/INDEX.md and reads one section, not a whole doc; a structural test checks the `Finding things` line in each agent file.
 
 ## By moment
 
@@ -16,19 +17,23 @@
 | Goal | phase `brainstorm` | main agent + `brainstorm` skill (needs the user live) | – |
 | Plan | after choose-path; milestone start; backlog messy; after every slice (re-propose the build sequence before the dashboard refresh) | `product-manager` | sonnet |
 | PRD (gate) | any feature or behaviour change, before design or build; user approves in chat (docs/policies/prd-approval.md) | `product-manager`, then main agent presents and waits | sonnet |
+| Acceptance tests | after PRD approval at L2+ and in autonomy mode, before build: the test-writer writes and maps the tests, a separate fresh agent writes a throwaway implementation from the PRD alone into a scratch dir (the second reading), the coordinator runs `acceptance.py admit <slug> --reference-dir DIR`; ambiguities go back to the user as PRD questions | `test-writer`, then a fresh `developer` (scratch dir) or general-purpose agent | sonnet |
 | Design (software) | software-product / library-cli / infra-ops at L2+, or a risky or large feature at any level | `software-architect` | opus |
 | Design (spreadsheet/data) | data-spreadsheet path; restructuring a model | `spreadsheet-architect` | sonnet |
 | Build: small change (< ~50 lines, one area) | – | main agent | – |
-| Build: specified backlog item | approved PRD exists; can run in its own context; parallel slices | `developer` | sonnet |
+| Build: specified backlog item | approved PRD exists and its backlog item is marked `[~]` (the write guard blocks product edits otherwise, subagents included); can run in its own context; parallel slices | `developer` | sonnet |
 | Build: boilerplate from a pattern | reference file exists | `code-writer` | sonnet |
 | Build: workbook / data outputs | design exists | `data-builder` | sonnet |
 | Read big things | file > 350 lines, 3+ files, logs, long diffs | `bulk-reader` | haiku |
 | Run tests / builds | run `metrics.py test` directly (one line when green); delegate when it fails or output is long | `test-runner` | haiku |
+| Failing acceptance tests → issues | L2+ in autonomy mode: after a build or a failing gate (docs/policies/issue-ledger.md) | `finder` | sonnet |
+| Fix issues unattended (autonomy mode) | L2+, `autonomy.enabled`, open issues with an approved PRD, you start it (docs/policies/runner.md) | `python3 scripts/runner.py run --next` (fixer and reviewer are headless agents it starts; not a subagent) | sonnet (`autonomy.model`) |
+| Release (user promotes) | staging has fixes main lacks, or a post-deploy smoke failed (docs/policies/runner-release.md) | `python3 scripts/release.py verify`, then `python3 scripts/release.py report`; `python3 scripts/release.py smoke-failed <sha>` after a failed smoke. You run the promote commands; no agent pushes or merges to main | none (script; gate in the tree sandbox) |
 | Debug | first attempt by the main agent fails, or production incident | `ultrathink-debugger` | opus |
 | UI changed | user-facing screens or flows touched | `ui-comprehensive-tester` | sonnet |
 | Task done? | see ladder | `task-completion-validator` | sonnet |
 | Too complex? | see ladder | `code-quality-pragmatist` | sonnet |
-| Ready to merge | see ladder | `reviewer` | sonnet |
+| Ready to merge | see ladder; run `python3 scripts/gate.py` (docs/policies/merge-gate.md); the reviewer adds a `Review: ship` or `Review: fix-first` trailer | `reviewer` | sonnet |
 | Follows our rules? | see ladder; drift suspected | `claude-md-compliance-checker` | haiku |
 | Milestone done? | milestone claimed complete | `karen` (runs it) then, if spec-heavy, `jenny` | sonnet |
 | Context getting long | context-watch nudge, or a logical boundary after a long session | `handoff` skill (main agent), commit the note, keep working; auto-compaction resets and the note reloads (`/clear` optional) | – |
@@ -64,8 +69,8 @@ Milestone end (L2+): `karen` always; `jenny` when GOAL.md or a spec has more tha
 
 | Path | Roster |
 |---|---|
-| software-product | product-manager, software-architect, developer, code-writer, test-runner, reviewer, task-completion-validator, ui-comprehensive-tester, karen, deploy-watcher, doc-keeper |
-| library-cli | product-manager, software-architect, developer, code-writer, test-runner, reviewer, code-quality-pragmatist, doc-keeper |
+| software-product | product-manager, software-architect, test-writer, developer, code-writer, test-runner, finder, reviewer, task-completion-validator, ui-comprehensive-tester, karen, deploy-watcher, doc-keeper |
+| library-cli | product-manager, software-architect, test-writer, developer, code-writer, test-runner, finder, reviewer, code-quality-pragmatist, doc-keeper |
 | data-spreadsheet | product-manager, spreadsheet-architect, data-builder, test-runner, reviewer, karen, doc-keeper |
 | documents-content | product-manager, reviewer, jenny, doc-keeper |
 | research-analysis | product-manager, bulk-reader, reviewer, jenny |
@@ -77,5 +82,8 @@ Milestone end (L2+): `karen` always; `jenny` when GOAL.md or a spec has more tha
 `bulk-reader`, `test-runner` and `ultrathink-debugger` are available on every path when their trigger fires.
 
 ## Changelog
+- 1.3.1 — every agent file carries the `Finding things` index-first line (DOCS-1).
+- 1.3.0 — 20 agents: `finder` (issue ledger, ADR 0008) for software-product and library-cli (AUTO-3).
+- 1.2.0 — 19 agents: `test-writer` and the Acceptance tests moment (AUTO-2).
 - 1.1.0 — adopt-existing moment and roster.
 - 1.0.0 — 18 agents, ladder by rigor, tie-breakers, path rosters. Verifiers adapted from darcyegb/ClaudeCodeAgents (MIT).

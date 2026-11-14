@@ -3,6 +3,7 @@ import contextlib
 import io
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -92,6 +93,104 @@ class Units(unittest.TestCase):
         self.assertIn("No PRDs yet", tab_traceability.render(tr))
         self.assertIn("0 PRDs", tab_traceability.line(tr))
         self.assertIn("drift 0", tab_architecture.line(arch))
+
+
+class Codegraph(unittest.TestCase):
+    """TD-004: import edges from the codegraph index when on and present, regex scan otherwise (no network, no CLI)."""
+
+    def _db(self, root, imports, flag=True):
+        put(root, "factory.json", json.dumps({"project": {"name": "demo"}, "integrations": {"codegraph": flag}}))
+        os.makedirs(os.path.join(root, ".codegraph"), exist_ok=True)
+        con = sqlite3.connect(os.path.join(root, model.CG_DB))
+        con.execute("CREATE TABLE nodes (id TEXT PRIMARY KEY, kind TEXT, name TEXT, file_path TEXT)")
+        con.execute("CREATE TABLE edges (id INTEGER PRIMARY KEY, source TEXT, target TEXT, kind TEXT)")
+        for i, f in enumerate(("src/a.ts", "src/b.ts", "src/c.ts")):
+            con.execute("INSERT INTO nodes VALUES (?, 'file', ?, ?)", ("f%d" % i, f, f))
+        for a, b in imports:
+            con.execute("INSERT INTO edges (source, target, kind) VALUES (?, ?, 'imports')", (a, b))
+        con.execute("INSERT INTO edges (source, target, kind) VALUES ('f0', 'f2', 'calls')")  # ignored: not an import
+        con.commit()
+        con.close()
+
+    def _repo(self, **kw):
+        r = tempfile.mkdtemp()
+        for rel in ("src/a.ts", "src/b.ts", "src/c.ts"):
+            put(r, rel, FILES[rel])  # the regex scan would find only a -> b
+        self._db(r, **kw)
+        return r
+
+    def test_recorded_output_maps_to_component_edges(self):
+        rec = json.load(open(os.path.join(ROOT, ".factory", "tests", "fixtures", "codegraph_imports.json")))
+        self.assertGreater(len(rec["rows"]), 20)
+        comps = [{"el": {"id": "app:" + p, "path": p}} for p in ("scripts/dashboard.py", "scripts/metrics.py", "scripts/obs", "scripts/archmodel.py")]
+        rels = model.codegraph_edges(comps, [tuple(r) for r in rec["rows"]])
+        self.assertIn(("serving", "app:scripts/obs", "app:scripts/archmodel.py"), rels)  # archmodel imports obs.model
+        self.assertIn(("serving", "app:scripts/metrics.py", "app:scripts/dashboard.py"), rels)
+        self.assertFalse([r for r in rels if r[1] == r[2]])  # no self edges (obs files importing each other)
+
+    def test_index_used_when_on_and_present(self):
+        r = self._repo(imports=[("f2", "f1")])  # c imports b: only the index knows; a imports b: only the scan knows
+        self.assertEqual(model.codegraph_pairs(r), [("src/c.ts", "src/b.ts")])
+        g = model.generate(r)
+        rels = {(x["type"], x["source"], x["target"]) for x in g["relations"]}
+        self.assertEqual(g["source"], "codegraph")
+        self.assertIn(("serving", "app:src/b.ts", "app:src/c.ts"), rels)
+        self.assertIn(("serving", "app:src/b.ts", "app:src/a.ts"), rels)  # the scan edge stays: the index can miss imports
+
+    def test_falls_back_to_scan(self):
+        for label, r in (("flag off", self._repo(imports=[("f2", "f1")], flag=False)), ("no index", self._repo(imports=[]))):
+            if label == "no index":
+                os.remove(os.path.join(r, model.CG_DB))
+            g = model.generate(r)
+            rels = {(x["type"], x["source"], x["target"]) for x in g["relations"]}
+            self.assertEqual(g["source"], "scan", label)
+            self.assertIn(("serving", "app:src/b.ts", "app:src/a.ts"), rels, label)
+        r = self._repo(imports=[])
+        open(os.path.join(r, model.CG_DB), "w").write("not a database")
+        self.assertIsNone(model.codegraph_pairs(r))
+        self.assertEqual(model.generate(r)["source"], "scan")
+
+
+class ProductLayout(unittest.TestCase):
+    """TD-005: layout of a real product repo (lpdan: Worker in worker/, static public/, tests/, evals/, template scripts)."""
+    LPDAN = {
+        "factory.json": '{"project": {"name": "Landing"}}',
+        "wrangler.jsonc": '{"name": "site", "main": "worker/index.ts", "assets": {"directory": "./public", "binding": "ASSETS"}}',
+        "worker/index.ts": "export default { fetch() { return new Response('ok'); } };\n",
+        "public/copy.js": "document.title = 'x';\n",
+        "tests/smoke.mjs": "import assert from 'node:assert';\n",
+        "tests/check_page.py": "import sys\n",
+        "evals/base/textkit/core.py": "def f(): pass\n",
+        "scripts/metrics.py": "import json\n",
+        "scripts/obs/model.py": "import os\n",
+        "node_modules/x/index.js": "module.exports = 1;\n",
+    }
+
+    def _components(self, files):
+        r = tempfile.mkdtemp()
+        for rel, text in files.items():
+            put(r, rel, text)
+        g = model.generate(r)
+        return g, [e["id"] for e in g["elements"] if e["type"] == "application-component"]
+
+    def test_lpdan_layout_gives_one_worker_component_and_no_noise(self):
+        g, app = self._components(self.LPDAN)
+        self.assertEqual(app, ["app:worker/index.ts"])
+        ids = {e["id"] for e in g["elements"]}
+        self.assertTrue({"if:http", "node:site", "svc:ASSETS"} <= ids, ids)
+        rels = {(r["type"], r["source"], r["target"]) for r in g["relations"]}
+        self.assertIn(("serving", "app:worker/index.ts", "if:http"), rels)
+        self.assertEqual(g["source"], "scan")
+
+    def test_worker_entry_directory_beats_candidate_guess(self):
+        files = dict(self.LPDAN, **{"src/legacy.ts": "export const x = 1;\n", "server/api.ts": "export const y = 2;\n",
+                                    "wrangler.jsonc": '{"name": "site", "main": "server/api.ts"}'})
+        del files["worker/index.ts"]
+        self.assertEqual(self._components(files)[1], ["app:server/api.ts"])
+        files["wrangler.jsonc"] = '{"name": "site", "main": "index.ts"}'  # entry at the repo root: fall back to candidates
+        self.assertEqual(self._components(files)[1], ["app:src/legacy.ts"])
+        files["wrangler.jsonc"] = '{"name": "site", "main": "scripts/x.ts"}'  # template-owned dir is never a root
+        self.assertEqual(self._components(files)[1], ["app:src/legacy.ts"])
 
 
 class Repo(unittest.TestCase):
@@ -398,6 +497,65 @@ class Slice3(unittest.TestCase):
         self.assertIn("4.0 d", html)
         self.assertIn("lead n/a", tab_flow.line(d))
         self.assertEqual(tab_flow.median([1, 2, 6]), 2)
+
+    def test_flow_prod_env_names_and_merge_history(self):
+        r = tempfile.mkdtemp()
+        sh(r, "git", "init", "-q", "-b", "main")
+        env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
+
+        def run(day, *args):
+            e = dict(env, GIT_AUTHOR_DATE=day, GIT_COMMITTER_DATE=day)
+            subprocess.run(["git", *args], cwd=r, check=True, capture_output=True, env=e)
+            return sources.git(r, "log", "-1", "--format=%h").strip()
+
+        put(r, "docs/specs/p.md", "# PRD: P\n\n> Status: approved · 2026-01-01 · by user · Owner: pm · Backlog: M1 — M\n")
+        put(r, "docs/BACKLOG.md", "## Milestone: M1 — M\n- [x] DEM-1 Build it (S)\n")
+        put(r, "factory.json", json.dumps({"dashboard": {"prod_envs": ["live", "Release"]}}))
+        run("2026-01-01T00:00:00+00:00", "add", "-A")
+        run("2026-01-01T00:00:00+00:00", "commit", "-qm", "docs")
+        run("2026-01-02T00:00:00+00:00", "checkout", "-qb", "feat")
+        put(r, "a.txt", "1")
+        run("2026-01-02T00:00:00+00:00", "add", "-A")
+        side = run("2026-01-02T00:00:00+00:00", "commit", "-qm", "work\n\nRefs: DEM-1")
+        run("2026-01-03T00:00:00+00:00", "checkout", "-q", "main")
+        put(r, "b.txt", "1")
+        run("2026-01-03T00:00:00+00:00", "add", "-A")
+        early = run("2026-01-03T00:00:00+00:00", "commit", "-qm", "unrelated")
+        merge = run("2026-01-04T00:00:00+00:00", "merge", "--no-ff", "-qm", "Merge feat", "feat")
+        self.assertNotEqual(side, merge)
+        hist = [{"ts": "2026-01-03T12:00:00+00:00", "kind": "deploy", "env": "live", "sha": early, "ok": True},  # before the merge
+                {"ts": "2026-01-06T00:00:00+00:00", "kind": "deploy", "env": "release", "sha": merge, "ok": True},
+                {"ts": "2026-01-07T00:00:00+00:00", "kind": "deploy", "env": "prod", "sha": merge, "ok": True}]  # not configured
+        put(r, "metrics/history.jsonl", "\n".join(json.dumps(x) for x in hist) + "\n")
+        base = {"progress": {"milestones": [{"name": "M1", "items": [{"title": "DEM-1 Build it", "state": "done"}]}]},
+                "traceability": {"chains": [{"prd": {"slug": "p", "status": "approved"}, "items": [{"title": "Build it"}]}]}}
+        d = tab_flow.collect(r, base)
+        self.assertEqual((d["deploys"]["prod"], d["deploys"]["other"]), (2, 1))
+        self.assertEqual(tab_flow.prod_envs(r), ("live", "release"))
+        self.assertEqual(d["items"][0]["lead_days"], 5.0)  # first deploy containing the merged commit: 01-06, not the 01-03 one
+
+    def test_flow_prod_envs_default_and_bad_config(self):
+        r = tempfile.mkdtemp()
+        self.assertEqual(tab_flow.prod_envs(r), ("prod", "production"))
+        for bad in ('{"dashboard": {"prod_envs": "prod"}}', '{"dashboard": {"prod_envs": []}}', '{"dashboard": 3}', "nope"):
+            put(r, "factory.json", bad)
+            self.assertEqual(tab_flow.prod_envs(r), ("prod", "production"), bad)
+
+    def test_hotspot_window_configurable(self):
+        r = tempfile.mkdtemp()
+        sh(r, "git", "init", "-q")
+        for i in range(4):
+            put(r, "src/a.py", "x = 1\n" * (i + 1))
+            sh(r, "git", "add", "-A")
+            sh(r, "git", "commit", "-qm", "c%d" % i)
+        self.assertEqual(sources.hotspot_window(r), 500)
+        self.assertEqual(tab_hotspots.collect(r, {})["files"][0]["commits"], 4)
+        put(r, "factory.json", json.dumps({"dashboard": {"hotspot_commits": 2}}))
+        self.assertEqual(sources.hotspot_window(r), 2)
+        self.assertEqual(tab_hotspots.collect(r, {})["files"][0]["commits"], 2)
+        for bad in (0, -5, "9", True, 1.5):
+            put(r, "factory.json", json.dumps({"dashboard": {"hotspot_commits": bad}}))
+            self.assertEqual(sources.hotspot_window(r), 500, bad)
 
     def test_hotspots_rank_by_churn_times_size(self):
         r = tempfile.mkdtemp()

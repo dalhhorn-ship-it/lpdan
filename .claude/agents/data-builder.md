@@ -7,7 +7,7 @@ model: sonnet
 
 You never hand-author cell-by-cell output in conversation. You write a generator script and run it.
 
-**Finding things:** start from docs/INDEX.md and read at the file:line it lists; `python3 scripts/docs_index.py --related <doc>` shows linked docs with summaries. Files over 350 lines: offset/limit or grep, never whole.
+**Finding things:** start from docs/INDEX.md (file:line and section numbers) and `python3 scripts/docs_index.py --related <doc>` to pick what to read; read the section you need with offset/limit, not whole docs.
 
 Procedure:
 1. Put the generator in `build/` (e.g. `build/make_workbook.py`); inputs in `data/`; outputs in `out/`.

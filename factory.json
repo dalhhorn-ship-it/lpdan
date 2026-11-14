@@ -3,7 +3,11 @@
   "template": {
     "name": "danfactory",
     "source_repo": "dalhhorn-ship-it/danfactory",
-    "decision_tree_version": "1.2.0"
+    "ref": "4c6a68d1ab484b66fa2d5563da71e7916512d449",
+    "decision_tree_version": "1.3.0"
+  },
+  "packs": {
+    "autonomy": false
   },
   "project": {
     "name": "Landing Page Dan Factory",
@@ -53,7 +57,69 @@
     "max_coverage_drop_pct": 2,
     "large_read_lines": 350,
     "session_weighted_tokens_warn": 750000,
-    "context_handoff_tokens": 120000
+    "context_handoff_tokens": 120000,
+    "size": {
+      "file_lines_warn": 400,
+      "file_lines_max": 700,
+      "always_loaded_tokens_max": 2500,
+      "agents_max": 20,
+      "code_growth_30d_pct_warn": 25,
+      "doc_tokens_sections": 1500,
+      "doc_tokens_warn": 3000
+    }
+  },
+  "gate": {
+    "base_branch": "main",
+    "protected": [
+      "tests/acceptance/**"
+    ],
+    "review": "advisory",
+    "prd": "advisory",
+    "security_ignore": [
+      ".factory/tests/**",
+      "evals/**"
+    ]
+  },
+  "acceptance": {
+    "dir": "tests/acceptance",
+    "command": "",
+    "reference_command": ""
+  },
+  "evals": {
+    "n": 3,
+    "model": "sonnet",
+    "budget_usd": 5,
+    "regression_threshold": 0.34,
+    "max_turns": 30
+  },
+  "autonomy": {
+    "enabled": false,
+    "staging_branch": "staging",
+    "max_attempts": 3,
+    "daily_budget_usd": 5,
+    "run_budget_usd": 2,
+    "model": "sonnet",
+    "review_model": "sonnet",
+    "max_turns": 40,
+    "max_parallel": 1,
+    "schedule_ok": false,
+    "learn_threshold": 3
+  },
+  "dashboard": {
+    "github_repo": "dalhhorn-ship-it/lpdan",
+    "changelog_file": "CHANGELOG.md",
+    "roadmap_view": "sequence",
+    "size_days": {
+      "S": 1,
+      "M": 3,
+      "L": 8
+    },
+    "wip": 1,
+    "prod_envs": [
+      "prod",
+      "production"
+    ],
+    "hotspot_commits": 500
   },
   "integrations": {
     "codegraph": false,
@@ -86,23 +152,5 @@
       }
     },
     "dashboard_url": "https://claude.ai/artifact/FmN8SMHSu89S6yQdjmmUKW"
-  },
-  "dashboard": {
-    "github_repo": "dalhhorn-ship-it/lpdan",
-    "changelog_file": "CHANGELOG.md",
-    "roadmap_view": "sequence",
-    "size_days": {
-      "S": 1,
-      "M": 3,
-      "L": 8
-    },
-    "wip": 1
-  },
-  "evals": {
-    "n": 3,
-    "model": "sonnet",
-    "budget_usd": 5,
-    "regression_threshold": 0.34,
-    "max_turns": 30
   }
 }

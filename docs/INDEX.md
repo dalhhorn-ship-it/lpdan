@@ -25,44 +25,49 @@
 
 | File | Lines | Summary |
 |---|---:|---|
-| CLAUDE.md | 40 | Always-loaded instructions. Keep short and stable (it is paid every turn). Details live… |
-| docs/BACKLOG.md | 51 | Milestones and work items; the dashboard reads this file. Seeded by `choose-path`,… |
+| CLAUDE.md | 40 | Always-loaded instructions. Keep short and stable (it is… |
+| docs/BACKLOG.md | 51 | Milestones and work items; the dashboard reads this file.… |
 | docs/GOAL.md | 59 | Status: confirmed by Dan on 2026-11-06. |
-| docs/OPERATING-MODEL.md | 78 | Approved by Dan on 2026-11-06, with rigor raised to L2. How this project is built:… |
-| docs/TECH-DEBT.md | 21 | Known shortcuts and their cost; the dashboard reads this file plus automated signals… |
-| docs/decisions/0000-template.md | 15 | Status: proposed \| accepted \| superseded by NNNN · Date: YYYY-MM-DD |
+| docs/OPERATING-MODEL.md | 78 | Approved by Dan on 2026-11-06, with rigor raised to L2.… — sections: Path and rigor:5, Agents and skills:12, Practices and habits:30, Policies:36, Commands (set in…:39, Quality gates:54, Deploy:62, Budgets:65, Deviations from path…:74 |
+| docs/TECH-DEBT.md | 21 | Known shortcuts and their cost; the dashboard reads this… |
+| docs/decisions/0000-template.md | 15 | Status: proposed \| accepted \| superseded by NNNN · Date:… |
 | docs/decisions/0001-use-danfactory-template.md | 12 | Status: accepted · Date: 2026-11-06 |
 | docs/decisions/0002-static-page-worker-assets-no-build.md | 27 | Status: accepted (Dan, 2026-11-06) · Date: 2026-11-06 |
-| docs/decisions/0003-deploy-token-in-github-environments.md | 19 | Status: accepted (Dan asked for the SEC findings to be fixed, 2026-11-07) · Date:… |
+| docs/decisions/0003-deploy-token-in-github-environments.md | 19 | Status: accepted (Dan asked for the SEC findings to be… |
 | docs/decisions/0004-prd-approval-gate.md | 16 | Status: accepted · Date: 2026-11-06 |
 | docs/decisions/0005-dashboard-observability-design.md | 43 | Status: accepted · Date: 2026-11-07 |
-| docs/decisions/0006-template-sync-1-2-0.md | 21 | Status: accepted (Dan approved docs/specs/template-update-2026-11.md in chat,… |
-| docs/design/ARCHITECTURE.md | 190 | Proposed (awaiting Dan's approval), 2026-11-06. Technical shape of the static landing… — sections: Context:5, File layout:8, CSS architecture:29, Design-token mapping…:41, Responsive type scale and…:60, Section → component mapping:78, Changes needed in the…:99, Accessibility plan (contrast…:113, Performance budget…:127, Content truth:137, Test strategy:143, Deploy:159, Build plan (vertical slices…:168, Risks and open questions:183 |
-| docs/operating-model/AGENT-ROUTING.md | 81 | Which agent gets involved when. The main agent coordinates and decides; subagents are… |
-| docs/operating-model/DECISION-TREE.md | 73 | Picks the operating model for a goal. Version 1.2.0. Keep this file short: details live… |
-| docs/operating-model/LEARNINGS.md | 47 | Append-only log written by `retro`. Each entry tags path(s) and a type; `[upstream]`… |
-| docs/operating-model/paths/adopt-existing.md | 59 | Bringing an existing build (Lovable, Bolt, v0, or any half-finished repo) into… |
-| docs/operating-model/paths/automation-script.md | 25 | Glue code, integrations, scheduled jobs, bots, one-purpose scripts. Default rigor L1. |
-| docs/operating-model/paths/data-spreadsheet.md | 32 | Spreadsheets, financial/data models, workbooks, CSV outputs, generated reports. Default… |
-| docs/operating-model/paths/documents-content.md | 25 | Documents, decks, handbooks, proposals, long-form writing. Default rigor L1. |
-| docs/operating-model/paths/infra-ops.md | 26 | Infrastructure as code, CI/CD pipelines, cloud config, DNS, access. Default rigor L3… |
-| docs/operating-model/paths/library-cli.md | 30 | Packages, SDKs, CLIs that others import or invoke. Default rigor L2. |
-| docs/operating-model/paths/prototype-spike.md | 20 | Throwaway code to learn or prove feasibility. Rigor L0. Speed over polish — but… |
-| docs/operating-model/paths/research-analysis.md | 25 | Questions answered from sources or data: market scans, technical comparisons, data… |
-| docs/operating-model/paths/software-product.md | 40 | Apps, APIs, services with users. Default rigor L2 (L3 if money/PII/public). Goes live… |
-| docs/policies/async-delivery.md | 23 | The agent's time is the most expensive part of a deploy. Push, hand off, keep working;… |
-| docs/policies/documentation.md | 11 | Docs are part of done. Small, true, linked — and indexed so agents never read more than… |
-| docs/policies/evals.md | 34 | Behavioural evals for the factory: a fixed task suite run by headless `claude -p` in… |
-| docs/policies/prd-approval.md | 25 | No feature work starts until the product-manager has written a PRD and the user has… |
-| docs/policies/security.md | 31 | Secure defaults always; guards are advisory unless backed by credential scoping; full… |
-| docs/policies/testing-and-metrics.md | 19 | Fast feedback is a feature. Measure test time, coverage, deploys and tokens; act on the… |
-| docs/policies/token-economy.md | 38 | Spend tokens on decisions, not on moving bytes. Adapted from Spotify's `shunt` plugin… |
-| docs/reviews/2026-11-07-truth-pass.md | 22 | Delegated by Dan in chat ("launch content review agent … to signoff that work, I wont… |
-| docs/specs/_TEMPLATE.md | 33 | Status: draft \| approved · YYYY-MM-DD · by user in chat \| dropped · Owner:… |
-| docs/specs/agents-index-first.md | 49 | Status: approved · 2026-11-07 · by user in chat · Owner: product-manager · Backlog: M2 /… |
-| docs/specs/dashboard-observability-design.md | 175 | Status: accepted · 2026-11-07 · Owner: software-architect · PRD:… — sections: Module layout:7, Model file:…:34, How each layer is derived:50, SVG diagram (`obs/svg.py`):79, Traceability keys (ADR 0005):88, data.json additions…:105, --print rows (one per tab):110, Empty states (AC2):114, Test strategy:118, Risks and spikes:134, Slice 1 build order (one…:142, Slice 2 as built:165, Slice 3 as built:171 |
-| docs/specs/dashboard-observability-tabs.md | 78 | Status: approved · 2026-11-07 · by user in chat (all three slices; open questions… |
-| docs/specs/landing-latest-features.md | 64 | Status: approved · 2026-11-07 · by user in chat (options: 1A drop both screenshots, 2… |
-| docs/specs/landing-page.md | 233 | Status: confirmed by Dan on 2026-11-06 (see Decisions). Traces to docs/GOAL.md outcome… — sections: Problem statement:5, User story:8, Build constraints:11, Acceptance criteria:14, Non-goals:28, Sections in order (copy below):31, Truth rules for the developer:216, Scope cuts (recommended):220, Decisions (Dan, 2026-11-06):227 |
-| docs/specs/template-update-2026-11.md | 74 | Status: approved by Dan in chat 2026-11-11 (recommendations taken on all open questions)… |
-| docs/specs/template-update-v0-2-0.md | 24 | Status: approved · 2026-11-14 · by user in chat ("approved", with the change to v0.2.0)… |
+| docs/decisions/0006-template-sync-1-2-0.md | 21 | Status: accepted (Dan approved… |
+| docs/design/ARCHITECTURE-plan.md | 41 | Split from [ARCHITECTURE.md](ARCHITECTURE.md) to stay… |
+| docs/design/ARCHITECTURE-tokens.md | 61 | Split from [ARCHITECTURE.md](ARCHITECTURE.md) to stay… |
+| docs/design/ARCHITECTURE.md | 102 | Proposed (awaiting Dan's approval), 2026-11-06. Technical… — sections: Context:5, File layout:8, CSS architecture:29, Design tokens, type…:41, Accessibility plan…:45, Performance budget…:59, Content truth:69, Test strategy:75, Deploy:91, Build plan and risks:100 |
+| docs/operating-model/AGENT-ROUTING.md | 89 | Which agent gets involved when. The main agent coordinates… — sections: Principles:5, By moment:12, Verification ladder…:44, Tie-breakers…:55, Path rosters…:68, Changelog:84 |
+| docs/operating-model/DECISION-TREE.md | 78 | Picks the operating model for a goal. Version 1.3.0. Keep… |
+| docs/operating-model/LEARNINGS.md | 47 | Append-only log written by `retro`. Each entry tags… |
+| docs/operating-model/paths/adopt-existing.md | 59 | Bringing an existing build (Lovable, Bolt, v0, or any… |
+| docs/operating-model/paths/automation-script.md | 25 | Glue code, integrations, scheduled jobs, bots, one-purpose… |
+| docs/operating-model/paths/data-spreadsheet.md | 32 | Spreadsheets, financial/data models, workbooks, CSV… |
+| docs/operating-model/paths/documents-content.md | 25 | Documents, decks, handbooks, proposals, long-form writing.… |
+| docs/operating-model/paths/infra-ops.md | 26 | Infrastructure as code, CI/CD pipelines, cloud config,… |
+| docs/operating-model/paths/library-cli.md | 30 | Packages, SDKs, CLIs that others import or invoke. Default… |
+| docs/operating-model/paths/prototype-spike.md | 20 | Throwaway code to learn or prove feasibility. Rigor L0.… |
+| docs/operating-model/paths/research-analysis.md | 25 | Questions answered from sources or data: market scans,… |
+| docs/operating-model/paths/software-product.md | 40 | Apps, APIs, services with users. Default rigor L2 (L3 if… |
+| docs/policies/async-delivery.md | 23 | The agent's time is the most expensive part of a deploy.… |
+| docs/policies/documentation.md | 12 | Docs are part of done. Small, true, linked — and indexed… |
+| docs/policies/evals-visualizations.md | 10 | Hook evidence, proof strength per task, the rule inventory… |
+| docs/policies/evals.md | 38 | Behavioural evals for the factory: a fixed task suite run… — sections: Why:5, How to run:8, Rules:27 |
+| docs/policies/merge-gate.md | 68 | One command, one verdict with reason codes, the same… — sections: Use:5, Checks, in order:11, Reading a verdict:30, Acceptance suite…:33, Trailers:42, Config (factory.json…:47, Security scan notes:56, Issue ledger:61, Honest limits:64 |
+| docs/policies/prd-approval.md | 30 | No feature work starts until the product-manager has… — sections: When it applies:5, Flow:14, Enforcement:22 |
+| docs/policies/security.md | 32 | Secure defaults always; guards block known forms and… |
+| docs/policies/template-maintenance.md | 11 | How a checkout is recognised as the template itself, and… |
+| docs/policies/testing-and-metrics.md | 28 | Fast feedback is a feature. Measure test time, coverage,… |
+| docs/policies/token-economy.md | 38 | Spend tokens on decisions, not on moving bytes. Adapted… |
+| docs/reviews/2026-11-07-truth-pass.md | 22 | Delegated by Dan in chat ("launch content review agent …… |
+| docs/specs/_TEMPLATE.md | 33 | Status: draft \| approved · YYYY-MM-DD · by user in chat \|… |
+| docs/specs/agents-index-first.md | 49 | Status: approved · 2026-11-07 · by user in chat · Owner:… |
+| docs/specs/dashboard-observability-design.md | 175 | Status: accepted · 2026-11-07 · Owner: software-architect… — sections: Module layout:7, Model file:…:34, How each layer is…:50, SVG diagram…:79, Traceability keys…:88, data.json additions…:105, --print rows (one…:110, Empty states (AC2):114, Test strategy:118, Risks and spikes:134, Slice 1 build order…:142, Slice 2 as built:165, Slice 3 as built:171 |
+| docs/specs/dashboard-observability-tabs.md | 78 | Status: approved · 2026-11-07 · by user in chat (all three… — sections: Problem:5, Goal and success…:8, Users and user stories:11, Scope:16, Non-goals:35, Acceptance criteria:41, UX / behaviour notes:54, Risks and assumptions:59, Effort and sequencing:66, Open questions:73 |
+| docs/specs/landing-latest-features.md | 64 | Status: approved · 2026-11-07 · by user in chat (options:… — sections: Problem:5, Goal and success…:8, Users and user stories:11, Scope:16, Non-goals:24, Acceptance criteria:30, UX / behaviour notes:41, Risks and assumptions:46, Effort and sequencing:52, Open questions:55, Revision 2026-11-07…:60 |
+| docs/specs/landing-page.md | 233 | Status: confirmed by Dan on 2026-11-06 (see Decisions).… — sections: Problem statement:5, User story:8, Build constraints:11, Acceptance criteria:14, Non-goals:28, Sections in order…:31, Truth rules for the…:216, Scope cuts…:220, Decisions (Dan,…:227 |
+| docs/specs/template-update-2026-11.md | 74 | Status: approved by Dan in chat 2026-11-11… — sections: Problem:5, Goal and success…:8, Users and user stories:11, Scope:16, Non-goals:26, Acceptance criteria:32, UX / behaviour notes:45, Risks and assumptions:50, Effort and sequencing:59, Open questions:62, Decisions (Dan,…:69 |
+| docs/specs/template-update-v0-2-0.md | 24 | Status: approved · 2026-11-14 · by user in chat… |

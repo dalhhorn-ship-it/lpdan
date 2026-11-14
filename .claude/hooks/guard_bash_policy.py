@@ -6,8 +6,13 @@ or `git push origin main --no-verify` slip through. This hook tokenises the comm
 compound commands, follows `bash -c`/`eval`/command substitution and package.json scripts, and
 inspects programs, not quoted text. Rollback stays allowed.
 
-It is ADVISORY: a determined caller can still hide a deploy (python -c, generated scripts). The real
-protection is credential scoping (docs/policies/security.md). Stdlib only, Python 3.8+.
+It also scans the text handed to `python -c`/`node -e`/`perl -e`..., and the content of a local script
+file the command executes, for a deploy command, and blocks recursive content reads (`grep -r`, `find
+-exec cat`, `rg --hidden`, `cat .*`/`cat *` under dotglob) that would reach a real .env*/.dev.vars* file.
+
+Residual risk, accepted: a program the agent generates and then runs can still build a deploy command
+or read a secret in ways no text scan sees. The real protection is credential scoping (ADR 0003,
+docs/policies/security.md). Stdlib only, Python 3.8+.
 """
 import json
 import os
@@ -17,6 +22,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import ROOT, block, read_event  # noqa: E402
+from _secretreads import DOTGLOB, GIT_VALUE_GLOBALS, check_secrets, find_check  # noqa: E402
 
 MAX_DEPTH = 8
 SHELLS = {"bash", "sh", "zsh", "dash", "ksh"}
@@ -27,7 +33,6 @@ RUN_ALIASES = {"run", "run-script", "rum", "urn"}
 EXEC_ALIASES = {"exec", "dlx", "x"}
 PM_VALUE_FLAGS = {"--prefix", "--workspace", "-w", "--filter", "-F", "--cwd", "--dir", "-C", "--cache"}
 WRANGLER_VALUE_FLAGS = {"-c", "--config", "-e", "--env", "--cwd"}
-GIT_VALUE_GLOBALS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
 COMMIT_VALUE_LETTERS = set("mFCctu")
 WRANGLER = re.compile(r"^(?:@cloudflare/)?wrangler(?:@[^/]*)?$")
 ASSIGN = re.compile(r"^([A-Za-z_]\w*)=")
@@ -36,9 +41,12 @@ QUOTED = re.compile(r"'[^']*'|\"(?:[^\"\\]|\\.)*\"")
 HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1.*?^\s*\2\s*$", re.S | re.M)
 SINGLE_QUOTED = re.compile(r"'[^']*'")
 SUBST = re.compile(r"\$\(([^()]*)\)|`([^`]*)`")
-SECRET = re.compile(r"^\.(?:env|dev\.vars)(?:\.[^/]*|[*?\[].*)?$")
-SECRET_OK = re.compile(r"\.(?:example|sample|template)$")
 DEPLOY_HINT = re.compile(r"\bwrangler\b")
+
+DEPLOY_TEXT = re.compile(r"\bwrangler\W+(?:(?:pages|versions)\W+)?(?:deploy|publish)\b")
+INTERPRETERS = re.compile(r"^(?:python[\d.]*|node|nodejs|deno|bun|ruby|perl|php|tsx|ts-node)$")
+CODE_FLAGS = {"-c", "-e", "-E", "-p", "--eval", "--print"}
+SCAN_LIMIT = 512 * 1024
 
 CTX = []  # package.json script names being followed, for messages
 
@@ -124,6 +132,15 @@ def analyze(cmd, depth=0, seen=frozenset(), secrets=True):
             toks = shlex.split(seg)
             if toks and os.path.basename(toks[0]) in ("echo", "printf"):
                 analyze(" ".join(t for t in toks[1:] if not t.startswith("-")), depth + 1, seen, secrets)
+    if secrets and re.search(r"\bxargs\b", QUOTED.sub("''", cmd)):  # find ... | xargs cat: same as find -exec cat
+        toks = [shlex.split(s) for s in segs]
+        for t in toks:
+            if t and os.path.basename(t[0]) == "find" and "-exec" not in t:
+                for u in toks:
+                    if u and os.path.basename(u[0]) == "xargs":
+                        rest = [a for a in u[1:] if not a.startswith("-") and not a.isdigit()]
+                        if rest:
+                            find_check(t + ["-exec", rest[0], "{}", "+"])
     for seg in segs:
         for m in SUBST.finditer(SINGLE_QUOTED.sub("''", seg)):
             analyze(m.group(1) or m.group(2) or "", depth + 1, seen, secrets)
@@ -147,6 +164,7 @@ def inspect(tokens, depth, seen, secrets, envs, top):
             rest = rest[1:]
         return inspect(rest, depth + 1, seen, secrets, envs, False)
     if prog in SHELLS:
+        run_script_file(prog, tokens, args, depth, seen)
         for i, a in enumerate(args):
             if a.startswith("-") and not a.startswith("--") and "c" in a and i + 1 < len(args):
                 return analyze(args[i + 1], depth + 1, seen, secrets)
@@ -155,6 +173,9 @@ def inspect(tokens, depth, seen, secrets, envs, top):
         return
     if prog == "eval":
         return analyze(" ".join(args), depth + 1, seen, secrets)
+    if INTERPRETERS.match(prog):
+        scan_inline_code(args)
+    run_script_file(prog, tokens, args, depth, seen)
     if prog in ("npx", "bunx", "pnpx"):
         return run_wrapper(args, depth, seen, secrets, envs, {"-p", "--package"})
     if prog in ("npm", "pnpm", "yarn", "bun"):
@@ -165,6 +186,68 @@ def inspect(tokens, depth, seen, secrets, envs, top):
         return wrangler(args)
     if prog == "git":
         return git(args, envs)
+
+
+def has_deploy_text(text):
+    """A deploy command (not a dry run) in free text, one line at a time; `#` comment lines are skipped."""
+    for line in text.splitlines():
+        m = DEPLOY_TEXT.search(line)
+        if m and not line.lstrip().startswith("#") and "--dry-run" not in line:
+            return m.group(0)
+    return None
+
+
+def scan_inline_code(args):
+    """`python -c CODE`, `node -e CODE`: the argument is a program, so look for a deploy command in it."""
+    for i, a in enumerate(args):
+        is_flag = a in CODE_FLAGS or (re.match(r"^-[A-Za-z]+$", a) and a[-1] in "ce")
+        if is_flag and i + 1 < len(args):
+            hit = has_deploy_text(args[i + 1])
+            if hit:
+                deploy_block(hit + " (inside an inline program)")
+
+
+def local_file(token):
+    """Absolute path of a regular, small file under the repo that `token` names, else None."""
+    if not token or token.startswith("-") or "$" in token:
+        return None
+    root = os.path.realpath(ROOT)
+    path = os.path.realpath(os.path.join(root, os.path.expanduser(token)))
+    if path.startswith(root + os.sep) and os.path.isfile(path) and os.path.getsize(path) <= SCAN_LIMIT:
+        return path
+    return None
+
+
+def run_script_file(prog, tokens, args, depth, seen):
+    """Best effort: a local script the command executes (`./x.sh`, `bash x.sh`, `python x.py`, `source x`) is
+    scanned for a deploy command. Shell scripts are also analysed, so `npm run deploy` inside is caught."""
+    if "/" in tokens[0] and not INTERPRETERS.match(prog) and prog not in SHELLS:
+        target = tokens[0]
+    elif prog in SHELLS or INTERPRETERS.match(prog) or prog in ("source", "."):
+        if prog in SHELLS and any(re.match(r"^-[A-Za-z]*c", a) for a in args):
+            return  # `bash -c`: handled as inline code
+        target = next((a for a in args if not a.startswith("-")), None)
+    else:
+        return
+    path = local_file(target)
+    if not path or path in seen:
+        return
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+    except OSError:
+        return
+    hit = has_deploy_text(text)
+    if hit:
+        block("Direct `wrangler deploy` is not allowed: the script `%s` that this command runs contains `%s`. "
+              "Production deploys go through git (see the `ship` skill); remove the deploy from the script."
+              % (os.path.relpath(path, ROOT), hit))
+    first = text.split("\n", 1)[0]
+    if path.endswith((".sh", ".bash")) or (first.startswith("#!") and "sh" in first):
+        try:
+            analyze(text, depth + 1, seen | {path}, False)
+        except ValueError:
+            pass
 
 
 def run_wrapper(args, depth, seen, secrets, envs, value_flags):
@@ -298,39 +381,13 @@ def git(args, envs):
                     break
 
 
-def git_subcommand(args):
-    i = 0
-    while i < len(args):
-        if args[i] in GIT_VALUE_GLOBALS:
-            i += 2
-        elif args[i].startswith("-"):
-            i += 1
-        else:
-            return args[i]
-    return None
-
-
-def check_secrets(prog, tokens, args):
-    """Block reading/writing .env* and .dev.vars* via Bash (listing/testing/ignore-checks are allowed)."""
-    if prog in ("ls", "test", "[", "[["):
-        return
-    if prog == "git" and git_subcommand(args) in ("check-ignore", "status"):
-        return
-    for t in tokens:
-        for cand in (t, t.split("=", 1)[-1]):
-            cand = re.sub(r"^(?:\d*[<>]+|@)", "", cand)
-            name = os.path.basename(cand.rstrip("/"))
-            if SECRET.match(name) and not SECRET_OK.search(name):
-                block("Bash access to secret files (`%s`) is blocked: .env*/.dev.vars* must not be read, "
-                      "copied or sourced by the agent. Use `.env.example` for templates; ask the user to "
-                      "handle real secrets." % name)
-
 
 def main():
     ev = read_event()
     if ev.get("tool_name") != "Bash":
         return
     cmd = (ev.get("tool_input") or {}).get("command", "")
+    DOTGLOB[0] = "dotglob" in cmd
     try:
         analyze(cmd)
     except ValueError:  # unparseable: fail closed for deploy-like text, open otherwise
