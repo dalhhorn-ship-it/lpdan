@@ -21,6 +21,8 @@ TOKENS = ROOT / "design" / "gpm-keynote" / "tokens.json"
 EXTERNAL_ALLOW = {
     "https://github.com/dalhhorn-ship-it/danfactory",
     "https://github.com/dalhhorn-ship-it/danfactory/issues",
+    "https://github.com/dalhhorn-ship-it/danfactory#autonomy-pack",
+    "https://github.com/dalhhorn-ship-it/danfactory/tree/main/evals/spikes/pilot-semverlite",
     "https://github.com/darcyegb/ClaudeCodeAgents",
     "https://github.com/spotify/portal-ai-plugins/tree/main/plugins/shunt",
     "https://github.com/colbymchenry/codegraph",

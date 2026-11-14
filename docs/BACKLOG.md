@@ -40,7 +40,7 @@ Roadmap tab: item order here is the proposed sequence. Tag technical work `#foun
 - [x] Agents navigate docs index-first: INDEX line in 7 agents + `docs_index.py --related` (S-M, [PRD approved](specs/agents-index-first.md)) #process
 - [ ] Measure index-first navigation over 5 sessions (docs/policies/token-economy.md), then upstream the change to danfactory as one branch with the result (S) #process
 - [ ] Short screen recording or animated terminal of the 3 phases (M)
-- [~] UPD-3 Template update to danfactory v0.2.0: gated autonomy section, worked example from pilot 2, template file sync (docs/specs/template-update-v0-2-0.md) (M) #feature
+- [x] UPD-3 Template update to danfactory v0.2.0: gated autonomy section, worked example from pilot 2, template file sync (docs/specs/template-update-v0-2-0.md) (M) #feature
 - [ ] Dark/light toggle and print-friendly cheat sheet of the 7 habits (S)
 - [ ] Translations (S per language)
 - [ ] Challenge 8+ ideas: a data-spreadsheet challenge, a library-cli challenge, an automation-script challenge (M each)

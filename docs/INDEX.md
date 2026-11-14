@@ -29,7 +29,8 @@
 | docs/BACKLOG.md | 51 | Milestones and work items; the dashboard reads this file.… |
 | docs/GOAL.md | 59 | Status: confirmed by Dan on 2026-11-06. |
 | docs/OPERATING-MODEL.md | 78 | Approved by Dan on 2026-11-06, with rigor raised to L2.… — sections: Path and rigor:5, Agents and skills:12, Practices and habits:30, Policies:36, Commands (set in…:39, Quality gates:54, Deploy:62, Budgets:65, Deviations from path…:74 |
-| docs/TECH-DEBT.md | 21 | Known shortcuts and their cost; the dashboard reads this… |
+| docs/TECH-DEBT.md | 23 | Known shortcuts and their cost; the dashboard reads this… |
+| docs/claims-v0-2-0.md | 44 | Every claim in the "From supervised to gated autonomy"… |
 | docs/decisions/0000-template.md | 15 | Status: proposed \| accepted \| superseded by NNNN · Date:… |
 | docs/decisions/0001-use-danfactory-template.md | 12 | Status: accepted · Date: 2026-11-06 |
 | docs/decisions/0002-static-page-worker-assets-no-build.md | 27 | Status: accepted (Dan, 2026-11-06) · Date: 2026-11-06 |

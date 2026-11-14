@@ -11,7 +11,9 @@ Format: `- [ ] TD-NNN Title — impact: high|medium|low · effort: S|M|L · area
 - [ ] TD-004 Magenta-text lint in check_page.py is lexical (rule-level); smoke.mjs checks computed styles and is the real guard — impact: low · effort: S · area: tests
 - [ ] TD-005 No section links in the nav below 860px (only brand + GitHub; hero links to #start). A no-JS `<details>` menu would fix it if wanted — impact: low · effort: S · area: ui
 - [ ] TD-010 Dashboard tabs are CSS radio inputs, so a URL hash (dashboard/#tab-evals) cannot open a tab; the page links to dashboard/ and names the tab instead. Fix upstream in danfactory (no-JS deep links), then pull — impact: low · effort: M · area: dashboard
-- [ ] TD-012 Eval fixtures (tests/fixtures/danfactory-evals.jsonl, danfactory-evals-policy.md) and metrics/evals*.json are frozen copies from danfactory 9cb70c5; refresh at the next template sync — impact: low · effort: S · area: tests
+- [ ] TD-012 Eval fixtures (tests/fixtures/danfactory-evals.jsonl, danfactory-evals-policy.md) and metrics/evals*.json are frozen copies from danfactory 9cb70c5 (README fixture refreshed to 4c6a68d in UPD-3); refresh at the next template sync — impact: low · effort: S · area: tests
+
+- [ ] TD-013 Page copy still says "18 agents" (README at 4c6a68d says 20; lpdan carries 19 as the autonomy pack's `finder` is out), and docs/OPERATING-MODEL.md says slices "S1, S3–S7 in ARCHITECTURE.md" which moved to docs/design/ARCHITECTURE-plan.md (UPD-3 split the doc for the size budget); both outside UPD-3's scope — impact: low · effort: S · area: docs
 
 ## Resolved
 - [x] TD-011 Template drift: scripts/docs_index.py stays lpdan's version (template 1.2.0 lacks `--related`, upstreamed from lpdan 1b35b9f); lpdan also re-adds two security fixes the template dropped (adopt_scan.py report sanitiser, pipe-to-shell in guard_bash_policy.py). Upstream all three to danfactory so the next sync is clean — impact: medium · effort: S · area: tooling — upstreamed 2026-11-11: danfactory branch ccr-7c9c51ff-xe5z6t (caeb33a), with regression tests; no PR opened
