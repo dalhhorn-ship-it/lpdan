@@ -1,0 +1,24 @@
+{
+ "source": "danfactory v0.2.0 7428d462441c3faaef6e006e51f405f26620559f",
+ "gate_checks": [
+  "structure",
+  "build",
+  "lint",
+  "tests",
+  "coverage",
+  "acceptance",
+  "protected",
+  "prd",
+  "review",
+  "security",
+  "size"
+ ],
+ "max_attempts": 3,
+ "daily_budget_usd": 5,
+ "run_budget_usd": 2,
+ "max_parallel_cap": 4,
+ "max_parallel_cap_source": "docs/policies/runner.md:27",
+ "autonomy_enabled_default": false,
+ "pack_files": 36,
+ "pack_lines": 5098
+}

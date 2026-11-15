@@ -229,6 +229,22 @@ def eval_checks(check, html, text):
     check("evals section links to the dashboard's Evals tab", sec and 'href="dashboard/"' in sec.group(0) and "Evals tab" in body)
 
 
+def v020_checks(check, html):
+    """'New in v0.2.0' numbers must equal danfactory at tag v0.2.0 (fixture; docs/specs/landing-v0-2-0-features.md)."""
+    f = json.loads((ROOT / "tests" / "fixtures" / "danfactory-v0-2-0-facts.json").read_text(encoding="utf-8"))
+    sec = re.search(r'<section id="safely".*?</section>', html, flags=re.S)
+    body = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", sec.group(0))) if sec else ""
+    words = {11: "Eleven"}
+    want = ["%s checks, from %s to %s" % (words.get(len(f["gate_checks"]), len(f["gate_checks"])), f["gate_checks"][0], f["gate_checks"][-1]),
+            "At most %d attempts per issue, %d USD a day, %d USD a run, %d fixers in parallel" % (
+                f["max_attempts"], f["daily_budget_usd"], f["run_budget_usd"], f["max_parallel_cap"]),
+            "(%d files, about %s lines)" % (f["pack_files"], format(round(f["pack_lines"], -2), ","))]
+    bad = [w for w in want if w not in body]
+    check("v0.2.0 numbers match danfactory at the tag", sec and not bad and f["autonomy_enabled_default"] is False, bad)
+    check("v0.2.0 diagram: img with alt, served", sec and 'src="img/agents-safely.svg"' in sec.group(0)
+          and (PUB / "img" / "agents-safely.svg").is_file() and "Six layers of safety" in sec.group(0))
+
+
 def main():
     results = []
 
@@ -398,6 +414,7 @@ def main():
           [r.get("id") for r in opened])
 
     eval_checks(check, html, text)
+    v020_checks(check, html)
     dashboard_checks(check)
 
     failed = [r for r in results if not r[1]]

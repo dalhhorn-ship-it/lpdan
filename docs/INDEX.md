@@ -30,7 +30,7 @@
 | docs/GOAL.md | 59 | Status: confirmed by Dan on 2026-11-06. |
 | docs/OPERATING-MODEL.md | 78 | Approved by Dan on 2026-11-06, with rigor raised to L2.… — sections: Path and rigor:5, Agents and skills:12, Practices and habits:30, Policies:36, Commands (set in…:39, Quality gates:54, Deploy:62, Budgets:65, Deviations from path…:74 |
 | docs/TECH-DEBT.md | 22 | Known shortcuts and their cost; the dashboard reads this… |
-| docs/claims-v0-2-0.md | 44 | Every claim in the "From supervised to gated autonomy"… |
+| docs/claims-v0-2-0.md | 72 | Every claim in the "From supervised to gated autonomy"… — sections: From supervised to…:5, Worked example…:26, New in v0.2.0…:44 |
 | docs/decisions/0000-template.md | 15 | Status: proposed \| accepted \| superseded by NNNN · Date:… |
 | docs/decisions/0001-use-danfactory-template.md | 12 | Status: accepted · Date: 2026-11-06 |
 | docs/decisions/0002-static-page-worker-assets-no-build.md | 27 | Status: accepted (Dan, 2026-11-06) · Date: 2026-11-06 |
@@ -70,6 +70,6 @@
 | docs/specs/dashboard-observability-tabs.md | 78 | Status: approved · 2026-11-07 · by user in chat (all three… — sections: Problem:5, Goal and success…:8, Users and user stories:11, Scope:16, Non-goals:35, Acceptance criteria:41, UX / behaviour notes:54, Risks and assumptions:59, Effort and sequencing:66, Open questions:73 |
 | docs/specs/landing-latest-features.md | 64 | Status: approved · 2026-11-07 · by user in chat (options:… — sections: Problem:5, Goal and success…:8, Users and user stories:11, Scope:16, Non-goals:24, Acceptance criteria:30, UX / behaviour notes:41, Risks and assumptions:46, Effort and sequencing:52, Open questions:55, Revision 2026-11-07…:60 |
 | docs/specs/landing-page.md | 233 | Status: confirmed by Dan on 2026-11-06 (see Decisions).… — sections: Problem statement:5, User story:8, Build constraints:11, Acceptance criteria:14, Non-goals:28, Sections in order…:31, Truth rules for the…:216, Scope cuts…:220, Decisions (Dan,…:227 |
-| docs/specs/landing-v0-2-0-features.md | 37 | Status: draft (proposed, awaiting Dan's approval) ·… |
+| docs/specs/landing-v0-2-0-features.md | 37 | Status: approved · 2026-11-15 · by user in chat ("1. svg… |
 | docs/specs/template-update-2026-11.md | 74 | Status: approved by Dan in chat 2026-11-11… — sections: Problem:5, Goal and success…:8, Users and user stories:11, Scope:16, Non-goals:26, Acceptance criteria:32, UX / behaviour notes:45, Risks and assumptions:50, Effort and sequencing:59, Open questions:62, Decisions (Dan,…:69 |
 | docs/specs/template-update-v0-2-0.md | 24 | Status: approved · 2026-11-14 · by user in chat… |

@@ -1,6 +1,6 @@
 # PRD: Landing page: danfactory v0.2.0 features and system diagram
 
-> Status: draft (proposed, awaiting Dan's approval) · 2026-11-15 · Owner: product-manager · Backlog: M2 → UPD-4
+> Status: approved · 2026-11-15 · by user in chat ("1. svg is ok, 2. ok, [3] ok separate section, 4. ok"): inline SVG, keep the 7-step figure, separate section, Layers of safety as own list · Owner: product-manager · Backlog: M2 → UPD-4
 
 ## Problem
 #autonomy and #example cover the three controls and the pilot, but not what v0.2.0 actually ships: the 11 merge-gate checks, locked acceptance tests, issue ledger, fixer caps, release train, learning loop, lean-by-default. Dan's brief (danfactory tag v0.2.0, 7428d46) lists them with a diagram prompt. Claims in docs/claims-v0-2-0.md are anchored to 4c6a68d, before the tag.
@@ -33,5 +33,5 @@ M. Slices: claims re-anchor, then copy, then diagram. Depends on danfactory read
 ## Open questions
 1. Diagram: inline SVG in page tokens (recommended, no-JS, themed) or Dan supplies a PNG from the prompt (fixed navy, needs a dark frame in light mode)?
 2. Existing 7-step figure: keep and add the new diagram (recommended, they answer different questions) or replace it?
-3. Placement: new "What's new in v0.2.0" block inside #autonomy (recommended, one story) or a separate section?
+3. Placement: ~~block inside #autonomy~~ → **decided: separate section** after #autonomy.
 4. "Layers of safety": own numbered list beside or under the diagram (recommended, accessible and works at 390px) or only drawn in the figure?

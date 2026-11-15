@@ -257,6 +257,8 @@ figcaption{color:var(--ink-muted);font-size:var(--fs-small);margin-top:var(--spa
 .flow7 path{stroke:var(--cyan);stroke-width:3;fill:none}
 .flow7 .tip{fill:var(--cyan);stroke:none}
 figure.fig{margin:0}
+.fig img{display:block;width:100%;max-width:440px;height:auto;margin:0 auto}
+#safely h3{margin:var(--space-12) 0 0}.layers{margin:var(--space-4) 0 0;padding-left:1.4em;color:var(--ink-muted)}.layers li{margin-top:6px}
 figure.fig figcaption{color:var(--ink-muted);font-size:var(--fs-small);margin-top:var(--space-4)}
 
 .habits{list-style:none;padding:0;margin:var(--space-12) 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;counter-reset:h}
@@ -553,7 +555,7 @@ footer a{color:var(--ink-muted);text-decoration:none}
     <div class="dsec">
       <div>
         <ul class="feat">
-          <li><b>You approve the PRD.</b><span>No approved PRD, no product code. A hook blocks the edit, and the merge gate checks it again on every commit.</span></li>
+          <li><b>You approve the PRD.</b><span>No approved PRD, no product code. A hook blocks the edit, and the merge gate checks it again on every product-code commit.</span></li>
           <li><b>You start the builds.</b><span>The fixer runs only when you start it, within an attempt limit and a daily budget.</span></li>
           <li><b>You push to main.</b><span>Fixes merge to a <code>staging</code> branch only. The release report prints the exact commands, and you run them.</span></li>
         </ul>
@@ -582,8 +584,40 @@ footer a{color:var(--ink-muted);text-decoration:none}
   </div>
 </section>
 
+<!-- 7c new in v0.2.0 -->
+<section id="safely" class="alt">
+  <div class="wrap">
+    <p class="kicker">New in v0.2.0</p>
+    <h2>How danfactory builds with agents, safely</h2>
+    <p class="lede">Agents do the middle. You keep three controls. This is what bounds the agents in between.</p>
+    <div class="dsec">
+      <div>
+        <ul class="feat">
+          <li><b>PRD write guard</b><span>No approved PRD, no product code. A hook blocks the edit, shell writes too, and the merge gate checks product-code commits again. A waiver must quote your own words.</span></li>
+          <li><b>Merge gate</b><span>One command, one verdict with reason codes, the same locally and in CI. Eleven checks, from structure to size.</span></li>
+          <li><b>Locked acceptance tests</b><span>A test writer turns each PRD criterion into a test. From rigor L2, a test is admitted only if it fails before the build and passes on an independent second implementation. Open points come back to you as PRD questions.</span></li>
+          <li><b>Issue ledger</b><span>Failing tests become issue files, one per root cause. Fixed ones move to <code>issues/fixed/</code>, and a regression reopens its issue.</span></li>
+          <li><b>Fixers, if you want them</b><span>One sandboxed agent per attempt, without network. A read-only agent reviews, the gate decides. At most 3 attempts per issue, 5 USD a day, 2 USD a run, 4 fixers in parallel. Fixes merge to <code>staging</code> only.</span></li>
+          <li><b>Release train</b><span>Staging is re-verified as a batch, a report prints the exact commands, and you promote to main. A failed smoke test prepares a revert branch and an issue.</span></li>
+          <li><b>Learning loop</b><span>Recurring rejection reasons become candidate rules for your retro. Evals check how the fixers behave.</span></li>
+          <li><b>Lean by default</b><span>The autonomy pack (36 files, about 5,100 lines) is installed only if you choose autonomy. Size budgets flag big files, growth and heavy docs on the dashboard.</span></li>
+        </ul>
+        <h3>Layers of safety</h3>
+        <ol class="layers">
+          <li>PRD write guard</li><li>Locked acceptance tests</li><li>Sandboxed fixers with caps</li>
+          <li>Independent review</li><li>Merge gate</li><li>Staging, and you push to main</li>
+        </ol>
+      </div>
+      <figure class="fig">
+        <img src="img/agents-safely.svg" width="400" height="1336" loading="lazy" alt="Diagram: you approve the PRD; test writers, issue finders and fixers work through a merge gate to a staging branch; you push to main. Six layers of safety: PRD write guard, locked tests, sandboxed fixers with caps, independent review, merge gate, staging.">
+        <figcaption>Magenta boxes are yours. Autonomy is optional: new projects start without it.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
 <!-- 7d worked example -->
-<section id="example" class="alt">
+<section id="example">
   <div class="wrap">
     <p class="kicker">Worked example</p>
     <h2>A semver library the fixer wrote</h2>
