@@ -239,10 +239,18 @@ def v020_checks(check, html):
             "At most %d attempts per issue, %d USD a day, %d USD a run, %d fixers in parallel" % (
                 f["max_attempts"], f["daily_budget_usd"], f["run_budget_usd"], f["max_parallel_cap"]),
             "(%d files, about %s lines)" % (f["pack_files"], format(round(f["pack_lines"], -2), ","))]
+    if len(f["gate_checks"]) not in words:
+        want.append("words map in v020_checks lacks %d checks" % len(f["gate_checks"]))
     bad = [w for w in want if w not in body]
     check("v0.2.0 numbers match danfactory at the tag", sec and not bad and f["autonomy_enabled_default"] is False, bad)
-    check("v0.2.0 diagram: img with alt, served", sec and 'src="img/agents-safely.svg"' in sec.group(0)
-          and (PUB / "img" / "agents-safely.svg").is_file() and "Six layers of safety" in sec.group(0))
+    svg_p = PUB / "img" / "agents-safely.svg"
+    svg = re.sub(r"\s+", " ", " ".join(re.findall(r"<text[^>]*>([^<]*)</text>", svg_p.read_text(encoding="utf-8")))) if svg_p.is_file() else ""
+    chips = [c.lower() for c in re.findall(r'<g class="ch"><rect[^>]*/><text[^>]*>([^<]*)</text>', svg_p.read_text(encoding="utf-8"))] if svg else []
+    want_svg = ["From rigor L2,", "Max %d attempts per issue," % f["max_attempts"],
+                "%d USD a day, %d USD a run." % (f["daily_budget_usd"], f["run_budget_usd"]), "One command you run"]
+    bad_svg = [w for w in want_svg if w not in svg] + ([] if chips == f["gate_checks"] else ["chips %s" % chips])
+    check("v0.2.0 diagram text matches danfactory at the tag", sec and 'src="img/agents-safely.svg"' in sec.group(0)
+          and svg and not bad_svg, bad_svg)
 
 
 def main():

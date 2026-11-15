@@ -54,7 +54,7 @@ The diagram repeats the same seven steps: approve PRD (human), write tests, file
 | Test writer turns each PRD criterion into a test | .claude/agents/test-writer.md:16-17, 19 |
 | From rigor L2, admitted only if fails before the build and passes on an independent second implementation | docs/policies/merge-gate.md:36 |
 | Open points come back as PRD questions | .claude/agents/test-writer.md:19 |
-| Failing tests become issue files, one per root cause | docs/policies/issue-ledger.md:14, 17; .claude/agents/finder.md:3 |
+| Failing tests become issue files, grouped by root cause | docs/policies/issue-ledger.md:14, 17; .claude/agents/finder.md:3 |
 | Fixed ones move to `issues/fixed/`, a regression reopens | docs/policies/issue-ledger.md:7 |
 | One sandboxed agent per attempt, without network | docs/policies/runner.md:5, 17, 18, 20 |
 | A read-only agent reviews, the gate decides | docs/policies/runner.md:20, 21 |
@@ -62,11 +62,15 @@ The diagram repeats the same seven steps: approve PRD (human), write tests, file
 | 4 fixers in parallel (hard cap; default 1) | factory.json:84; docs/policies/runner.md:27 |
 | Fixes merge to `staging` only | docs/policies/runner.md:22; runner-release.md:6 |
 | Staging re-verified as a batch; report prints the exact commands; you promote | docs/policies/runner-release.md:7, 8, 11-13 |
-| Failed smoke test prepares a revert branch and an issue | docs/policies/runner-release.md:16 |
+| If a smoke test fails, one command you run prepares a revert branch and an issue | docs/policies/runner-release.md:16 (`release.py smoke-failed`; no branch if the revert conflicts) |
 | Recurring rejection reasons become candidate rules for the retro; evals check the fixers | docs/policies/runner-release.md:19 |
 | Autonomy pack: 36 files, about 5,100 lines, only if you choose autonomy | packs/autonomy.json (36 files, 5,098 lines counted at the tag); scripts/bootstrap.sh:77; README.md:93-99. The brief said "about 4,800"; ADR 0011 says "about 4,500"; the page uses the count. |
 | Size budgets flag big files, growth and heavy docs on the dashboard | factory.json:46-54; README.md:46, 87 |
 | New projects start without autonomy | README.md:93; factory.json:76 |
+| Diagram, test writers: "From rigor L2, admitted only if they fail first and pass on a second implementation" | docs/policies/merge-gate.md:36 (below L2: admitted with `reference: null` and a warning) |
+| Diagram, Deploy: "Failed smoke? One command you run makes a revert branch and an issue", arrow to the issue ledger (not to the finders: the issue has no PRD link, the runner does not pick it up) | docs/policies/runner-release.md:16 |
+| Diagram, learning loop: candidate rules go to your retro, arrow ends at the PRD step | docs/policies/runner-release.md:19 |
+| Diagram text (L2 qualifier, caps, gate chips) is tested against the fixture by tests/check_page.py `v020_checks` | — |
 | Diagram: same flow and six layers as the brief; fixer box says "one sandboxed agent per attempt" (the brief's "one agent per issue" is not what runner.md says) | runner.md:5, 17 |
 
 Also refreshed to 4c6a68d: the bootstrap command line in the "start in three commands" section (README.md:13, now lists `--with-autonomy` and `--template-ref`).
