@@ -12,5 +12,5 @@ Dan uploaded a v0.2.0 features brief (danfactory tag v0.2.0, 7428d46). PRD docs/
 - Checks: metrics.py test green, check.sh ok, check_page 56/0, smoke 57/0, 390/1440 no h-scroll, 0 external requests, works without JS. Gate: review/size warnings are advisory.
 
 ## Next
-- Not deployed: production is main; waiting for Dan to say merge/PR. Then deploy-watcher in background.
+- Deployed: Dan said "push to main"; 5646827 fast-forwarded to main, live at danfactory.dalhhorn.workers.dev (/version sha matches, #safely present, SVG 200 image/svg+xml). Watcher couldn't reach the host from the Default env; session moved to the "lpdan" environment (allows that host) and smoke was done by hand.
 - index.html budget nearly full: next copy addition needs a trim or a budget decision (ADR).
