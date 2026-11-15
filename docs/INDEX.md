@@ -41,6 +41,7 @@
 | docs/design/ARCHITECTURE-plan.md | 41 | Split from [ARCHITECTURE.md](ARCHITECTURE.md) to stay… |
 | docs/design/ARCHITECTURE-tokens.md | 61 | Split from [ARCHITECTURE.md](ARCHITECTURE.md) to stay… |
 | docs/design/ARCHITECTURE.md | 102 | Proposed (awaiting Dan's approval), 2026-11-06. Technical… — sections: Context:5, File layout:8, CSS architecture:29, Design tokens, type…:41, Accessibility plan…:45, Performance budget…:59, Content truth:69, Test strategy:75, Deploy:91, Build plan and risks:100 |
+| docs/design/latest-features-v0-2-0.md | 66 | Source of truth: danfactory tag v0.2.0 (commit 7428d46).… |
 | docs/operating-model/AGENT-ROUTING.md | 89 | Which agent gets involved when. The main agent coordinates… — sections: Principles:5, By moment:12, Verification ladder…:44, Tie-breakers…:55, Path rosters…:68, Changelog:84 |
 | docs/operating-model/DECISION-TREE.md | 78 | Picks the operating model for a goal. Version 1.3.0. Keep… |
 | docs/operating-model/LEARNINGS.md | 47 | Append-only log written by `retro`. Each entry tags… |
